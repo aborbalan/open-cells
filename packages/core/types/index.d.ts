@@ -60,3 +60,37 @@ export type {
 } from './bridge';
 export { EventEmitter } from './event-emitter';
 
+// ---- API runtime pública (alineada con src/index.js) ----
+import type { CellsConfig, BridgeAPI } from './bridge';
+import type { QueryParams } from './navigation-stack';
+import type { RouteData } from './route';
+
+export declare const $bridge: BridgeAPI | null;
+
+export declare function startApp(config: CellsConfig): BridgeAPI | null;
+export declare function getConfig(): CellsConfig;
+export declare function enqueueCommand(command: string, parameters: unknown[]): void;
+export declare function subscribe(
+  channelName: string,
+  node: object,
+  callback: (value: any) => void,
+): void;
+export declare function unsubscribe(channels: string | string[], node: object): void;
+export declare function publish(
+  channelName: string,
+  value: unknown,
+  options?: { sessionStorage?: boolean },
+): void;
+export declare function publishOn(
+  channelName: string,
+  htmlElement: HTMLElement,
+  eventName: string,
+): void;
+export declare function navigate(page: string, params?: QueryParams): void;
+export declare function updateInterceptorContext(ctx: object): void;
+export declare function resetInterceptorContext(): void;
+export declare function getInterceptorContext(): object;
+export declare function setInterceptorContext(ctx: object): void;
+export declare function getCurrentRoute(): RouteData;
+export declare function updateSubroute(subroute: string): void;
+export declare function backStep(): void;
