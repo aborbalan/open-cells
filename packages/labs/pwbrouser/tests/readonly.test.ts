@@ -4,13 +4,14 @@ import {
   browser_network_request,
   browser_network_requests,
   browser_snapshot,
+  browser_tabs,
   browser_take_screenshot,
 } from "../src/readonly.js";
 
 const SNAPSHOT = '- heading "Page" [ref=e1]';
 const URL = "https://example.com/";
 
-function makePage() {
+function makePage(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     ariaSnapshot: vi.fn().mockResolvedValue(SNAPSHOT),
     url: vi.fn().mockReturnValue(URL),
@@ -19,12 +20,21 @@ function makePage() {
     getByRole: vi.fn().mockReturnValue({
       first: vi.fn().mockReturnValue({ __roleLocator: true }),
     }),
+    ...overrides,
+  } as never;
+}
+
+function makeContext() {
+  return {
+    pages: vi.fn(),
+    newPage: vi.fn(),
   } as never;
 }
 
 function ctx(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     page: makePage(),
+    context: makeContext(),
     consoleMessages: [],
     networkRequests: [],
     navIndex: 0,
@@ -310,5 +320,177 @@ describe("browser_network_request", () => {
   it("throws when index is not found", async () => {
     const c = ctx({ networkRequests: [] });
     await expect(browser_network_request(c, { index: 99 })).rejects.toThrow("not found");
+  });
+});
+
+describe("browser_tabs", () => {
+  function tabPage(url: string, title: string, ariaSnapshotVal?: string) {
+    return {
+      url: vi.fn().mockReturnValue(url),
+      title: vi.fn().mockResolvedValue(title),
+      close: vi.fn().mockResolvedValue(undefined),
+      bringToFront: vi.fn().mockResolvedValue(undefined),
+      ariaSnapshot: vi.fn().mockResolvedValue(ariaSnapshotVal ?? `- heading "Tab" [ref=e1]`),
+      goto: vi.fn().mockResolvedValue(undefined),
+    };
+  }
+
+  type MockCtx = Record<string, unknown> & { page: Record<string, unknown>; context: Record<string, unknown> };
+
+  function mockCtx(overrides: Partial<Record<string, unknown>> = {}): MockCtx {
+    return ctx(overrides) as unknown as MockCtx;
+  }
+
+  describe("action: list", () => {
+    it("returns list of tabs with index, url, and title", async () => {
+      const pages = [tabPage("https://a.com", "Page A"), tabPage("https://b.com", "Page B")];
+      const c = mockCtx({ context: { pages: vi.fn().mockReturnValue(pages), newPage: vi.fn() } });
+
+      const result = await browser_tabs(c as never, { action: "list" });
+      const tabs = result.tabs as Array<{ index: number; url: string; title: string }>;
+      expect(tabs).toHaveLength(2);
+      expect(tabs[0]).toEqual({ index: 0, url: "https://a.com", title: "Page A" });
+      expect(tabs[1]).toEqual({ index: 1, url: "https://b.com", title: "Page B" });
+      expect(result.url).toBe(URL);
+    });
+
+    it("returns empty array when no tabs", async () => {
+      const c = mockCtx({ context: { pages: vi.fn().mockReturnValue([]), newPage: vi.fn() } });
+      const result = await browser_tabs(c as never, { action: "list" });
+      expect(result.tabs).toEqual([]);
+    });
+  });
+
+  describe("action: new", () => {
+    it("creates a new page and returns snapshot", async () => {
+      const newPage = tabPage("about:blank", "New Tab");
+      const c = mockCtx({ context: { pages: vi.fn(), newPage: vi.fn().mockResolvedValue(newPage) } });
+
+      const result = await browser_tabs(c as never, { action: "new" });
+      expect(c.context.newPage).toHaveBeenCalled();
+      expect(result).toEqual({ snapshot: '- heading "Tab" [ref=e1]', url: "about:blank" });
+    });
+
+    it("navigates to URL when provided", async () => {
+      const newPage = tabPage("https://target.com", "Target");
+      const c = mockCtx({ context: { pages: vi.fn(), newPage: vi.fn().mockResolvedValue(newPage) } });
+
+      await browser_tabs(c as never, { action: "new", url: "https://target.com" });
+      expect(newPage.goto).toHaveBeenCalledWith("https://target.com", { waitUntil: "networkidle", timeout: 60000 });
+    });
+
+    it("updates ctx.page to the new page", async () => {
+      const newPage = tabPage("about:blank", "New");
+      const c = mockCtx({ context: { pages: vi.fn(), newPage: vi.fn().mockResolvedValue(newPage) } });
+
+      const oldPage = c.page;
+      await browser_tabs(c as never, { action: "new" });
+      expect(c.page).toBe(newPage);
+      expect(c.page).not.toBe(oldPage);
+    });
+  });
+
+  describe("action: close", () => {
+    it("closes current page when no index", async () => {
+      const closeFn = vi.fn().mockResolvedValue(undefined);
+      const remainingPages = [tabPage("https://other.com", "Other")];
+      const c = mockCtx({
+        page: { close: closeFn, url: vi.fn().mockReturnValue(URL), ariaSnapshot: vi.fn().mockResolvedValue(SNAPSHOT) },
+        context: { pages: vi.fn().mockReturnValue(remainingPages), newPage: vi.fn() },
+      });
+
+      const result = await browser_tabs(c as never, { action: "close" });
+      expect(closeFn).toHaveBeenCalled();
+      expect(result.url).toBe("https://other.com");
+    });
+
+    it("switches to last remaining page after close", async () => {
+      const lastPage = tabPage("https://last.com", "Last");
+      const c = mockCtx({
+        page: {
+          close: vi.fn().mockResolvedValue(undefined),
+          url: vi.fn().mockReturnValue(URL),
+          ariaSnapshot: vi.fn().mockResolvedValue(SNAPSHOT),
+        },
+        context: { pages: vi.fn().mockReturnValue([lastPage]), newPage: vi.fn() },
+      });
+
+      await browser_tabs(c as never, { action: "close" });
+      expect(c.page).toBe(lastPage);
+    });
+
+    it("creates new page when no tabs remain", async () => {
+      const newPage = tabPage("about:blank", "Blank");
+      const c = mockCtx({
+        page: {
+          close: vi.fn().mockResolvedValue(undefined),
+          url: vi.fn().mockReturnValue(URL),
+          ariaSnapshot: vi.fn().mockResolvedValue(SNAPSHOT),
+        },
+        context: { pages: vi.fn().mockReturnValue([]), newPage: vi.fn().mockResolvedValue(newPage) },
+      });
+
+      await browser_tabs(c as never, { action: "close" });
+      expect(c.context.newPage).toHaveBeenCalled();
+      expect(c.page).toBe(newPage);
+    });
+
+    it("closes specific tab by index", async () => {
+      const tab2 = tabPage("https://tab2.com", "Tab 2");
+      const pages = [tabPage("https://tab1.com", "Tab 1"), tab2, tabPage("https://tab3.com", "Tab 3")];
+      const newPage = tabPage("https://other.com", "Other");
+      const c = mockCtx({
+        context: {
+          pages: vi
+            .fn()
+            .mockReturnValueOnce(pages)
+            .mockReturnValueOnce([tabPage("https://tab1.com", "Tab 1"), newPage, tabPage("https://tab3.com", "Tab 3")]),
+          newPage: vi.fn(),
+        },
+      });
+
+      await browser_tabs(c as never, { action: "close", index: 1 });
+      expect(tab2.close).toHaveBeenCalled();
+    });
+
+    it("throws if tab index not found", async () => {
+      const c = mockCtx({ context: { pages: vi.fn().mockReturnValue([]), newPage: vi.fn() } });
+      await expect(browser_tabs(c as never, { action: "close", index: 5 })).rejects.toThrow("not found");
+    });
+  });
+
+  describe("action: select", () => {
+    it("switches to tab by index and returns snapshot", async () => {
+      const page2 = tabPage("https://page2.com", "Page 2");
+      const pages = [tabPage("https://page1.com", "Page 1"), page2];
+      const c = mockCtx({ context: { pages: vi.fn().mockReturnValue(pages), newPage: vi.fn() } });
+
+      const result = await browser_tabs(c as never, { action: "select", index: 1 });
+      expect(page2.bringToFront).toHaveBeenCalled();
+      expect(c.page).toBe(page2);
+      expect(result).toEqual({ snapshot: '- heading "Tab" [ref=e1]', url: "https://page2.com" });
+    });
+
+    it("throws if index is missing", async () => {
+      const c = ctx();
+      await expect(browser_tabs(c as never, { action: "select" })).rejects.toThrow('"index"');
+    });
+
+    it("throws if tab index not found", async () => {
+      const c = mockCtx({ context: { pages: vi.fn().mockReturnValue([]), newPage: vi.fn() } });
+      await expect(browser_tabs(c as never, { action: "select", index: 0 })).rejects.toThrow("not found");
+    });
+  });
+
+  describe("validation", () => {
+    it("throws if action is missing", async () => {
+      const c = ctx();
+      await expect(browser_tabs(c as never, {} as never)).rejects.toThrow('"action"');
+    });
+
+    it("throws for unknown action", async () => {
+      const c = ctx();
+      await expect(browser_tabs(c as never, { action: "unknown" })).rejects.toThrow("Unknown tabs action");
+    });
   });
 });

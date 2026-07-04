@@ -26,6 +26,31 @@ Actions:
   console [level]                  Show console messages (debug/info/warning/error)
   network [filter]                 List network requests
   network_req <index> [part]       Show network request details
+  route <pattern> [status] [body]  Mock network requests
+  route_list                       List active mocked routes
+  unroute [pattern]                Remove route(s) (all if no pattern)
+  network_state <online|offline>   Set network online/offline
+  tabs list                        List all open tabs
+  tabs new [url]                   Open a new tab
+  tabs close [index]               Close tab (current if no index)
+  tabs select <index>              Switch to tab by index
+  cookies [domain]                 List cookies (optional domain filter)
+  cookie get <name>                Get a cookie by name
+  cookie set <name> <value>        Set a cookie
+  cookie delete <name>             Delete a cookie by name
+  cookie clear                     Clear all cookies
+  localstorage                     List localStorage items
+  localstorage get <key>           Get a localStorage value
+  localstorage set <key> <value>   Set a localStorage value
+  localstorage delete <key>        Delete a localStorage item
+  localstorage clear               Clear all localStorage
+  sessionstorage                   List sessionStorage items
+  sessionstorage get <key>         Get a sessionStorage value
+  sessionstorage set <key> <value> Set a sessionStorage value
+  sessionstorage delete <key>      Delete a sessionStorage item
+  sessionstorage clear             Clear all sessionStorage
+  storage_state [filename]         Save storage state (to file if provided)
+  set_state <filename>             Restore storage state from file
   --json '<payload>'               Send raw { method, params } payload`;
 
 interface ExecuteResponse {
@@ -107,6 +132,73 @@ export function buildPayload(args: string[]): { method: string; params: Record<s
     case "network_req": {
       const part = rest[1] as string | undefined;
       return { method: "browser_network_request", params: { index: Number(rest[0]), part } };
+    }
+
+    case "route": {
+      const p: Record<string, unknown> = { pattern: rest[0] };
+      if (rest[1] !== undefined) p.status = Number(rest[1]);
+      if (rest[2] !== undefined) p.body = rest[2];
+      return { method: "browser_route", params: p };
+    }
+
+    case "route_list":
+      return { method: "browser_route_list", params: {} };
+
+    case "unroute":
+      return { method: "browser_unroute", params: rest[0] ? { pattern: rest[0] } : {} };
+
+    case "network_state":
+      return { method: "browser_network_state_set", params: { state: rest[0] } };
+
+    case "cookies":
+      return { method: "browser_cookie_list", params: { domain: rest[0] } };
+
+    case "cookie": {
+      const sub = rest[0];
+      if (sub === "get") return { method: "browser_cookie_get", params: { name: rest[1] } };
+      if (sub === "set") return { method: "browser_cookie_set", params: { name: rest[1], value: rest[2] } };
+      if (sub === "delete") return { method: "browser_cookie_delete", params: { name: rest[1] } };
+      if (sub === "clear") return { method: "browser_cookie_clear", params: {} };
+      throw new Error(`Unknown cookie action: ${sub}. Use get, set, delete, or clear.`);
+    }
+
+    case "localstorage": {
+      const sub = rest[0];
+      if (!sub || sub === "list") return { method: "browser_localstorage_list", params: {} };
+      if (sub === "get") return { method: "browser_localstorage_get", params: { key: rest[1] } };
+      if (sub === "set") return { method: "browser_localstorage_set", params: { key: rest[1], value: rest[2] } };
+      if (sub === "delete") return { method: "browser_localstorage_delete", params: { key: rest[1] } };
+      if (sub === "clear") return { method: "browser_localstorage_clear", params: {} };
+      throw new Error(`Unknown localstorage action: ${sub}. Use get, set, delete, clear, or no subcommand for list.`);
+    }
+
+    case "sessionstorage": {
+      const sub = rest[0];
+      if (!sub || sub === "list") return { method: "browser_sessionstorage_list", params: {} };
+      if (sub === "get") return { method: "browser_sessionstorage_get", params: { key: rest[1] } };
+      if (sub === "set") return { method: "browser_sessionstorage_set", params: { key: rest[1], value: rest[2] } };
+      if (sub === "delete") return { method: "browser_sessionstorage_delete", params: { key: rest[1] } };
+      if (sub === "clear") return { method: "browser_sessionstorage_clear", params: {} };
+      throw new Error(`Unknown sessionstorage action: ${sub}. Use get, set, delete, clear, or no subcommand for list.`);
+    }
+
+    case "storage_state":
+      return { method: "browser_storage_state", params: { filename: rest[0] } };
+
+    case "set_state":
+      return { method: "browser_set_storage_state", params: { filename: rest[0] } };
+
+    case "tabs": {
+      const sub = rest[0];
+      if (sub === "list") return { method: "browser_tabs", params: { action: "list" } };
+      if (sub === "new") return { method: "browser_tabs", params: { action: "new", url: rest[1] } };
+      if (sub === "close")
+        return {
+          method: "browser_tabs",
+          params: { action: "close", index: rest[1] !== undefined ? Number(rest[1]) : undefined },
+        };
+      if (sub === "select") return { method: "browser_tabs", params: { action: "select", index: Number(rest[1]) } };
+      throw new Error(`Unknown tabs action: ${sub}. Use list, new, close, or select.`);
     }
 
     default:

@@ -41,6 +41,15 @@ pwbrouser server stop
 | `pwbrouser back` | Go back in history |
 | `pwbrouser close` | Close current page (opens new blank page) |
 
+### Tabs
+
+| Command | Description |
+|---------|-------------|
+| `pwbrouser tabs list` | List all open tabs |
+| `pwbrouser tabs new [url]` | Open a new tab |
+| `pwbrouser tabs close [index]` | Close tab (current if no index) |
+| `pwbrouser tabs select <index>` | Switch to tab by index |
+
 ### Interaction
 
 | Command | Description |
@@ -64,6 +73,28 @@ pwbrouser server stop
 | `pwbrouser wait_for text <text>` | Wait for text to appear |
 | `pwbrouser wait_for textGone <text>` | Wait for text to disappear |
 
+### Storage
+
+| Command | Description |
+|---------|-------------|
+| `pwbrouser cookies [domain]` | List all cookies (optional domain filter) |
+| `pwbrouser cookie get <name>` | Get a cookie by name |
+| `pwbrouser cookie set <name> <value>` | Set a cookie |
+| `pwbrouser cookie delete <name>` | Delete a cookie by name |
+| `pwbrouser cookie clear` | Clear all cookies |
+| `pwbrouser localstorage` | List all localStorage items |
+| `pwbrouser localstorage get <key>` | Get a localStorage value |
+| `pwbrouser localstorage set <key> <value>` | Set a localStorage value |
+| `pwbrouser localstorage delete <key>` | Delete a localStorage item |
+| `pwbrouser localstorage clear` | Clear all localStorage |
+| `pwbrouser sessionstorage` | List all sessionStorage items |
+| `pwbrouser sessionstorage get <key>` | Get a sessionStorage value |
+| `pwbrouser sessionstorage set <key> <value>` | Set a sessionStorage value |
+| `pwbrouser sessionstorage delete <key>` | Delete a sessionStorage item |
+| `pwbrouser sessionstorage clear` | Clear all sessionStorage |
+| `pwbrouser storage_state [filename]` | Save storage state (to file if provided) |
+| `pwbrouser set_state <filename>` | Restore storage state from file |
+
 ### Inspection
 
 | Command | Description |
@@ -73,6 +104,20 @@ pwbrouser server stop
 | `pwbrouser console [level]` | Show console messages (debug/info/warning/error) |
 | `pwbrouser network [filter]` | List network requests |
 | `pwbrouser network_req <index> [part]` | Show network request details |
+
+### Network Mocking
+
+| Command | Description |
+|---------|-------------|
+| `pwbrouser route <pattern> [status] [body]` | Mock requests matching a URL glob pattern |
+| `pwbrouser route_list` | List all active mocked routes |
+| `pwbrouser unroute [pattern]` | Remove route(s) (all if no pattern) |
+| `pwbrouser network_state <online\|offline>` | Set browser network online or offline |
+
+For complex route configurations (content type, extra headers, etc.), use JSON mode:
+```bash
+pwbrouser --json '{"method":"browser_route","params":{"pattern":"**/api/*","status":201,"body":"{\"ok\":true}","contentType":"application/json","headers":["X-Custom: value"]}}'
+```
 
 ### Raw JSON
 
@@ -111,7 +156,7 @@ The daemon exposes a single HTTP endpoint:
 { "error": { "message": "page.goto: net::ERR_NAME_NOT_RESOLVED", "snapshot": "..." } }
 ```
 
-All 20 methods from `playwright_wrapper.md` are implemented. See the spec for details.
+All 42 methods from `playwright_wrapper.md` are implemented. See the spec for details.
 
 ## Development
 

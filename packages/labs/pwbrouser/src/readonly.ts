@@ -1,10 +1,11 @@
-import type { Page } from "playwright";
+import type { BrowserContext, Page } from "playwright";
 import { captureSnapshot } from "./snapshot.js";
 import { resolveTarget } from "./target.js";
 import type { ConsoleMessageEntry, NetworkRequestEntry, Target } from "./types.js";
 
 interface ReadOnlyContext {
   page: Page;
+  context: BrowserContext;
   consoleMessages: ConsoleMessageEntry[];
   networkRequests: NetworkRequestEntry[];
   navIndex: number;
@@ -141,6 +142,71 @@ export async function browser_network_request(
   return result;
 }
 
+export async function browser_tabs(
+  ctx: ReadOnlyContext,
+  params: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const action = params.action as string;
+  if (!action) throw new Error('browser_tabs requires "action" parameter');
+
+  switch (action) {
+    case "list": {
+      const pages = ctx.context.pages();
+      const tabs = await Promise.all(
+        pages.map(async (p, i) => ({
+          index: i,
+          url: p.url(),
+          title: await p.title(),
+        })),
+      );
+      return { tabs, url: ctx.page.url() };
+    }
+    case "new": {
+      const url = params.url as string | undefined;
+      const newPage = await ctx.context.newPage();
+      if (url) {
+        await newPage.goto(url, { waitUntil: "networkidle", timeout: 60000 });
+      }
+      ctx.page = newPage;
+      const snapshot = await captureSnapshot(newPage);
+      return { snapshot, url: newPage.url() };
+    }
+    case "close": {
+      const index = params.index as number | undefined;
+      if (index !== undefined) {
+        const pages = ctx.context.pages();
+        const targetPage = pages[index];
+        if (!targetPage) throw new Error(`Tab index ${index} not found`);
+        await targetPage.close();
+      } else {
+        await ctx.page.close();
+      }
+      const remainingPages = ctx.context.pages();
+      if (remainingPages.length === 0) {
+        const newPage = await ctx.context.newPage();
+        ctx.page = newPage;
+      } else {
+        ctx.page = remainingPages[remainingPages.length - 1]!;
+      }
+      const snapshot = await captureSnapshot(ctx.page);
+      return { snapshot, url: ctx.page.url() };
+    }
+    case "select": {
+      const index = params.index as number;
+      if (index === undefined) throw new Error('browser_tabs select requires "index" parameter');
+      const pages = ctx.context.pages();
+      const targetPage = pages[index];
+      if (!targetPage) throw new Error(`Tab index ${index} not found`);
+      await targetPage.bringToFront();
+      ctx.page = targetPage;
+      const snapshot = await captureSnapshot(ctx.page);
+      return { snapshot, url: ctx.page.url() };
+    }
+    default:
+      throw new Error(`Unknown tabs action: ${action}. Use list, new, close, or select.`);
+  }
+}
+
 export const readonlyMethods: Record<
   string,
   (ctx: ReadOnlyContext, params: Record<string, unknown>) => Promise<Record<string, unknown>>
@@ -150,4 +216,5 @@ export const readonlyMethods: Record<
   browser_console_messages,
   browser_network_requests,
   browser_network_request,
+  browser_tabs,
 };

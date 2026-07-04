@@ -1,7 +1,9 @@
 import http from "node:http";
 import { type Browser, type BrowserContext, chromium, type Dialog, type FileChooser, type Page } from "playwright";
 import { coreMethods } from "./core.js";
+import { networkMethods, type RouteConfig } from "./network.js";
 import { readonlyMethods } from "./readonly.js";
+import { storageMethods } from "./storage.js";
 import type { ConsoleMessageEntry, ExecuteRequest, ExecuteResponse, NetworkRequestEntry } from "./types.js";
 
 const PORT = Number(process.env.PWBROWSER_PORT) || 9999;
@@ -13,6 +15,7 @@ let pendingDialog: Dialog | null = null;
 let pendingFileChooser: FileChooser | null = null;
 const consoleMessages: ConsoleMessageEntry[] = [];
 const networkRequests: NetworkRequestEntry[] = [];
+const routes = new Map<string, RouteConfig>();
 let requestIndex = 0;
 let navIndex = 0;
 
@@ -21,6 +24,8 @@ type AnyHandler = (ctx: Record<string, unknown>, params: Record<string, unknown>
 const allMethods: Record<string, AnyHandler> = {
   ...coreMethods,
   ...readonlyMethods,
+  ...storageMethods,
+  ...networkMethods,
 } as unknown as Record<string, AnyHandler>;
 
 const NAV_METHODS = new Set(["browser_navigate", "browser_navigate_back", "browser_close"]);
@@ -132,6 +137,7 @@ const server = http.createServer(async (req, res) => {
       const methodCtx: Record<string, unknown> = {
         page,
         context,
+        routes,
         pendingDialog,
         pendingFileChooser,
         consoleMessages,
