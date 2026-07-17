@@ -4,9 +4,11 @@
   "description": "",
   "files": [
     "/src/",
-    "*.js"
+    "*.js",
+    "types/index.d.ts"
   ],
   "main": "index.js",
+  "types": "types/index.d.ts",
   "dependencies": {
     "@open-cells/core-plugin": "^1.2.2",
     "@open-wc/dedupe-mixin": "^1.4.0"

@@ -2,7 +2,7 @@
   "name": "@open-cells/core-plugin",
   "version": "1.2.2",
   "main": "index.js",
-  "types": "/types/index.d.ts",
+  "types": "types/index.d.ts",
   "scripts": {
     "build": "echo \"Building element...\""
   },

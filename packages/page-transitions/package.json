@@ -4,15 +4,20 @@
   "description": "",
   "keywords": [],
   "exports": {
-    ".": "./index.js",
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./index.js"
+    },
     "./page-transition-head-styles.js": "./page-transition-head-styles.js"
   },
   "main": "index.js",
+  "types": "types/index.d.ts",
   "type": "module",
   "license": "Apache-2.0",
   "files": [
     "/src/",
-    "*.js"
+    "*.js",
+    "types/index.d.ts"
   ],
   "dependencies": {
     "lit": "^3.0.0",
