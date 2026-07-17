@@ -6,7 +6,7 @@ export interface CoreAPI {
   unsubscribe: (channels: string | string[]) => void;
   publish: (channelName: string, value: any, options?: Object) => void;
   publishOn: (channelName: string, htmlElement: HTMLElement, eventName: string) => void;
-  navigate: (page: string, params: Object) => void;
+  navigate: (page: string, params?: Object) => void;
   updateInterceptorContext: (ctx: Object) => void;
   resetInterceptorContext: () => void;
   getInterceptorContext: () => Object;

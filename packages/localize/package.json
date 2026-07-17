@@ -16,12 +16,18 @@
     "mixin"
   ],
   "exports": {
-    ".": "./index.js"
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./index.js"
+    }
   },
   "main": "index.js",
+  "types": "types/index.d.ts",
   "type": "module",
   "files": [
-    "/src/"
+    "/src/",
+    "*.js",
+    "types/index.d.ts"
   ],
   "scripts": {
     "dev": "vite",
