@@ -23,6 +23,7 @@ In this mono repo we have the modules that builds up Open Cells:
 - **`core`**: implements routing, state handling, app configuration and bootstrapping of the application.
 - **`element-controller`**: provides the components the mechanisms to use the core API (navigation, state, configuration)
 - **`page-controller`**: extends `element-controller` and provides lifecycle hooks to handle page loading.
+- **`mcp-server`**: [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI assistants analyse the routes and state channels of an application, scaffold pages and look up the framework API. See [its README](./packages/mcp-server/README.md).
 
 To create an application with Open Cells run:
 

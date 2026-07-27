@@ -1,0 +1,48 @@
+{
+  "name": "@open-cells/mcp-server",
+  "version": "0.1.0",
+  "description": "Model Context Protocol server for Open Cells apps: route/channel analysis, page scaffolding and API reference",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "open-cells-mcp": "dist/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/chmod-bin.js",
+    "dev": "tsc -p tsconfig.json --watch",
+    "lint": "eslint . --fix",
+    "start": "node dist/index.js",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "typchk": "tsc -p tsconfig.json --noEmit",
+    "inspect": "npm run build && npx @modelcontextprotocol/inspector node dist/index.js"
+  },
+  "keywords": [
+    "open-cells",
+    "mcp",
+    "model-context-protocol",
+    "webcomponents",
+    "lit"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "typescript": "^5.6.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.10",
+    "vitest": "^4.0.18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
