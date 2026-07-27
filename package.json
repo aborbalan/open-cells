@@ -47,13 +47,15 @@
         "./packages/core:build",
         "./packages/example/recipes-app:build",
         "./packages/element-controller:build",
-        "./packages/page-controller:build"
+        "./packages/page-controller:build",
+        "./packages/mcp-server:build"
       ]
     },
     "test": {
       "dependencies": [
         "./packages/core:test",
-        "./packages/example/recipes-app:test"
+        "./packages/example/recipes-app:test",
+        "./packages/mcp-server:test"
       ]
     }
   },

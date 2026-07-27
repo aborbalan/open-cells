@@ -2,13 +2,36 @@
 
 > Documento vivo para retomar el trabajo en futuras sesiones.
 > Consolida descubrimientos, estado y mejoras pendientes del fork.
-> Última actualización: 2026-07-02
+> Última actualización: 2026-07-27
 
 ## Contexto del fork
 
 - `origin` = `aborbalan/open-cells` (fork del usuario) — **todos los PRs van aquí**.
 - `upstream` = `BBVA/open-cells` — **nunca se abren PRs contra BBVA** (no aceptan externos).
 - Monorepo de web components (npm workspaces + wireit). Paquetes en `packages/*`.
+
+## Servidor MCP (`packages/mcp-server`)
+
+Rama `claude/open-cells-mcp-server-fj6yp7`: paquete nuevo `@open-cells/mcp-server`, servidor
+Model Context Protocol (stdio) para aplicaciones Open Cells. TypeScript + `@modelcontextprotocol/sdk`
++ zod; el análisis del proyecto usa el AST de TypeScript, sin type checker.
+
+| Herramienta | Qué hace |
+|---|---|
+| `open_cells_list_routes` | Rutas: nombre, patrones, componente, `:params`, wildcard, 404, imports diferidos |
+| `open_cells_validate_routes` | Nombres/paths duplicados, tags inválidos o no definidos, `action` que no resuelve, falta de ruta 404, nombres desconocidos en `persistentPages`/`commonPages` |
+| `open_cells_list_channels` | Mapa de canales: quién publica y quién se suscribe (fichero:línea), canales huérfanos, nombres casi idénticos |
+| `open_cells_scaffold_page` | Genera la página y registra la ruta; `dry_run: true` por defecto (devuelve contenido + diff) |
+| `open_cells_create_app` | Ejecuta `@open-cells/create-app` sin prompts |
+| `open_cells_api_reference` / `open_cells_docs_search` | API y guías de los 8 paquetes |
+
+Recursos MCP: `opencells://api/{module}` y `opencells://guide/{topic}`.
+
+**Estado:** 46 tests en verde (vitest, incluye cliente MCP in-memory), `tsc` limpio, prettier limpio,
+enganchado a `wireit` (build + test) del raíz y con changeset `tidy-pandas-shake.md` (minor).
+
+**Hallazgo real del propio análisis:** `recipes-app` declara `notFound: false` en su ruta
+`not-found`, así que la app de ejemplo se queda sin página 404 efectiva (`validate_routes` lo avisa).
 
 ## Objetivo en curso
 

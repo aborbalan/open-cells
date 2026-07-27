@@ -24,6 +24,7 @@ En este mono repo están los módulos que forman Open Cells:
 - **`element-controller`**: dota a los componentes de un mecanismo para usar el api de core (navegación, estado, configuración).
 - **`page-controller`**: extensión de `element-controller` y provee hooks de ciclo de vida para manejar la carga de páginas.
 - **`transitions`**: implementa animaciones de transición entre páginas.
+- **`mcp-server`**: servidor [Model Context Protocol](https://modelcontextprotocol.io) que permite a los asistentes de IA analizar las rutas y los canales de estado de una aplicación, generar páginas y consultar el API del framework. Ver [su README](./packages/mcp-server/README.md).
 
 Para crear una aplicación con Open Cells ejecuta:
 
