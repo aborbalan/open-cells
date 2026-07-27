@@ -10,9 +10,36 @@ what is broken.
 
 ## Installation
 
-The server speaks the **stdio** transport, so clients spawn it as a subprocess.
+The server speaks the **stdio** transport, so clients spawn it as a subprocess. Claude Code reads
+`.mcp.json` from the project root; Claude Desktop reads `claude_desktop_config.json`.
 
-Claude Code reads `.mcp.json`; Claude Desktop reads `claude_desktop_config.json`.
+### From this repository
+
+This is the only option until the package is published to npm. Build it once — the server runs
+from `dist/`, so a fresh clone has nothing to spawn:
+
+```sh
+npm install
+npm run build -w @open-cells/mcp-server
+```
+
+The `.mcp.json` at the root of this repository already registers the server, so a Claude Code
+session opened here picks it up after a restart. To register it somewhere else, point the command
+at the built entry point:
+
+<!-- prettier-ignore -->
+```json
+{
+  "mcpServers": {
+    "open-cells": {
+      "command": "node",
+      "args": ["/path/to/open-cells/packages/mcp-server/dist/index.js", "--project-root", "/path/to/my-app"]
+    }
+  }
+}
+```
+
+### From npm, once published
 
 <!-- prettier-ignore -->
 ```json
@@ -26,15 +53,19 @@ Claude Code reads `.mcp.json`; Claude Desktop reads `claude_desktop_config.json`
 }
 ```
 
+### Choosing the application
+
 `--project-root` sets the application analysed when a tool call omits `project_root`; it can also
 come from `OPEN_CELLS_PROJECT_ROOT`, and falls back to the working directory. Every tool also
-accepts `project_root` per call, which is what you want in a monorepo with several apps.
+accepts `project_root` per call, which is what you want with several apps in one repository.
 
-From a checkout of this repository:
+Point it at an **application**, not at a monorepo: from a repository root that contains several
+apps, the tools find more than one routes file and ask you to disambiguate rather than guessing.
+
+To check the server outside a client:
 
 ```sh
-npm install
-npm run build -w @open-cells/mcp-server
+node packages/mcp-server/dist/index.js --help
 node packages/mcp-server/dist/index.js --project-root ./packages/example/recipes-app
 ```
 
@@ -52,6 +83,23 @@ node packages/mcp-server/dist/index.js --project-root ./packages/example/recipes
 
 All data tools accept `response_format: "markdown" | "json"` and return structured content
 alongside the readable text.
+
+### Asking for them
+
+The tools are addressed in plain language; these are the questions they answer well:
+
+| Ask                                                                            | Tool the assistant reaches for                        |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| "What routes does this app have, and which take parameters?"                   | `open_cells_list_routes`                              |
+| "Navigating to the profile page does nothing, what is wrong with the routing?" | `open_cells_validate_routes`                          |
+| "Where does `liked-recipes` come from and who reads it?"                       | `open_cells_list_channels`                            |
+| "Is any channel published that nobody consumes?"                               | `open_cells_list_channels`                            |
+| "Add a `/settings` page bound to the `user` channel"                           | `open_cells_scaffold_page` (preview first)            |
+| "How do I subscribe to a channel from a page?"                                 | `open_cells_docs_search` → `open_cells_api_reference` |
+
+Verifying the server is live in a session: ask for the routes of the app and check the answer
+names a real file. If the tools are missing, the build step above has not run, or the session
+predates the configuration and needs a restart.
 
 ### Resources
 

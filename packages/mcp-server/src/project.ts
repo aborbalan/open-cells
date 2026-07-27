@@ -215,8 +215,55 @@ export function walk(node: ts.Node, visitor: (node: ts.Node) => void): void {
 }
 
 /**
- * Finds the routes file of an application: an explicit path if given, otherwise the conventional
- * locations, otherwise any source file exporting an array of route objects.
+ * True when the file really declares an array of route-like objects. Parsing rather than matching
+ * text matters: a JSDoc mention such as `@param {RouteDefinition[]} routesArray` is not a routes
+ * file, and picking one up leads the whole analysis astray.
+ */
+function containsRouteArray(filePath: string): boolean {
+  let content: string;
+  try {
+    content = fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return false;
+  }
+
+  // Cheap filter before paying for the parse: every routes file assigns a `path`.
+  if (!content.includes('path')) {
+    return false;
+  }
+
+  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  let found = false;
+
+  walk(sourceFile, node => {
+    if (found || !ts.isArrayLiteralExpression(node)) {
+      return;
+    }
+    const objects = node.elements
+      .map(element => unwrapExpression(element))
+      .filter(ts.isObjectLiteralExpression);
+
+    if (!objects.length || objects.length !== node.elements.length) {
+      return;
+    }
+    found =
+      objects.every(object => getProperty(object, 'path')) &&
+      objects.some(
+        object =>
+          getProperty(object, 'component') ||
+          getProperty(object, 'action') ||
+          getProperty(object, 'name'),
+      );
+  });
+
+  return found;
+}
+
+/**
+ * Finds the routes file of an application: an explicit path if given, then the conventional
+ * locations, then any source file that actually declares a routes array. When several files qualify
+ * — the usual case when pointed at a monorepo rather than at one app — it reports the candidates
+ * instead of guessing.
  */
 export function findRoutesFile(root: string, explicit?: string): string {
   if (explicit) {
@@ -237,16 +284,29 @@ export function findRoutesFile(root: string, explicit?: string): string {
     }
   }
 
-  for (const file of collectSourceFiles(root)) {
-    const content = fs.readFileSync(file, 'utf8');
-    if (/RouteDefinition\s*\[\]/.test(content) || /export\s+const\s+routes\s*(:|=)/.test(content)) {
-      return file;
+  const candidates = collectSourceFiles(root).filter(containsRouteArray);
+
+  if (candidates.length === 1) {
+    return candidates[0]!;
+  }
+
+  if (candidates.length > 1) {
+    // A file named routes.* is a far better bet than an inline array somewhere else.
+    const named = candidates.filter(file => /^routes\.[cm]?[jt]s$/.test(path.basename(file)));
+    if (named.length === 1) {
+      return named[0]!;
     }
+
+    const list = (named.length ? named : candidates).map(file => toRelative(root, file));
+    throw new ProjectError(
+      `${list.length} files under ${root} declare route arrays: ${list.join(', ')}.`,
+      'Pass "routes_file" with the one to analyse, or point "project_root" at a single application instead of a monorepo.',
+    );
   }
 
   throw new ProjectError(
     `No routes file found under ${root}.`,
-    'Open Cells apps usually declare routes in src/router/routes.ts. Pass "routes_file" to point at a different location.',
+    'Open Cells apps usually declare routes in src/router/routes.ts. Pass "routes_file" to point at a different location, or "project_root" at the application directory.',
   );
 }
 
