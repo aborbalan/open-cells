@@ -12,9 +12,9 @@
 
 ## Servidor MCP (`packages/mcp-server`)
 
-Rama `claude/open-cells-mcp-server-fj6yp7`: paquete nuevo `@open-cells/mcp-server`, servidor
-Model Context Protocol (stdio) para aplicaciones Open Cells. TypeScript + `@modelcontextprotocol/sdk`
-+ zod; el análisis del proyecto usa el AST de TypeScript, sin type checker.
+**Mergeado en `main`** (PR #5). Paquete `@open-cells/mcp-server`, servidor Model Context Protocol
+(stdio) para aplicaciones Open Cells. TypeScript + `@modelcontextprotocol/sdk` + zod; el análisis
+del proyecto usa el AST de TypeScript, sin type checker.
 
 | Herramienta | Qué hace |
 |---|---|
@@ -27,8 +27,15 @@ Model Context Protocol (stdio) para aplicaciones Open Cells. TypeScript + `@mode
 
 Recursos MCP: `opencells://api/{module}` y `opencells://guide/{topic}`.
 
-**Estado:** 46 tests en verde (vitest, incluye cliente MCP in-memory), `tsc` limpio, prettier limpio,
-enganchado a `wireit` (build + test) del raíz y con changeset `tidy-pandas-shake.md` (minor).
+**Estado:** 49 tests en verde (vitest, incluye cliente MCP in-memory), `tsc` limpio, prettier limpio,
+enganchado a `wireit` (build + test) del raíz y con changeset `tidy-pandas-shake.md` (minor) todavía
+sin consumir — el paquete **no está publicado en npm** (`npm view` da 404), así que hasta que se
+publique solo se puede usar desde el checkout.
+
+**Cómo lo consume una sesión de Claude Code:** `.mcp.json` en la raíz lo registra apuntando a
+`packages/mcp-server/dist/index.js` con `--project-root packages/example/recipes-app`. Requiere
+`npm run build -w @open-cells/mcp-server` una vez, porque arranca desde `dist/`. `CLAUDE.md` en la
+raíz documenta el monorepo, las convenciones del framework y lo que está rojo de antes.
 
 **Hallazgo real del propio análisis:** `recipes-app` declara `notFound: false` en su ruta
 `not-found`, así que la app de ejemplo se queda sin página 404 efectiva (`validate_routes` lo avisa).

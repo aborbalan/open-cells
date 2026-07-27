@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "open-cells": {
+      "command": "node",
+      "args": [
+        "packages/mcp-server/dist/index.js",
+        "--project-root",
+        "packages/example/recipes-app"
+      ]
+    }
+  }
+}

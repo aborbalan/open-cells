@@ -62,6 +62,56 @@ describe('analyzeRoutes', () => {
     expect(recipe?.hasAction).toBe(true);
   });
 
+  it('ignores files that only mention RouteDefinition in a comment', () => {
+    // The core's bridge.js has `@param {RouteDefinition[]} routesArray` in a JSDoc block, which a
+    // text based search picks up as the routes file.
+    const root = project({
+      'src/bridge.js': `/**
+ * @param {RouteDefinition[]} routesArray - The array of routes to be parsed.
+ */
+export function parseRoutes(routesArray) {
+  return routesArray;
+}
+`,
+      'src/app/routes.ts': `export const routes = [
+  { path: '/', name: 'home', component: 'home-page', action: async () => {} },
+];
+`,
+    });
+
+    expect(analyzeRoutes(root).file).toBe('src/app/routes.ts');
+  });
+
+  it('reports the candidates instead of guessing when several apps are in range', () => {
+    const routesFile = `export const routes = [
+  { path: '/', name: 'home', component: 'home-page', action: async () => {} },
+];
+`;
+    const root = project({
+      'packages/one/config/nav.ts': routesFile,
+      'packages/two/config/nav.ts': routesFile,
+    });
+
+    expect(() => analyzeRoutes(root)).toThrow(/declare route arrays/);
+    expect(() => analyzeRoutes(root)).toThrow(/packages\/one\/config\/nav\.ts/);
+  });
+
+  it('prefers a file named routes.* over other route arrays', () => {
+    const root = project({
+      'packages/app/router/routes.ts': `export const routes = [
+  { path: '/', name: 'home', component: 'home-page', action: async () => {} },
+];
+`,
+      'packages/app/config/inline.ts': `startApp({
+  mainNode: 'app-content',
+  routes: [{ path: '/other', name: 'other', component: 'other-page' }],
+});
+`,
+    });
+
+    expect(analyzeRoutes(root).file).toBe('packages/app/router/routes.ts');
+  });
+
   it('supports several patterns on one route', () => {
     const root = project({
       'src/router/routes.ts': `export const routes = [
