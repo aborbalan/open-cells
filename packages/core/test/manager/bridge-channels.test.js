@@ -17,111 +17,345 @@
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import { BridgeChannelManager } from '../../src/manager/bridge-channels.js';
-import { Channel } from '../../src/state/channel.js';
-import { Observable } from 'rxjs';
+import { ComponentConnector } from '../../src/component-connector.js';
 import { BRIDGE_CHANNEL_PREFIX } from '../../src/constants.js';
 
+const P = BRIDGE_CHANNEL_PREFIX;
+
 describe('BridgeChannelManager', () => {
-  let bridge;
   let bridgeChannelManager;
-  let channelStub;
-  let observableStub;
+  let componentConnector;
+  let sandbox;
+
+  /** Collects every value a channel emits, so tests can assert on what was published. */
+  function record(channel) {
+    const received = [];
+    channel.subscribe(evt => received.push(evt));
+    return received;
+  }
 
   beforeEach(() => {
-    bridge = {
-      ComponentConnector: { getChannel: sinon.stub() },
-      channelPrefix: BRIDGE_CHANNEL_PREFIX,
-    };
-    channelStub = sinon.createStubInstance(Channel);
-    observableStub = sinon.createStubInstance(Observable);
-    bridge.ComponentConnector.getChannel.returns(channelStub);
-    bridgeChannelManager = new BridgeChannelManager(bridge);
+    sandbox = sinon.createSandbox();
+    componentConnector = new ComponentConnector(P);
+    bridgeChannelManager = new BridgeChannelManager({
+      ComponentConnector: componentConnector,
+      channelPrefix: P,
+    });
   });
 
-  it('should get a bridge channel', () => {
-    const channel = bridgeChannelManager.getBridgeChannel('testChannel');
-    expect(channel).to.equal(channelStub);
-    expect(
-      bridge.ComponentConnector.getChannel.calledWith(`${BRIDGE_CHANNEL_PREFIX}_ch_testChannel`),
-    ).to.be.true;
+  afterEach(() => {
+    sandbox.restore();
   });
 
-  // it('should get the idle callback channel', () => {
-  //   const idleChannel$ = bridgeChannelManager.getIdleCallbackChannel();
-  //   expect(idleChannel$).to.equal(observableStub.pipe.first());
-  // });
+  describe('channel naming', () => {
+    it('should name the application context channel', () => {
+      expect(bridgeChannelManager.getAppContextChannelName()).to.equal(`${P}_app`);
+    });
 
-  it('should get the application context channel', () => {
-    const channel = bridgeChannelManager.getAppContextChannel();
-    expect(channel).to.equal(channelStub);
-    expect(bridge.ComponentConnector.getChannel.calledWith(`${BRIDGE_CHANNEL_PREFIX}_app`)).to.be
-      .true;
+    it('should name the cancelled back navigation channel', () => {
+      expect(bridgeChannelManager.getCancelledBackNavigationChannelName()).to.equal(
+        `${P}_cancelled_back_navigation`,
+      );
+    });
+
+    it('should name the intercepted navigation channel', () => {
+      expect(bridgeChannelManager.getInterceptedNavigationChannelName()).to.equal(
+        `${P}_intercepted_navigation`,
+      );
+    });
+
+    it('should expose the private, event, bridge and post-message prefixes', () => {
+      expect(bridgeChannelManager.getPrivateChannelPrefix()).to.equal(`${P}_page_`);
+      expect(bridgeChannelManager.getEventChannelPrefix()).to.equal(`${P}_evt_`);
+      expect(bridgeChannelManager.getBridgeChannelPrefix()).to.equal(`${P}_ch_`);
+      expect(bridgeChannelManager.getPostMessageChannelPrefix()).to.equal(`${P}_post_message_`);
+    });
+
+    it('should honour a custom prefix', () => {
+      const custom = new BridgeChannelManager({
+        ComponentConnector: componentConnector,
+        channelPrefix: '__myapp',
+      });
+      expect(custom.getAppContextChannelName()).to.equal('__myapp_app');
+    });
   });
 
-  it('should get the cancelled back navigations channel', () => {
-    const channel = bridgeChannelManager.getCancelledBackNavigationChannel();
-    expect(channel).to.equal(channelStub);
-    expect(
-      bridge.ComponentConnector.getChannel.calledWith(
-        `${BRIDGE_CHANNEL_PREFIX}_cancelled_back_navigation`,
-      ),
-    ).to.be.true;
+  describe('channel access', () => {
+    it('should get a bridge channel under the application-writable prefix', () => {
+      const channel = bridgeChannelManager.getBridgeChannel('config');
+      expect(channel).to.equal(componentConnector.getChannel(`${P}_ch_config`));
+    });
+
+    it('should get the application context channel', () => {
+      expect(bridgeChannelManager.getAppContextChannel()).to.equal(
+        componentConnector.getChannel(`${P}_app`),
+      );
+    });
+
+    it('should get the cancelled back navigation channel', () => {
+      expect(bridgeChannelManager.getCancelledBackNavigationChannel()).to.equal(
+        componentConnector.getChannel(`${P}_cancelled_back_navigation`),
+      );
+    });
+
+    it('should get the intercepted navigation channel', () => {
+      expect(bridgeChannelManager.getInterceptedNavigationChannel()).to.equal(
+        componentConnector.getChannel(`${P}_intercepted_navigation`),
+      );
+    });
+
+    it('should get the post message channel of an event', () => {
+      expect(bridgeChannelManager.getPostMessageChannel('ready')).to.equal(
+        componentConnector.getChannel(`${P}_post_message_ready`),
+      );
+    });
+
+    it('should get the private channel of a page and remember it', () => {
+      const channel = bridgeChannelManager.getPrivate('home');
+      expect(channel).to.equal(componentConnector.getChannel(`${P}_page_home`));
+      expect(bridgeChannelManager.privateChannels.has(`${P}_page_home`)).to.be.true;
+    });
   });
 
-  it('should get the intercepted navigations channel', () => {
-    const channel = bridgeChannelManager.getInterceptedNavigationChannel();
-    expect(channel).to.equal(channelStub);
-    expect(
-      bridge.ComponentConnector.getChannel.calledWith(
-        `${BRIDGE_CHANNEL_PREFIX}_intercepted_navigation`,
-      ),
-    ).to.be.true;
+  describe('#initAppContextChannel / #initCancelledBackNavigationChannel', () => {
+    it('should create the application context channel', () => {
+      bridgeChannelManager.initAppContextChannel();
+      expect(componentConnector.getChannels()).to.have.property(`${P}_app`);
+    });
+
+    it('should create the cancelled back navigation channel', () => {
+      bridgeChannelManager.initCancelledBackNavigationChannel();
+      expect(componentConnector.getChannels()).to.have.property(`${P}_cancelled_back_navigation`);
+    });
   });
 
-  it('should get the private channel that corresponds to a page', () => {
-    const channel = bridgeChannelManager.getPrivate('testPage');
-    expect(channel).to.equal(channelStub);
-    expect(
-      bridge.ComponentConnector.getChannel.calledWith(`${BRIDGE_CHANNEL_PREFIX}_page_testPage`),
-    ).to.be.true;
+  describe('#publishPrivatePageStatus', () => {
+    it('should announce that a page is active on its private channel', () => {
+      const received = record(bridgeChannelManager.getPrivate('home'));
+
+      bridgeChannelManager.publishPrivatePageStatus('home', true);
+
+      expect(received).to.have.lengthOf(1);
+      expect(received[0].type).to.equal('page-load');
+      expect(received[0].detail).to.deep.equal({ value: true });
+    });
+
+    it('should announce that a page is no longer active', () => {
+      const received = record(bridgeChannelManager.getPrivate('home'));
+
+      bridgeChannelManager.publishPrivatePageStatus('home', false);
+
+      expect(received[0].detail).to.deep.equal({ value: false });
+    });
   });
 
-  it('should get the post message channel for the given event name', () => {
-    const channel = bridgeChannelManager.getPostMessageChannel('testEvent');
-    expect(channel).to.equal(channelStub);
-    expect(
-      bridge.ComponentConnector.getChannel.calledWith(
-        `${BRIDGE_CHANNEL_PREFIX}_post_message_testEvent`,
-      ),
-    ).to.be.true;
+  describe('#initPrivateChannel', () => {
+    it('should activate the new page and deactivate the old one', () => {
+      const home = record(bridgeChannelManager.getPrivate('home'));
+      const category = record(bridgeChannelManager.getPrivate('category'));
+
+      bridgeChannelManager.initPrivateChannel('home', 'category');
+
+      expect(category[0].detail).to.deep.equal({ value: true });
+      expect(home[0].detail).to.deep.equal({ value: false });
+    });
+
+    it('should only activate the new page when there is no previous one', () => {
+      const publish = sandbox.spy(bridgeChannelManager, 'publishPrivatePageStatus');
+
+      bridgeChannelManager.initPrivateChannel(undefined, 'home');
+
+      expect(publish.calledOnceWith('home', true)).to.be.true;
+    });
   });
 
-  it('should initialize the application context channel', () => {
-    bridgeChannelManager.initAppContextChannel();
-    expect(bridge.ComponentConnector.getChannel.calledWith(`${BRIDGE_CHANNEL_PREFIX}_app`)).to.be
-      .true;
+  describe('#updateAppContext', () => {
+    it('should publish the whole application context', () => {
+      const received = record(bridgeChannelManager.getAppContextChannel());
+      const currentRoute = { name: 'category', params: { name: 'beef' } };
+
+      bridgeChannelManager.updateAppContext('home', 'category', { token: 'x' }, currentRoute);
+
+      expect(received).to.have.lengthOf(1);
+      expect(received[0].type).to.equal('app-context');
+      expect(received[0].detail.value).to.deep.equal({
+        currentPage: 'category',
+        fromPage: 'home',
+        interceptorContext: { token: 'x' },
+        currentRoute,
+      });
+    });
   });
 
-  it('should initialize the cancelled back navigation channel', () => {
-    bridgeChannelManager.initCancelledBackNavigationChannel();
-    expect(
-      bridge.ComponentConnector.getChannel.calledWith(
-        `${BRIDGE_CHANNEL_PREFIX}_cancelled_back_navigation`,
-      ),
-    ).to.be.true;
+  describe('#updateBridgeChannels', () => {
+    it('should publish the context and swap the private page channels', () => {
+      const appContext = record(bridgeChannelManager.getAppContextChannel());
+      const category = record(bridgeChannelManager.getPrivate('category'));
+      const home = record(bridgeChannelManager.getPrivate('home'));
+
+      bridgeChannelManager.updateBridgeChannels('home', 'category', {}, { name: 'category' });
+
+      expect(appContext).to.have.lengthOf(1);
+      expect(category[0].detail).to.deep.equal({ value: true });
+      expect(home[0].detail).to.deep.equal({ value: false });
+    });
   });
 
-  it('should initialize the private channel for the given page', () => {
-    const publishPrivatePageStatus = sinon.stub(bridgeChannelManager, 'publishPrivatePageStatus');
-    const channel = bridgeChannelManager.initPrivateChannel('oldPage', 'newPage');
-    expect(publishPrivatePageStatus.calledWith('newPage', true)).to.be.true;
-    expect(publishPrivatePageStatus.calledWith('oldPage', false)).to.be.true;
+  describe('navigation announcements', () => {
+    it('should publish a cancelled back navigation', () => {
+      const received = record(bridgeChannelManager.getCancelledBackNavigationChannel());
+      const navigation = { from: 'category', to: 'home' };
+
+      bridgeChannelManager.publishCancelledBackNavigation(navigation);
+
+      expect(received[0].type).to.equal('back-nav-cancelled');
+      expect(received[0].detail).to.deep.equal({ value: navigation });
+    });
+
+    it('should publish an intercepted navigation', () => {
+      const received = record(bridgeChannelManager.getInterceptedNavigationChannel());
+      const navigation = { from: { page: 'home' }, to: { page: 'private' } };
+
+      bridgeChannelManager.publishInterceptedNavigation(navigation);
+
+      expect(received[0].type).to.equal('intercepted-navigation');
+      expect(received[0].detail).to.deep.equal({ value: navigation });
+    });
   });
 
-  it('should initialize the private channel for the given page without previous navigation', () => {
-    const publishPrivatePageStatus = sinon.stub(bridgeChannelManager, 'publishPrivatePageStatus');
-    const channel = bridgeChannelManager.initPrivateChannel(undefined, 'newPage');
-    expect(publishPrivatePageStatus.calledWith('newPage', true)).to.be.true;
-    expect(publishPrivatePageStatus.calledWith(undefined, false)).to.be.false;
+  describe('#isPrivateChannel / #isActivePrivateChannel', () => {
+    it('should recognise a private channel by its prefix', () => {
+      expect(bridgeChannelManager.isPrivateChannel(`${P}_page_home`)).to.be.true;
+    });
+
+    it('should not claim a channel that merely contains the prefix', () => {
+      expect(bridgeChannelManager.isPrivateChannel(`other_${P}_page_home`)).to.be.false;
+    });
+
+    it('should not claim an application channel', () => {
+      expect(bridgeChannelManager.isPrivateChannel('recipes')).to.be.false;
+    });
+
+    it('should only report a private channel as active once it has been created', () => {
+      expect(bridgeChannelManager.isActivePrivateChannel(`${P}_page_home`)).to.be.false;
+      bridgeChannelManager.getPrivate('home');
+      expect(bridgeChannelManager.isActivePrivateChannel(`${P}_page_home`)).to.be.true;
+    });
+  });
+
+  describe('#resetBridgeChannels', () => {
+    it('should clean every channel and drop every subscriptor', () => {
+      const node = document.createElement('div');
+      node.recipe = 'initial';
+      componentConnector.addSubscription('recipes', node, 'recipe');
+      componentConnector.publish('recipes', 'buffered');
+
+      bridgeChannelManager.resetBridgeChannels(node, true);
+
+      expect(componentConnector.subscriptors.size).to.equal(0);
+      expect(componentConnector.getChannel('recipes').buffer).to.be.empty;
+    });
+  });
+
+  describe('#getCCSubscriptions', () => {
+    let container;
+    let node;
+
+    beforeEach(() => {
+      container = document.createElement('div');
+      container.id = 'cross-container';
+      node = document.createElement('div');
+      container.appendChild(node);
+      document.body.appendChild(container);
+    });
+
+    afterEach(() => {
+      container.remove();
+    });
+
+    it('should report the in connections of the components under the container', () => {
+      componentConnector.addSubscription('recipes', node, 'recipe');
+
+      const { inConnections } = bridgeChannelManager.getCCSubscriptions(
+        'cross-container',
+        'main-node',
+      );
+
+      expect(inConnections).to.have.lengthOf(1);
+      expect(inConnections[0].channel).to.equal('recipes');
+      expect(inConnections[0].bind).to.equal('recipe');
+      expect(inConnections[0].component).to.equal(node);
+    });
+
+    it('should report the out connections of the components under the container', () => {
+      componentConnector.addPublication('recipes', node, 'picked', undefined);
+
+      const { outConnections } = bridgeChannelManager.getCCSubscriptions(
+        'cross-container',
+        'main-node',
+      );
+
+      expect(outConnections).to.have.lengthOf(1);
+      expect(outConnections[0].channel).to.equal('recipes');
+      expect(outConnections[0].bind).to.equal('picked');
+      expect(outConnections[0].component).to.equal(node);
+    });
+
+    it('should ignore components that hang somewhere else', () => {
+      const stray = document.createElement('div');
+      document.body.appendChild(stray);
+      componentConnector.addSubscription('recipes', stray, 'recipe');
+
+      const { inConnections } = bridgeChannelManager.getCCSubscriptions(
+        'cross-container',
+        'main-node',
+      );
+
+      expect(inConnections).to.be.empty;
+      stray.remove();
+    });
+
+    it('should include the main node itself', () => {
+      const mainNode = document.createElement('div');
+      mainNode.id = 'main-node';
+      document.body.appendChild(mainNode);
+      componentConnector.addSubscription('recipes', mainNode, 'recipe');
+
+      const { inConnections } = bridgeChannelManager.getCCSubscriptions(
+        'cross-container',
+        'main-node',
+      );
+
+      expect(inConnections).to.have.lengthOf(1);
+      mainNode.remove();
+    });
+  });
+
+  describe('#initEventChannels', () => {
+    it('should forward the declared events of a node onto their channels', () => {
+      const node = document.createElement('div');
+      document.body.appendChild(node);
+      bridgeChannelManager.initEventChannels(node, ['app-ready']);
+      const received = record(componentConnector.getChannel(`${P}_evt_app-ready`));
+
+      node.dispatchEvent(new CustomEvent('app-ready', { detail: { ok: true } }));
+
+      expect(received).to.have.lengthOf(1);
+      expect(received[0].detail).to.deep.equal({ ok: true });
+      node.remove();
+    });
+  });
+
+  describe('#subscribeToEvent', () => {
+    it('should call back when the event channel emits', () => {
+      const node = document.createElement('div');
+      const callback = sandbox.spy();
+      bridgeChannelManager.subscribeToEvent(node, 'app-ready', callback);
+
+      componentConnector.getChannel(`${P}_evt_app-ready`).next({ detail: { ok: true } });
+
+      expect(callback.calledOnce).to.be.true;
+      expect(callback.firstCall.args[0].detail).to.deep.equal({ ok: true });
+    });
   });
 });
