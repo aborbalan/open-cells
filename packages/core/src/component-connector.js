@@ -275,8 +275,13 @@ export class ComponentConnector {
    * @returns {boolean} True if the node has a publisher, false otherwise.
    */
   _hasPublisher({ publications }, node, channelName, bindName) {
+    // RxJS renamed the child-subscription list from `_subscriptions` to `_finalizers`
+    // in v7. Reading only the old name made this always return false, so
+    // addPublication() registered a duplicate listener on every call.
+    const registered = publications._finalizers || publications._subscriptions || [];
+
     return Boolean(
-      (publications._subscriptions || []).find(
+      registered.find(
         publication =>
           publication.node === node &&
           publication.channelName === channelName &&
