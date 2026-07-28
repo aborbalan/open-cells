@@ -15,64 +15,120 @@
  */
 
 import { expect } from '@esm-bundle/chai';
-import sinon from 'sinon';
 import { ChannelManager } from '../../src/manager/channel-manager.js';
+import { Channel } from '../../src/state/channel.js';
 
 describe('ChannelManager', () => {
   let channelManager;
-  let channelStub;
 
   beforeEach(() => {
     channelManager = new ChannelManager();
   });
 
-  it('should create a new channel if it does not exist', () => {
-    const existsBefore = channelManager.has('testChannel');
-    const channel = channelManager.get('testChannel');
-    const existsAfter = channelManager.has('testChannel');
-
-    expect(channel.name).to.equal('testChannel');
-    expect(existsBefore).to.be.false;
-    expect(existsAfter).to.be.true;
+  describe('#constructor', () => {
+    it('should start with no channels', () => {
+      expect(channelManager.channels).to.deep.equal({});
+    });
   });
 
-  it('should get an existing channel', () => {
-    const createSpy = sinon.spy(channelManager, 'create');
-    const channel1 = channelManager.get('testChannel');
-    const channel2 = channelManager.get('testChannel');
-    expect(channel1.name).to.equal('testChannel');
-    expect(channel1).to.equal(channel2);
-    expect(createSpy.calledOnce).to.be.true;
+  describe('#get', () => {
+    it('should create a channel the first time it is asked for', () => {
+      const channel = channelManager.get('recipes');
+      expect(channel).to.be.instanceOf(Channel);
+      expect(channel.name).to.equal('recipes');
+    });
+
+    it('should return the same channel on every later call', () => {
+      const channel = channelManager.get('recipes');
+      expect(channelManager.get('recipes')).to.equal(channel);
+    });
   });
 
-  it('should remove a channel', () => {
-    channelManager.get('testChannel');
-    channelManager.remove('testChannel');
-    const channel = channelManager.getUnsafe('testChannel');
-    expect(channel).to.be.undefined;
+  describe('#getUnsafe', () => {
+    it('should return nothing for a channel that does not exist', () => {
+      expect(channelManager.getUnsafe('recipes')).to.be.undefined;
+    });
+
+    it('should return an existing channel without creating one', () => {
+      const channel = channelManager.get('recipes');
+      expect(channelManager.getUnsafe('recipes')).to.equal(channel);
+    });
   });
 
-  it('should clean all channels', () => {
-    let ch = channelManager.get('testChannel');
-    let clean = sinon.stub(ch, 'clean');
-    channelManager.cleanAllChannels();
-    expect(clean.calledOnce).to.be.true;
+  describe('#create', () => {
+    it('should create and register a channel', () => {
+      const channel = channelManager.create('recipes');
+      expect(channelManager.getUnsafe('recipes')).to.equal(channel);
+    });
+
+    it('should replace an existing channel of the same name', () => {
+      const first = channelManager.create('recipes');
+      const second = channelManager.create('recipes');
+      expect(second).to.not.equal(first);
+      expect(channelManager.getUnsafe('recipes')).to.equal(second);
+    });
   });
 
-  it('should remove all channels', () => {
-    channelManager.removeAllChannels();
-    const channel = channelManager.getUnsafe('testChannel');
-    expect(channel).to.be.undefined;
+  describe('#has', () => {
+    it('should be false for a channel that was never created', () => {
+      expect(channelManager.has('recipes')).to.be.false;
+    });
+
+    it('should be true once the channel exists', () => {
+      channelManager.get('recipes');
+      expect(channelManager.has('recipes')).to.be.true;
+    });
   });
 
-  it('should check if a channel exists', () => {
-    channelManager.get('testChannel');
-    const exists = channelManager.has('testChannel');
-    expect(exists).to.be.true;
+  describe('#remove', () => {
+    it('should drop a channel', () => {
+      channelManager.get('recipes');
+      channelManager.remove('recipes');
+      expect(channelManager.has('recipes')).to.be.false;
+    });
+
+    it('should do nothing for a channel it does not hold', () => {
+      expect(() => channelManager.remove('nowhere')).to.not.throw();
+    });
   });
 
-  it('should check if a channel does not exist', () => {
-    const exists = channelManager.has('testChannel');
-    expect(exists).to.be.false;
+  describe('#getChannels / #setChannels', () => {
+    it('should expose the channels it holds', () => {
+      channelManager.get('recipes');
+      expect(Object.keys(channelManager.getChannels())).to.deep.equal(['recipes']);
+    });
+
+    it('should let the whole collection be replaced', () => {
+      const channels = { shared: new Channel('shared') };
+      channelManager.setChannels(channels);
+      expect(channelManager.getChannels()).to.equal(channels);
+      expect(channelManager.has('shared')).to.be.true;
+    });
+  });
+
+  describe('#cleanAllChannels', () => {
+    it('should empty the buffer of every channel without dropping them', () => {
+      const recipes = channelManager.get('recipes');
+      const categories = channelManager.get('categories');
+      recipes.next({ detail: 'a' });
+      categories.next({ detail: 'b' });
+
+      channelManager.cleanAllChannels();
+
+      expect(recipes.buffer).to.be.empty;
+      expect(categories.buffer).to.be.empty;
+      expect(channelManager.has('recipes')).to.be.true;
+    });
+  });
+
+  describe('#removeAllChannels', () => {
+    it('should drop every channel', () => {
+      channelManager.get('recipes');
+      channelManager.get('categories');
+
+      channelManager.removeAllChannels();
+
+      expect(channelManager.getChannels()).to.deep.equal({});
+    });
   });
 });
