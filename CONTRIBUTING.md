@@ -34,17 +34,18 @@ Then, from the repository root:
 npm test
 ```
 
-That runs the `@open-cells/core` unit suite (vitest, in Chromium) and then the `recipes-app`
-end-to-end suite (Playwright, in Chromium and WebKit). The two run **one after the other**: both
-drive real browsers, and starting the two stacks at once crashes the browser process on Windows,
-so `recipes-app:test` declares a wireit dependency on `core:test`.
+That runs every workspace's suite **one after the other** (`npm run test --workspaces`). Almost
+all of them drive a real browser, and starting several at once exhausts the machine, so the
+sequential order is deliberate — do not parallelise it.
 
 To run a single workspace:
 
 ```sh
-npm run -w @open-cells/core test           # unit tests + coverage
-npm run -w @open-cells/localize test       # web-test-runner
-npm run -w @open-cells/recipes-app test:e2e  # end-to-end only, no unit suite first
+npm run -w @open-cells/core test              # unit tests + coverage
+npm run -w @open-cells/localize test          # web-test-runner
+npm run -w @open-cells/page-transitions test  # any other package
+npm run -w @open-cells/create-app test        # scaffolder smoke test, runs in Node
+npm run -w @open-cells/recipes-app test       # end-to-end
 ```
 
 `@open-cells/core` enforces a coverage floor on every run. It is a **ratchet**: raise it in the PR

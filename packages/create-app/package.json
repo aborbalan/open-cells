@@ -11,7 +11,9 @@
   "scripts": {
     "start": "node ./src/create.js",
     "update": "node ./scripts/update.js",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "test": "vitest --run",
+    "test:watch": "vitest"
   },
   "files": [
     "src"
