@@ -94,8 +94,14 @@ export class Channel extends ReplaySubject {
    */
   unsubscribe() {
     super.unsubscribe();
+    // Reopen the channel. RxJS marks a Subject as closed *and* stopped when it is
+    // unsubscribed, and drops its observer lists. The flag is `isStopped`; writing to
+    // `stoped` left the subject stopped, so a channel that had been reset never emitted
+    // again and everything published after a logout was silently dropped.
     this.closed = false;
-    this.stoped = false;
+    this.isStopped = false;
+    this.observers = [];
+    this.currentObservers = null;
   }
 
   /** 

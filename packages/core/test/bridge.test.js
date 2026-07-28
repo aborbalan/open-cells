@@ -127,6 +127,9 @@ describe('Bridge', () => {
     eventManager.removeAllListeners();
     sandbox.restore();
     container.remove();
+    // _initCrossComponents() mounts the cross-component container on document.body and
+    // nothing takes it down, so the next bridge would find it and treat it as declarative.
+    document.querySelectorAll('#cells-template-__cross').forEach(node => node.remove());
   });
 
   describe('#constructor', () => {
@@ -212,7 +215,7 @@ describe('Bridge', () => {
 
     it('should load the page and hand it the route params', async () => {
       makeBridge();
-      await waitFor(() => bridge.TemplateManager.get('home'), 'the initial page');
+      await waitFor(() => bridge.TemplateManager.selected === 'home', 'the initial page');
 
       bridge.navigate('category', { name: 'service' });
       await waitFor(() => document.body.querySelector('category-page'), 'the category page');
@@ -596,7 +599,7 @@ describe('Bridge', () => {
   describe('private page channels', () => {
     it('should announce that the page being entered is active', async () => {
       makeBridge();
-      await waitFor(() => bridge.TemplateManager.get('home'), 'the initial page');
+      await waitFor(() => bridge.TemplateManager.selected === 'home', 'the initial page');
 
       bridge.navigate('category', { name: 'food' });
       await waitFor(() => bridge.getCurrentRoute().name === 'category', 'the category route');
@@ -610,10 +613,334 @@ describe('Bridge', () => {
     });
   });
 
+  describe('#_initCrossComponents', () => {
+    it('should build the cross-component container when there is none', () => {
+      makeBridge();
+      const crossContainer = bridge.TemplateManager.get('__cross');
+      expect(crossContainer).to.exist;
+      expect(crossContainer.node.parentNode).to.equal(document.body);
+      expect(bridge.usingDeclarativeCrossContainer).to.not.be.true;
+      crossContainer.node.remove();
+    });
+
+    it('should adopt a cross-component container already in the markup', () => {
+      const declared = document.createElement('div');
+      declared.id = 'cells-template-__cross';
+      document.body.appendChild(declared);
+
+      makeBridge();
+
+      expect(bridge.usingDeclarativeCrossContainer).to.be.true;
+      expect(bridge.TemplateManager.get('__cross').node).to.equal(declared);
+      declared.remove();
+    });
+  });
+
+  describe('external events', () => {
+    it('should dispatch an external event on the main node', () => {
+      makeBridge();
+      const eventName = bridge.externalEvents[0];
+      const listener = sandbox.spy();
+      bridge.getMainNode().addEventListener(eventName, listener);
+
+      eventManager.emit(eventName, { a: 1 });
+
+      expect(listener.calledOnce).to.be.true;
+      expect(listener.firstCall.args[0].detail).to.deep.equal({ a: 1 });
+    });
+
+    it('should open a channel per external event and forward what the node emits', () => {
+      makeBridge();
+      const eventName = bridge.externalEvents[0];
+      bridge._initEventChannels();
+      const received = [];
+      bridge.ComponentConnector.getChannel(`${BRIDGE_CHANNEL_PREFIX}_evt_${eventName}`).subscribe(
+        evt => received.push(evt),
+      );
+
+      bridge.getMainNode().dispatchEvent(new CustomEvent(eventName, { detail: { a: 1 } }));
+
+      expect(received.length).to.be.at.least(1);
+      expect(received[0].detail).to.deep.equal({ a: 1 });
+    });
+
+    it('should hook up the subscriptions declared in the configuration', () => {
+      const callback = sinon.spy();
+      const eventName = 'template-registered';
+      makeBridge({ eventSubscriptions: [{ event: eventName, callback }] });
+      const subscribe = sandbox.spy(bridge, 'subscribeToEvent');
+
+      bridge._addInitialSubscribersToEvents();
+
+      expect(subscribe.calledOnceWith(eventName, callback)).to.be.true;
+    });
+
+    it('should do nothing when no subscriptions are declared', () => {
+      makeBridge();
+      const subscribe = sandbox.spy(bridge, 'subscribeToEvent');
+      bridge._addInitialSubscribersToEvents();
+      expect(subscribe.called).to.be.false;
+    });
+  });
+
+  describe('#routeHandler', () => {
+    it('should publish each route parameter on a channel of its own name', () => {
+      makeBridge();
+      sandbox.stub(bridge, '_handleRouteLoading');
+      bridge.Router.currentRoute = { name: 'category', params: { categoryName: 'beef' } };
+      const received = [];
+      bridge.ComponentConnector.getChannel('categoryName').subscribe(evt => received.push(evt));
+
+      bridge.routeHandler();
+
+      expect(received).to.have.lengthOf(1);
+      expect(received[0].type).to.equal('category-name-changed');
+      expect(received[0].detail).to.deep.equal({ value: 'beef' });
+    });
+
+    it('should announce the parsed route', () => {
+      makeBridge();
+      sandbox.stub(bridge, '_handleRouteLoading');
+      const listener = sandbox.spy();
+      eventManager.on('parse-route', listener);
+      bridge.Router.currentRoute = { name: 'home', params: {} };
+
+      bridge.routeHandler();
+
+      expect(listener.calledOnce).to.be.true;
+    });
+
+    it('should ask for the page of the route to be loaded', () => {
+      makeBridge();
+      const load = sandbox.stub(bridge, '_handleRouteLoading');
+      const route = { name: 'home', params: {} };
+      bridge.Router.currentRoute = route;
+
+      bridge.routeHandler();
+
+      expect(load.calledOnceWith(route)).to.be.true;
+    });
+  });
+
+  describe('#_handleRouteLoading', () => {
+    it('should create the page and then select it', async () => {
+      makeBridge();
+      const select = sandbox.stub(bridge, 'selectPage');
+
+      bridge._handleRouteLoading({ name: 'category', component: 'category-page', params: {} });
+      await waitFor(
+        () => select.getCalls().some(call => call.args[0] === 'category'),
+        'the category page to be selected',
+      );
+
+      expect(select.calledWith('category', {})).to.be.true;
+    });
+  });
+
+  describe('#_updateChannels', () => {
+    it('should hand the old and new template names to the channel manager', () => {
+      makeBridge();
+      const update = sandbox.stub(bridge.BridgeChannelManager, 'updateBridgeChannels');
+
+      bridge._updateChannels({ name: 'home' }, { name: 'category' });
+
+      expect(update.calledOnce).to.be.true;
+      expect(update.firstCall.args[0]).to.equal('home');
+      expect(update.firstCall.args[1]).to.equal('category');
+    });
+
+    it('should leave the old name undefined when there is no previous template', () => {
+      makeBridge();
+      const update = sandbox.stub(bridge.BridgeChannelManager, 'updateBridgeChannels');
+
+      bridge._updateChannels(undefined, { name: 'home' });
+
+      expect(update.firstCall.args[0]).to.be.undefined;
+    });
+  });
+
+  describe('#_handleParams', () => {
+    it('should copy the params onto a node that expects them', () => {
+      makeBridge();
+      const node = { params: {} };
+      bridge._handleParams(node, { name: 'beef' });
+      expect(node.params).to.deep.equal({ name: 'beef' });
+    });
+
+    it('should clear the params when there are none', () => {
+      makeBridge();
+      const node = { params: { stale: true } };
+      bridge._handleParams(node, {});
+      expect(node.params).to.deep.equal({});
+    });
+
+    it('should leave a node without a params property alone', () => {
+      makeBridge();
+      const node = {};
+      bridge._handleParams(node, { name: 'beef' });
+      expect(node.params).to.be.undefined;
+    });
+  });
+
+  describe('#_waitRenderComplete', () => {
+    it('should wait for the render promise of the node', async () => {
+      makeBridge();
+      const template = { node: { updateComplete: Promise.resolve('rendered') } };
+      expect(await bridge._waitRenderComplete(template)).to.equal('rendered');
+    });
+
+    it('should resolve straight away for a node that does not render', async () => {
+      makeBridge();
+      expect(await bridge._waitRenderComplete({ node: {} })).to.be.true;
+    });
+  });
+
+  describe('#onRender', () => {
+    it('should mount an unattached template inside the main node', () => {
+      makeBridge();
+      const template = document.createElement('div');
+
+      bridge.onRender(template);
+
+      expect(template.parentNode).to.equal(bridge.getMainNode());
+    });
+
+    it('should announce that the components of the template are loaded', () => {
+      makeBridge();
+      const listener = sandbox.spy();
+      document.body.addEventListener('componentsInTemplateLoaded', listener);
+
+      bridge.onRender(document.createElement('div'));
+
+      expect(listener.calledOnce).to.be.true;
+      document.body.removeEventListener('componentsInTemplateLoaded', listener);
+    });
+
+    it('should leave a template that is already mounted where it is', () => {
+      makeBridge();
+      const elsewhere = document.createElement('div');
+      document.body.appendChild(elsewhere);
+      const template = document.createElement('div');
+      elsewhere.appendChild(template);
+
+      bridge.onRender(template);
+
+      expect(template.parentNode).to.equal(elsewhere);
+      elsewhere.remove();
+    });
+  });
+
+  describe('#loadCellsPage / #_lazyLoadPages', () => {
+    it('should run the action of the route', () => {
+      const action = sinon.stub().returns('loaded');
+      makeBridge({ routes: { home: { path: '/', action } } });
+
+      expect(bridge.loadCellsPage('home')).to.equal('loaded');
+    });
+
+    it('should load every common page up front', () => {
+      const action = sinon.stub();
+      makeBridge({ routes: { home: { path: '/', action } }, commonPages: ['home'] });
+
+      // The constructor lazy-loads them, so the action has already run.
+      expect(action.called).to.be.true;
+    });
+  });
+
+  describe('cross-component connections', () => {
+    let node;
+
+    beforeEach(() => {
+      node = document.createElement('some-element');
+      document.body.appendChild(node);
+    });
+
+    afterEach(() => {
+      node.remove();
+    });
+
+    it('should unregister the components of every connection when disconnecting', () => {
+      makeBridge();
+      bridge.registerInConnection('recipes', node, 'recipe');
+
+      bridge._disconnectCrossComponents(
+        { inConnections: [{ component: node }], outConnections: [] },
+        true,
+      );
+
+      expect(bridge.ComponentConnector.subscriptors.has(node)).to.be.false;
+    });
+
+    it('should tolerate a connection set with nothing in it', () => {
+      makeBridge();
+      expect(() =>
+        bridge._disconnectCrossComponents({ inConnections: undefined, outConnections: undefined }, true),
+      ).to.not.throw();
+    });
+
+    it('should register the connections again when reconnecting', () => {
+      makeBridge();
+      node.recipe = 'initial';
+
+      bridge._reconnectCrossComponents({
+        inConnections: [{ channel: 'recipes', component: node, bind: 'recipe' }],
+        outConnections: [],
+      });
+      bridge.publish('recipes', { id: 8 });
+
+      expect(node.recipe).to.deep.equal({ id: 8 });
+    });
+
+    it('should keep the cross-component connections across a channel reset', () => {
+      makeBridge();
+      const crossContainer = bridge.TemplateManager.get('__cross');
+      crossContainer.node.appendChild(node);
+      node.recipe = 'initial';
+      bridge.registerInConnection('recipes', node, 'recipe');
+
+      bridge._resetBridgeChannels();
+      bridge.publish('recipes', { id: 9 });
+
+      expect(node.recipe).to.deep.equal({ id: 9 });
+      crossContainer.node.remove();
+    });
+  });
+
+  describe('#logout', () => {
+    it('should do nothing when the initial template is already the selected one', () => {
+      makeBridge({ initialTemplate: 'home' });
+      bridge.TemplateManager.selected = 'home';
+      const reset = sandbox.stub(bridge, '_resetBridgeChannels');
+
+      bridge.logout();
+
+      expect(reset.called).to.be.false;
+    });
+
+    it('should reset the channels and go back to the initial page', async () => {
+      makeBridge({ initialTemplate: 'home' });
+      await waitFor(() => bridge.TemplateManager.selected === 'home', 'the initial page');
+      bridge.TemplateManager.selected = 'category';
+      const category = bridge.TemplateManager.createTemplate('category', {
+        tagName: 'category-page',
+      });
+      // removeTemplates() looks its nodes up in the document, so mount it like the bridge does.
+      bridge.getMainNode().appendChild(category.node);
+      const go = sandbox.stub(bridge.Router, 'go');
+      const reset = sandbox.stub(bridge, '_resetBridgeChannels');
+
+      bridge.logout();
+
+      expect(reset.calledOnce).to.be.true;
+      expect(go.calledOnceWith('home')).to.be.true;
+      expect(bridge.getInterceptorContext()).to.deep.equal({});
+    });
+  });
+
   describe('the application context channel', () => {
     it('should carry the current page and the interceptor context', async () => {
       makeBridge();
-      await waitFor(() => bridge.TemplateManager.get('home'), 'the initial page');
+      await waitFor(() => bridge.TemplateManager.selected === 'home', 'the initial page');
 
       bridge.navigate('category', { name: 'food' });
       await waitFor(() => bridge.getCurrentRoute().name === 'category', 'the category route');
