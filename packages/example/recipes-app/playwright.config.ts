@@ -18,8 +18,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Opt out of parallel tests on CI.
+   * Also on Windows: concurrent WebKit workers crash the browser process there
+   * (STATUS_STACK_BUFFER_OVERRUN, 0xC0000409), which fails tests that pass
+   * perfectly well when run one at a time. */
+  workers: process.env.CI || process.platform === 'win32' ? 1 : undefined,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */

@@ -39,7 +39,16 @@ export default defineConfig({
         ['lcov', { 'projectRoot': './src' }],
         ['json', { 'file': 'coverage.json' }],
         ['text']
-      ]
+      ],
+      // Ratchet: set to the level measured when the suite was first made
+      // runnable. Raise it with every PR that adds coverage, never lower it.
+      // Target for this package is 90% lines / 85% branches.
+      thresholds: {
+        lines: 57,
+        statements: 56,
+        functions: 53,
+        branches: 37,
+      }
     }
   },
 })

@@ -16,6 +16,37 @@ We sincerely appreciate your understanding and cooperation in this matter. Your 
 
 Please note that while we are not currently accepting pull requests, we plan to revisit this decision in the future as our project evolves. We appreciate your patience and understanding.
 
+## Running the tests
+
+Every suite runs in a real browser, so the browsers have to be fetched once after installing.
+The monorepo currently resolves more than one Playwright version — vitest's browser provider and
+`@playwright/test` do not agree on one — so the download has to be triggered per workspace:
+
+```sh
+npm ci
+npx playwright install --with-deps chromium
+npm exec -w @open-cells/recipes-app -- playwright install --with-deps chromium webkit
+```
+
+Then, from the repository root:
+
+```sh
+npm test
+```
+
+That runs the `@open-cells/core` unit suite (vitest, in Chromium) and the `recipes-app` end-to-end
+suite (Playwright, in Chromium and WebKit). To run a single workspace:
+
+```sh
+npm run -w @open-cells/core test          # unit tests + coverage
+npm run -w @open-cells/localize test      # web-test-runner
+npm run -w @open-cells/recipes-app test   # end-to-end
+```
+
+`@open-cells/core` enforces a coverage floor on every run. It is a **ratchet**: raise it in the PR
+that adds the coverage, never lower it to make a run pass. Current status and targets live in
+[`docs/testing-scorecard.md`](./docs/testing-scorecard.md).
+
 <!--
 
 ## Getting Started 
