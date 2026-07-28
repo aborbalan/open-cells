@@ -14,4 +14,14 @@ jobs:
         with:
           node-version: '20.x'
       - run: npm ci
+      # The monorepo currently resolves more than one Playwright version
+      # (vitest's browser provider and @playwright/test do not agree), so the
+      # browsers have to be fetched for each workspace that launches one.
+      # Unifying the toolchain is tracked as part of the dependency-hygiene work.
+      - name: Install Playwright browsers
+        run: |
+          npx playwright install --with-deps chromium
+          npm exec -w @open-cells/recipes-app -- playwright install --with-deps chromium webkit
       - run: npm run build --if-present
+      - name: Run tests
+        run: npm test
