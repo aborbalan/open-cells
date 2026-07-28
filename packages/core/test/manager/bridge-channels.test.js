@@ -315,6 +315,32 @@ describe('BridgeChannelManager', () => {
       stray.remove();
     });
 
+    it('should report nothing for a component that neither listens nor publishes', () => {
+      componentConnector.getSubscriptor(node);
+
+      const { inConnections, outConnections } = bridgeChannelManager.getCCSubscriptions(
+        'cross-container',
+        'main-node',
+      );
+
+      expect(inConnections).to.be.empty;
+      expect(outConnections).to.be.empty;
+    });
+
+    it('should survive a subscriptor with no publication or subscription list', () => {
+      const subscriptor = componentConnector.getSubscriptor(node);
+      subscriptor.publications = undefined;
+      subscriptor.subscriptions = undefined;
+
+      const { inConnections, outConnections } = bridgeChannelManager.getCCSubscriptions(
+        'cross-container',
+        'main-node',
+      );
+
+      expect(inConnections).to.be.empty;
+      expect(outConnections).to.be.empty;
+    });
+
     it('should include the main node itself', () => {
       const mainNode = document.createElement('div');
       mainNode.id = 'main-node';

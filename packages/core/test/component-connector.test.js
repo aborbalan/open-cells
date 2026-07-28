@@ -348,6 +348,26 @@ describe('ComponentConnector', () => {
       expect(node.getAttribute('data-recipe')).to.equal('beef');
     });
 
+    it('should hold the value back until an unresolved component is defined', async () => {
+      // An element whose tag is not in the registry yet: the connector watches it and
+      // dispatches once it resolves, instead of writing to a component that is not there.
+      const unresolved = document.createElement('not-yet-defined');
+      document.body.appendChild(unresolved);
+      unresolved.recipe = 'initial';
+      const callback = componentConnector.wrapCallback(unresolved, 'recipe');
+
+      callback({ type: 'recipes', detail: { id: 5 } });
+      expect(unresolved.recipe).to.equal('initial');
+
+      const deadline = Date.now() + 4000;
+      while (unresolved.recipe === 'initial' && Date.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 20));
+      }
+
+      expect(unresolved.recipe).to.deep.equal({ id: 5 });
+      unresolved.remove();
+    });
+
     it('should call the node method when the binding names one', () => {
       const spy = sandbox.spy();
       node.onRecipe = spy;

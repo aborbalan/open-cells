@@ -16,9 +16,12 @@
 
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
+import * as bridgeModule from '../src/bridge.js';
 import { Bridge, enqueueCommand } from '../src/bridge.js';
 import { eventManager } from '../src/manager/events.js';
-import { BRIDGE_CHANNEL_PREFIX } from '../src/constants.js';
+import { BRIDGE_CHANNEL_PREFIX, Constants } from '../src/constants.js';
+
+const { externalEventsCodes } = Constants;
 import { ComponentConnector } from '../src/component-connector.js';
 import { TemplateManager } from '../src/manager/template.js';
 import { Router } from '../src/router.js';
@@ -934,6 +937,205 @@ describe('Bridge', () => {
       expect(reset.calledOnce).to.be.true;
       expect(go.calledOnceWith('home')).to.be.true;
       expect(bridge.getInterceptorContext()).to.deep.equal({});
+    });
+  });
+
+  describe('navigation requests', () => {
+    /** Fires the event a component raises through an `outbound` with a `link`. */
+    function requestNavigation(detail, eventDetail = {}) {
+      eventManager.emit(externalEventsCodes.NAV_REQUEST, {
+        event: { detail: eventDetail },
+        detail,
+      });
+    }
+
+    it('should navigate to the requested page', () => {
+      makeBridge();
+      const go = sandbox.stub(bridge.Router, 'go');
+
+      requestNavigation({ page: 'category' });
+
+      // `replace` is defaulted in the destructuring, `skipHistory` is not.
+      expect(go.calledOnceWith('category', {}, false, undefined)).to.be.true;
+    });
+
+    it('should take the page name out of the event when it is bound', () => {
+      makeBridge();
+      const go = sandbox.stub(bridge.Router, 'go');
+
+      requestNavigation({ paramPage: 'target' }, { target: 'category' });
+
+      expect(go.firstCall.args[0]).to.equal('category');
+    });
+
+    it('should map the event detail onto the route params', () => {
+      makeBridge();
+      const go = sandbox.stub(bridge.Router, 'go');
+
+      requestNavigation({ page: 'category', params: { id: 'name' } }, { id: 'beef' });
+
+      expect(go.firstCall.args[1]).to.deep.equal({ name: 'beef' });
+    });
+
+    it('should ignore params the event does not carry', () => {
+      makeBridge();
+      const go = sandbox.stub(bridge.Router, 'go');
+
+      requestNavigation({ page: 'category', params: { missing: 'name' } }, { other: 'beef' });
+
+      expect(go.firstCall.args[1]).to.deep.equal({});
+    });
+
+    it('should clear the navigation stack up to the requested page', () => {
+      makeBridge();
+      sandbox.stub(bridge.Router, 'go');
+      const clear = sandbox.stub(bridge.Router, 'clearStackUntil');
+
+      requestNavigation({ page: 'category', cleanUntil: 'home' });
+
+      expect(clear.calledOnceWith('home')).to.be.true;
+    });
+
+    it('should pass the replace and skipHistory flags through', () => {
+      makeBridge();
+      const go = sandbox.stub(bridge.Router, 'go');
+
+      requestNavigation({ page: 'category', replace: true, skipHistory: true });
+
+      expect(go.firstCall.args[2]).to.be.true;
+      expect(go.firstCall.args[3]).to.be.true;
+    });
+
+    it('should clean a dirty hash before navigating', () => {
+      makeBridge();
+      sandbox.stub(bridge.Router, 'go');
+      bridge.Router.hashIsDirty = true;
+
+      requestNavigation({ page: 'category' });
+
+      expect(window.location.hash).to.equal('#!');
+    });
+  });
+
+  describe('the non-debug facade', () => {
+    it('should expose a restricted API instead of the bridge itself', () => {
+      makeBridge({ debug: false });
+
+      const facade = bridgeModule.$bridge;
+
+      expect(facade).to.not.equal(bridge);
+      expect(facade.logout).to.be.a('function');
+      expect(facade.publish).to.be.a('function');
+      expect(facade.navigate).to.be.a('function');
+      expect(facade.subscribeToEvent).to.be.a('function');
+      expect(facade.registerInConnection).to.be.a('function');
+      expect(facade.registerOutConnection).to.be.a('function');
+      expect(facade.unsubscribe).to.be.a('function');
+      expect(facade.updateSubroute).to.be.a('function');
+      expect(facade.getCurrentRoute).to.be.a('function');
+      expect(facade.updateApplicationConfig).to.be.a('function');
+    });
+
+    it('should not leak the bridge onto the window', () => {
+      delete window.$bridge;
+      makeBridge({ debug: false });
+      expect(window.$bridge).to.be.undefined;
+    });
+
+    it('should delegate every call to the bridge behind it', () => {
+      makeBridge({ debug: false });
+      const facade = bridgeModule.$bridge;
+      const node = document.createElement('some-element');
+
+      const navigate = sandbox.stub(bridge.Router, 'go');
+      facade.navigate('category', { name: 'beef' });
+      expect(navigate.calledOnceWith('category', { name: 'beef' })).to.be.true;
+
+      facade.setInterceptorContext({ token: 'a' });
+      expect(facade.getInterceptorContext()).to.deep.equal({ token: 'a' });
+      facade.updateInterceptorContext({ user: 'b' });
+      expect(facade.getInterceptorContext()).to.deep.equal({ token: 'a', user: 'b' });
+      facade.resetInterceptorContext();
+      expect(facade.getInterceptorContext()).to.deep.equal({});
+
+      node.recipe = 'initial';
+      facade.registerInConnection('recipes', node, 'recipe');
+      facade.publish('recipes', { id: 1 });
+      expect(node.recipe).to.deep.equal({ id: 1 });
+
+      facade.unsubscribe('recipes', node);
+      facade.publish('recipes', { id: 2 });
+      expect(node.recipe).to.deep.equal({ id: 1 });
+
+      expect(facade.getCurrentRoute().name).to.equal('home');
+
+      const updateSubroute = sandbox.stub(bridge.Router, 'updateSubrouteInBrowser');
+      facade.updateSubroute('/step');
+      expect(updateSubroute.calledOnceWith('/step')).to.be.true;
+    });
+
+    it('should expose the bridge on the window in debug mode', () => {
+      makeBridge({ debug: true });
+      expect(window.$bridge).to.equal(bridge);
+    });
+  });
+
+  describe('a configured interceptor', () => {
+    it('should be handed to the router along with the channel manager', () => {
+      const interceptor = () => ({ intercept: false });
+      makeBridge({ interceptor });
+
+      expect(bridge.Router.interceptor).to.equal(interceptor);
+      expect(bridge.Router.channelManager).to.equal(bridge.BridgeChannelManager);
+    });
+
+    it('should be ignored when it is not a function', () => {
+      makeBridge({ interceptor: 'not a function' });
+      expect(bridge.Router.interceptor).to.not.equal('not a function');
+    });
+  });
+
+  describe('optional collaborators', () => {
+    it('should skip the channel update when there is no channel manager', () => {
+      makeBridge();
+      bridge.BridgeChannelManager = undefined;
+      expect(() => bridge._updateChannels(undefined, { name: 'home' })).to.not.throw();
+    });
+
+    it('should tolerate reconnecting an empty connection set', () => {
+      makeBridge();
+      expect(() =>
+        bridge._reconnectCrossComponents({ inConnections: undefined, outConnections: undefined }),
+      ).to.not.throw();
+    });
+
+    it('should render without an onRender hook', async () => {
+      makeBridge();
+      await waitFor(() => bridge.TemplateManager.selected === 'home', 'the initial page');
+      bridge.onRender = undefined;
+      bridge.TemplateManager.createTemplate('category', { tagName: 'category-page' });
+
+      bridge.selectPage('category', {});
+      await waitFor(() => bridge.TemplateManager.selected === 'category', 'the category page');
+
+      expect(bridge.TemplateManager.selected).to.equal('category');
+    });
+
+    it('should give up on an undefined component when it cannot load pages', async () => {
+      makeBridge();
+      bridge.loadCellsPage = undefined;
+      await bridge.createPageFromWebComponent('unknown', 'another-unknown-page');
+      expect(bridge.TemplateManager.get('unknown')).to.exist;
+    });
+
+    it('should reuse a component already registered as a template node', async () => {
+      makeBridge();
+      const create = sandbox.spy(bridge.TemplateManager, 'createTemplate');
+      bridge.TemplateManager.templates['category-page'] = document.createElement('category-page');
+
+      await bridge.createPageFromWebComponent('category', 'category-page');
+
+      expect(create.called).to.be.false;
     });
   });
 

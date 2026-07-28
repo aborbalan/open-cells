@@ -130,5 +130,33 @@ describe('ChannelManager', () => {
 
       expect(channelManager.getChannels()).to.deep.equal({});
     });
+
+    it('should leave inherited entries alone', () => {
+      const inherited = Object.create({ ancestral: new Channel('ancestral') });
+      inherited.own = new Channel('own');
+      channelManager.setChannels(inherited);
+
+      channelManager.removeAllChannels();
+
+      expect(Object.prototype.hasOwnProperty.call(inherited, 'own')).to.be.false;
+      expect(inherited.ancestral).to.exist;
+    });
+  });
+
+  describe('inherited entries', () => {
+    it('should only clean the channels the collection owns', () => {
+      const ancestral = new Channel('ancestral');
+      const inherited = Object.create({ ancestral });
+      const own = new Channel('own');
+      inherited.own = own;
+      ancestral.next({ detail: 'kept' });
+      own.next({ detail: 'cleaned' });
+      channelManager.setChannels(inherited);
+
+      channelManager.cleanAllChannels();
+
+      expect(own.buffer).to.be.empty;
+      expect(ancestral.buffer).to.not.be.empty;
+    });
   });
 });
