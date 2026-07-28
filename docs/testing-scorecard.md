@@ -11,15 +11,15 @@ not moved.
 |---|---|---:|---:|---:|---|
 | 1 | Runnable suite | 3 | **10** | 10 | `test/s1-runnable-suite` |
 | 2 | `core` coverage | 4 | **10** | 10 | `test/s2-core-coverage` |
-| 3 | Per-package coverage | 2 | 2 | 10 | — |
+| 3 | Per-package coverage | 2 | **10** | 10 | `test/s3-package-coverage` |
 | 4 | `core` test quality | 4 | **7** | 10 | `test/s2-core-coverage` (partial) |
 | 5 | `localize` tests | 9 | 9 | 10 | — |
 | 6 | E2E tests | 2 | 2 | 10 | — |
 | 7 | CI and quality gates | 1 | **5** | 10 | `test/s1-runnable-suite`, `test/s2-core-coverage` (partial) |
-| 8 | Test infrastructure | 5 | 5 | 10 | — |
+| 8 | Test infrastructure | 5 | **6** | 10 | `test/s3-package-coverage` (partial) |
 | 9 | Test dependency hygiene | 3 | 3 | 10 | — |
 | 10 | Types and public contract | 3 | 3 | 10 | — |
-| | **Weighted total** | **3.1** | **6.30** | **10** | |
+| | **Weighted total** | **3.1** | **7.55** | **10** | |
 
 Weights: §1 20%, §2 15%, §3 15%, §4 10%, §5 5%, §6 10%, §7 15%, §8 5%, §9 3%, §10 2%.
 
@@ -114,6 +114,63 @@ Per file, statements / branches, from the audit baseline:
    channel open but reopened it by writing `this.stoped`; the flag is `isStopped`. Everything
    published on a channel that had been through `resetBridgeChannels()` — the path `logout()`
    takes — was silently dropped.
+
+### §3 — Per-package coverage: 2 → 10
+
+Six packages that ship to npm had no test at all, and `create-app` — the scaffolder every new
+user meets first — had none either. Every package now has its own vitest harness with its test
+dependencies declared explicitly, and `include: ['src/**/*.js']` so the report counts every
+source file rather than only the ones a test happened to import.
+
+| Package | Tests | Statements / branches |
+|---|---:|---|
+| `core-plugin` | 28 | 100 / 100 |
+| `element-controller` | 22 | 100 / 94.7 |
+| `page-controller` | 18 | 100 / 91.7 |
+| `page-mixin` | 20 | 100 / 91.7 |
+| `page-transitions` | 43 | 100 / 96.8 |
+| `create-app` | 15 | smoke test, see below |
+
+`create-app` carries no coverage gate on purpose: the suite runs the published entry point as a
+child process, the way `npx @open-cells/create-app` does, so the generator's statements execute
+outside the test process. What it proves is that both templates generate an application that is
+actually there and well formed — line coverage would not tell us that either way.
+
+**The defect it found:** `CorePlugin.addCellsCoreToPrototype()` called the bare identifier
+`_plugCellsCoreToPrototype(...)`, which is not in scope. Every call threw a `ReferenceError`
+instead of installing the API on the prototype.
+
+`page-mixin` had declared `@open-wc/testing` and `lit-element` as devDependencies without having
+a single test; they are gone.
+
+Every workspace now runs from the root, in sequence:
+
+```
+$ npm test
+@open-cells/core                 611 passed (20 files)
+@open-cells/core-plugin           28 passed (2 files)
+@open-cells/create-app            15 passed (1 file)
+@open-cells/element-controller    22 passed (1 file)
+@open-cells/localize              42 passed (7 files)
+@open-cells/page-controller       18 passed (1 file)
+@open-cells/page-mixin            20 passed (1 file)
+@open-cells/page-transitions      43 passed (3 files)
+@open-cells/recipes-app           18 passed (e2e)
+                                 ---
+                                 817 passed
+exit: 0
+```
+
+That is up from 105 tests actually running at the time of the audit.
+
+### §8 — Test infrastructure: 5 → 6 (partial)
+
+The root `test` script no longer goes through wireit. wireit ran the workspace suites
+concurrently and, with nine of them driving real browsers, the machine ran out of memory — the
+run died with `VirtualAlloc ... failed` before a single suite finished. Since no wireit caching
+was configured for tests, it was providing parallelism and nothing else. `npm run test
+--workspaces --if-present` runs them in sequence, which is what this workload needs. Still open
+for §8: the combined coverage report, the browser matrix, and the shared helpers.
 
 ### §4 — `core` test quality: 4 → 7 (partial)
 
