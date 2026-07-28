@@ -349,12 +349,21 @@ export class BridgeChannelManager {
         c.node.id === mainNodeId,
     );
 
+    /**
+     * RxJS 7 renamed Subscription's child list from `_subscriptions` to `_finalizers`.
+     * Reading only the old name made every out connection silently disappear.
+     *
+     * @param {Subscriptor} c
+     * @returns {WCSubscription[]}
+     */
+    const publicationsOf = c => c.publications?._finalizers || c.publications?._subscriptions;
+
     /** @type {OutConnection[]} */
     const outConnections =
       crossComponents
         .map(c =>
           /** @type {WCSubscription[]} */
-          c.publications?._subscriptions?.map((/** @type {WCSubscription} */ s) => {
+          publicationsOf(c)?.map((/** @type {WCSubscription} */ s) => {
             /** @type {OutConnection} */
             return {
               channel: s.channelName || '',

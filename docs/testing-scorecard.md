@@ -10,16 +10,16 @@ not moved.
 | # | Section | Baseline | Current | Target | Moved by |
 |---|---|---:|---:|---:|---|
 | 1 | Runnable suite | 3 | **10** | 10 | `test/s1-runnable-suite` |
-| 2 | `core` coverage | 4 | 4 | 10 | — |
+| 2 | `core` coverage | 4 | **10** | 10 | `test/s2-core-coverage` |
 | 3 | Per-package coverage | 2 | 2 | 10 | — |
-| 4 | `core` test quality | 4 | 4 | 10 | — |
+| 4 | `core` test quality | 4 | **7** | 10 | `test/s2-core-coverage` (partial) |
 | 5 | `localize` tests | 9 | 9 | 10 | — |
 | 6 | E2E tests | 2 | 2 | 10 | — |
-| 7 | CI and quality gates | 1 | **4** | 10 | `test/s1-runnable-suite` (partial) |
+| 7 | CI and quality gates | 1 | **5** | 10 | `test/s1-runnable-suite`, `test/s2-core-coverage` (partial) |
 | 8 | Test infrastructure | 5 | 5 | 10 | — |
 | 9 | Test dependency hygiene | 3 | 3 | 10 | — |
 | 10 | Types and public contract | 3 | 3 | 10 | — |
-| | **Weighted total** | **3.1** | **4.95** | **10** | |
+| | **Weighted total** | **3.1** | **6.30** | **10** | |
 
 Weights: §1 20%, §2 15%, §3 15%, §4 10%, §5 5%, §6 10%, §7 15%, §8 5%, §9 3%, §10 2%.
 
@@ -30,9 +30,8 @@ Weights: §1 20%, §2 15%, §3 15%, §4 10%, §5 5%, §6 10%, §7 15%, §8 5%, �
 | `@open-cells/core` | 90% | 85% |
 | `@open-cells/localize` | 95% | 95% |
 
-`packages/core/vite.config.ts` carries a **ratchet**: it is set to the level currently achieved and
-raised by every PR that adds coverage. It is never lowered. It currently sits at 57 lines /
-37 branches — the level the suite reached the day it first ran.
+`packages/core/vite.config.ts` carries a **ratchet**: raise it in the PR that adds the coverage,
+never lower it to make a run pass. It now sits at the agreed target and CI fails below it.
 
 ## Evidence
 
@@ -46,41 +45,88 @@ Playwright's `webServer` builds `recipes-app` with `tsc`, which failed with 9 er
 $ npm run -w @open-cells/core test
  Test Files  19 passed (19)
       Tests  105 passed (105)
-   Duration  22.19s
-
-File               | % Stmts | % Branch | % Funcs | % Lines |
 All files          |   56.18 |    37.41 |   53.01 |   57.04 |
-exit: 0
-```
 
-```
 $ npm exec -w @open-cells/recipes-app -- tsc --noEmit
 tsc exit: 0
-```
 
-```
 $ npm run -w @open-cells/recipes-app test
   18 passed (38.5s)
-```
 
-```
 $ npm test
 ✅ Ran 2 scripts and skipped 0 in 44,7s.
+```
+
+Carried forward: the split Playwright toolchain (§9) and the e2e suite's dependency on the live
+TheMealDB API (§6).
+
+### §2 — `core` coverage: 4 → 10
+
+```
+$ npm run -w @open-cells/core test
+ Test Files  20 passed (20)
+      Tests  611 passed (611)
+
+Statements   : 92.15%
+Branches     : 85.38%
+Functions    : 91.58%
+Lines        : 92.57%
+exit: 0
+
+$ npm test
+✅ Ran 2 scripts and skipped 0 in 52,3s.
 exit: 0
 ```
 
-Two findings surfaced while doing this and are carried forward rather than fixed here:
+The larger unit suite also exposed a scheduling problem: wireit ran `core:test` and
+`recipes-app:test` concurrently, and two browser stacks at once crash the browser process on
+Windows (`STATUS_STACK_BUFFER_OVERRUN`). Both suites passed alone and the pair failed. The e2e
+script now declares a wireit dependency on the unit suite so they run in sequence.
 
-- **The Playwright toolchain is split.** The tree resolves 1.58.2 for vitest's browser provider and
-  `@web/test-runner-playwright`, and 1.62.0 for `recipes-app`'s `@playwright/test`, so browsers must
-  be installed per workspace. npm `overrides` cannot fix it — they do not apply to a workspace's
-  direct dependencies. Tracked in §9.
-- **The e2e suite still calls the live TheMealDB API**, so "green" depends on a third-party service
-  being up. Tracked in §6.
+Per file, statements / branches, from the audit baseline:
 
-### §7 — CI and quality gates: 1 → 4 (partial)
+| File | Before | After |
+|---|---|---|
+| `router.js` | 52.91 / 41.74 | 89.86 / 80.95 |
+| `component-connector.js` | 25.00 / 8.97 | 89.60 / 87.34 |
+| `bridge.js` | 53.33 / 38.01 | 89.00 / 86.77 |
+| `external/event-emitter.js` | 45.96 / 30.30 | 80.64 / 70.90 |
+| `manager/bridge-channels.js` | 46.57 / 7.69 | 100 / 73.33 |
+| `manager/action-channels.js` | 25.80 / 0 | 100 / 94.11 |
+| `manager/template.js` | 53.94 / 29.72 | 98.68 / 91.89 |
+| `manager/storage.js` | 77.27 / 60.00 | 100 / 100 |
+| `manager/post-message.js` | 36.36 / 20.00 | 100 / 100 |
+| `adapter/element-adapter.js` | 25.00 / 11.11 | 100 / 96.29 |
+| `navigation-stack.js` | 67.50 / 64.70 | 100 / 100 |
+| `route.js`, `template.js`, `utils.js` | — | 100 / 100 |
 
-CI ran no tests at all; it ran `npm run build` and nothing else. It now installs browsers and runs
-the full suite on every push. The rest of the section — an ungated `npm publish` that swallows its
-own failures, coverage reporting, the local husky/lint-staged/commitlint gate, and branch
-protection — is untouched and keeps this section short of its target.
+#### Three defects the coverage work uncovered
+
+1. **`_hasPublisher()` never matched.** RxJS renamed `Subscription`'s child list from
+   `_subscriptions` to `_finalizers` in v7 and the `|| []` fallback turned the miss into a silent
+   `false`, so `addPublication()` registered a duplicate DOM listener — and a duplicate channel
+   emission — on every call. The same read in `getCCSubscriptions()` made every out connection
+   disappear.
+2. **`Router.stop()` did not stop the router.** `start()` attached its handler with
+   `subscription.forEach(...)`, which returns a Promise rather than a Subscription, so nothing
+   held a handle to the location pipeline. Every bridge built in a page left another one alive.
+3. **A reset channel was dead for good.** `Channel.unsubscribe()` is documented as keeping the
+   channel open but reopened it by writing `this.stoped`; the flag is `isStopped`. Everything
+   published on a channel that had been through `resetBridgeChannels()` — the path `logout()`
+   takes — was silently dropped.
+
+### §4 — `core` test quality: 4 → 7 (partial)
+
+Moved as a side effect of §2: the duplicated `router.test.js` (which declared `describe('Router')`
+but exercised `Route`) is gone, the tautological `channel.test.js` case that stubbed a method and
+asserted the stub was called is gone, the three assertion-free `subscriptor.test.js` cases now
+assert, and the `// Add more tests` placeholders are filled in. Still open for §4: the remaining
+`describe.skip` blocks, the shared `test/helpers/`, and running the suite under
+`--sequence.shuffle`.
+
+### §7 — CI and quality gates: 1 → 5 (partial)
+
+CI ran no tests at all; it now installs browsers, runs the full suite on every push, and fails
+when coverage drops below 90% lines / 85% branches. Still open: the ungated `npm publish` that
+swallows its own failures, coverage reporting, the local husky/lint-staged/commitlint gate, and
+branch protection.

@@ -60,6 +60,13 @@ let _useHistory = false;
 let _routes = {};
 /** @type {Subscription | null} */
 let _disposables;
+/**
+ * Subscription to the location source. Kept apart from `_disposables` because that one is a
+ * SerialSubscription, which only ever holds a single teardown.
+ *
+ * @type {Subscription | null}
+ */
+let _routeSubscription = null;
 /** @type {Route} */
 let _currentRoute;
 /** @type {Route | null} */
@@ -594,7 +601,10 @@ export class Router {
         }),
       );
 
-      subscription.forEach(route => {
+      // subscribe(), not forEach(): forEach returns a Promise, so the subscription to the
+      // location source could never be cancelled and stop() left the router still reacting
+      // to every hash change.
+      _routeSubscription = subscription.subscribe(route => {
         if (!this.hashIsDirty) {
           if (route) {
             // const currentRouteName = this.currentRoute ? this.currentRoute.name : undefined;
@@ -664,6 +674,10 @@ export class Router {
 
   /** Stops the router and cleans up any resources. */
   stop() {
+    if (_routeSubscription) {
+      _routeSubscription.unsubscribe();
+      _routeSubscription = null;
+    }
     if (_disposables) {
       _disposables.unsubscribe();
       _disposables = null;

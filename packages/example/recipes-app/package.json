@@ -13,7 +13,15 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "npm run build && vite preview",
-    "test": "playwright test"
+    "test": "wireit",
+    "test:e2e": "playwright test"
+  },
+  "wireit": {
+    "test": {
+      "command": "playwright test",
+      "//": "Depends on the core unit suite so wireit runs them one after the other. Both drive real browsers, and running the two stacks at once crashes the browser process on Windows (STATUS_STACK_BUFFER_OVERRUN). Use `test:e2e` to run just this suite.",
+      "dependencies": ["../../core:test"]
+    }
   },
   "dependencies": {
     "@material/web": "^1.2.0",
