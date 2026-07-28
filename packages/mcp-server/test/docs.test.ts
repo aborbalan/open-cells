@@ -75,8 +75,43 @@ describe('searchDocs', () => {
   });
 
   it('answers a natural language question about the lifecycle', () => {
-    const ids = searchDocs('when does onPageEnter run', 5).map(hit => hit.id);
-    expect(ids).toContain('page-controller.onPageEnter');
+    expect(searchDocs('when does onPageEnter run')[0]?.id).toBe('page-controller.onPageEnter');
+  });
+
+  it('is decided by the distinctive word of a question, not the common one', () => {
+    // Every page document mentions "page" and "route"; only one is about "params".
+    expect(searchDocs('how do I react to route params changing in a page')[0]?.id).toBe(
+      'page-controller.params',
+    );
+  });
+
+  it('answers questions phrased as tasks', () => {
+    expect(searchDocs('how do I subscribe to a channel from a page')[0]?.id).toBe('core.subscribe');
+    expect(searchDocs('block a navigation when the user is not logged in')[0]?.id).toBe(
+      'core.InterceptorFunction',
+    );
+    expect(searchDocs('how do I start the application')[0]?.id).toBe('core.startApp');
+  });
+
+  it('finds a symbol however the query spells it', () => {
+    for (const query of ['onPageEnter', 'on page enter', 'on-page-enter']) {
+      expect(searchDocs(query)[0]?.id, query).toBe('page-controller.onPageEnter');
+    }
+  });
+
+  it('matches singular and plural forms', () => {
+    expect(searchDocs('inbounds')[0]?.id).toBe('element-controller.static inbounds');
+    expect(searchDocs('channels')[0]?.id).toBeTruthy();
+    expect(searchDocs('param')[0]?.id).toBe('page-controller.params');
+  });
+
+  it('finds configuration options by name', () => {
+    expect(searchDocs('viewLimit')[0]?.id).toBe('core.CellsConfig');
+    expect(searchDocs('notFound')[0]?.id).toBe('core.RouteDefinition');
+  });
+
+  it('still answers when the query is only stop words', () => {
+    expect(searchDocs('what is the', 3).length).toBeGreaterThan(0);
   });
 
   it('respects the limit and returns nothing for gibberish', () => {

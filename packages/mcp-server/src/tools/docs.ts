@@ -160,7 +160,7 @@ Don't use when: you are looking for a concept rather than a symbol — use open_
       title: 'Search the Open Cells documentation',
       description: `Search the Open Cells API reference and concept guides.
 
-Ranks symbol names and signatures above prose, so a query like 'publish' returns the API entry before the guide that mentions it. The guides cover project anatomy, routing and navigation, state channels and bindings, the page lifecycle, and the startApp configuration.
+Takes natural language questions: terms are weighted by how rare they are in the documentation and by where they hit, so a symbol name beats the same word in prose and the distinctive word of a question decides the answer ('how do I react to route params changing in a page' is resolved by 'params', not by 'page'). Spelling of a symbol does not matter — 'onPageEnter', 'on page enter' and 'on-page-enter' find the same entry. The guides cover project anatomy, routing and navigation, state channels and bindings, the page lifecycle, and the startApp configuration.
 
 Args:
   - query (string): free text, e.g. 'how do I subscribe to a channel'
