@@ -1,5 +1,26 @@
 # @open-cells/element-controller
 
+## 1.0.5
+
+### Patch Changes
+
+- Updated dependencies [8db69be]
+- Updated dependencies [3b59f3d]
+  - @open-cells/core-plugin@1.2.3
+
+## 1.0.5-rc.1
+
+### Patch Changes
+
+- Updated dependencies [8db69be]
+  - @open-cells/core-plugin@1.2.3-rc.2
+
+## 1.0.5-rc.0
+
+### Patch Changes
+
+- @open-cells/core-plugin@1.2.3-rc.0
+
 ## 1.0.4
 
 ### Patch Changes

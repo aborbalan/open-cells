@@ -22,128 +22,80 @@ jobs:
       - name: Publish core package on NPM.js
         working-directory: ./packages/core
         run: |
-          VERSION=$(jq -r .version < package.json)
-          if npm info @open-cells/core@$VERSION > /dev/null 2>&1; then
+          if npm info @open-cells/core@$(jq -r .version < package.json) > /dev/null 2>&1; then
             echo "Version already published"
           else
-            if [[ "$VERSION" == *-* ]]; then
-              TAG=$(echo "$VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+).*/\1/')
-            else
-              TAG="latest"
-            fi
-            npm publish --tag "$TAG" || echo "Publish failed"
+            npm publish || echo "Publish failed"
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
       - name: Publish core-plugin package on NPM.js
         working-directory: ./packages/core-plugin
         run: |
-          VERSION=$(jq -r .version < package.json)
-          if npm info @open-cells/core-plugin@$VERSION > /dev/null 2>&1; then
+          if npm info @open-cells/core-plugin@$(jq -r .version < package.json) > /dev/null 2>&1; then
             echo "Version already published"
           else
-            if [[ "$VERSION" == *-* ]]; then
-              TAG=$(echo "$VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+).*/\1/')
-            else
-              TAG="latest"
-            fi
-            npm publish --tag "$TAG" || echo "Publish failed"
+            npm publish || echo "Publish failed"
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
       - name: Publish element-controller package on NPM.js
         working-directory: ./packages/element-controller
         run: |
-          VERSION=$(jq -r .version < package.json)
-          if npm info @open-cells/element-controller@$VERSION > /dev/null 2>&1; then
+          if npm info @open-cells/element-controller@$(jq -r .version < package.json) > /dev/null 2>&1; then
             echo "Version already published"
           else
-            if [[ "$VERSION" == *-* ]]; then
-              TAG=$(echo "$VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+).*/\1/')
-            else
-              TAG="latest"
-            fi
-            npm publish --tag "$TAG" || echo "Publish failed"
+            npm publish || echo "Publish failed"
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
       - name: Publish page-controller package on NPM.js
         working-directory: ./packages/page-controller
         run: |
-          VERSION=$(jq -r .version < package.json)
-          if npm info @open-cells/page-controller@$VERSION > /dev/null 2>&1; then
+          if npm info @open-cells/page-controller@$(jq -r .version < package.json) > /dev/null 2>&1; then
             echo "Version already published"
           else
-            if [[ "$VERSION" == *-* ]]; then
-              TAG=$(echo "$VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+).*/\1/')
-            else
-              TAG="latest"
-            fi
-            npm publish --tag "$TAG" || echo "Publish failed"
+            npm publish || echo "Publish failed"
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
       - name: Publish page-mixin package on NPM.js
         working-directory: ./packages/page-mixin
         run: |
-          VERSION=$(jq -r .version < package.json)
-          if npm info @open-cells/page-mixin@$VERSION > /dev/null 2>&1; then
+          if npm info @open-cells/page-mixin@$(jq -r .version < package.json) > /dev/null 2>&1; then
             echo "Version already published"
           else
-            if [[ "$VERSION" == *-* ]]; then
-              TAG=$(echo "$VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+).*/\1/')
-            else
-              TAG="latest"
-            fi
-            npm publish --tag "$TAG" || echo "Publish failed"
+            npm publish || echo "Publish failed"
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
       - name: Publish page-transitions package on NPM.js
         working-directory: ./packages/page-transitions
         run: |
-          VERSION=$(jq -r .version < package.json)
-          if npm info @open-cells/page-transitions@$VERSION > /dev/null 2>&1; then
+          if npm info @open-cells/page-transitions@$(jq -r .version < package.json) > /dev/null 2>&1; then
             echo "Version already published"
           else
-            if [[ "$VERSION" == *-* ]]; then
-              TAG=$(echo "$VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+).*/\1/')
-            else
-              TAG="latest"
-            fi
-            npm publish --tag "$TAG" || echo "Publish failed"
+            npm publish || echo "Publish failed"
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
       - name: Publish localize package on NPM.js
         working-directory: ./packages/localize
         run: |
-          VERSION=$(jq -r .version < package.json)
-          if npm info @open-cells/localize@$VERSION > /dev/null 2>&1; then
+          if npm info @open-cells/localize@$(jq -r .version < package.json) > /dev/null 2>&1; then
             echo "Version already published"
           else
-            if [[ "$VERSION" == *-* ]]; then
-              TAG=$(echo "$VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+).*/\1/')
-            else
-              TAG="latest"
-            fi
-            npm publish --tag "$TAG" || echo "Publish failed"
+            npm publish || echo "Publish failed"
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
       - name: Publish create-app package on NPM.js
         working-directory: ./packages/create-app
         run: |
-          VERSION=$(jq -r .version < package.json)
-          if npm info @open-cells/create-app@$VERSION > /dev/null 2>&1; then
+          if npm info @open-cells/create-app@$(jq -r .version < package.json) > /dev/null 2>&1; then
             echo "Version already published"
           else
-            if [[ "$VERSION" == *-* ]]; then
-              TAG=$(echo "$VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+).*/\1/')
-            else
-              TAG="latest"
-            fi
-            npm publish --tag "$TAG" || echo "Publish failed"
+            npm publish || echo "Publish failed"
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
