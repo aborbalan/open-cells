@@ -48,8 +48,10 @@ export type {
   TemplateNode,
   TemplateSpec,
 } from './manager/template';
+// `Bridge` is a class `src/index.js` exports as a value, so it is exported as one here:
+// `export type` made `new Bridge()` fail to compile for every consumer.
+export { Bridge } from './bridge';
 export type {
-  Bridge,
   BridgeAPI,
   CellsConfig,
   EventSubscription,

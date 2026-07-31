@@ -15,72 +15,139 @@
  */
 
 import { expect } from '@esm-bundle/chai';
-import sinon from 'sinon';
 import { Template } from '../src/template.js';
 
 describe('Template', () => {
   let template;
-  let spec;
 
   beforeEach(() => {
-    spec = { tagName: 'div' };
-    template = new Template(spec);
+    template = new Template({ tagName: 'div' });
   });
 
-  it('should create a new Template instance', () => {
-    expect(template).to.exist;
-    expect(template.node.tagName).to.equal('DIV');
+  describe('#constructor', () => {
+    it('should build its own node from a tag name', () => {
+      expect(template.node.tagName).to.equal('DIV');
+      expect(template.type).to.equal('TEMPLATE');
+      expect(template.name).to.equal('');
+    });
+
+    it('should adopt a node it is handed', () => {
+      const node = document.createElement('section');
+      expect(new Template({ node }).node).to.equal(node);
+    });
+
+    it('should prefer the given node over the tag name', () => {
+      const node = document.createElement('section');
+      expect(new Template({ node, tagName: 'div' }).node).to.equal(node);
+    });
+
+    it('should throw when given neither a node nor a tag name', () => {
+      expect(() => new Template({})).to.throw('Template must have a node or a tagName');
+    });
   });
 
-  it('should throw an error if no node or tagName is provided', () => {
-    expect(() => new Template({})).to.throw('Template must have a node or a tagName');
+  describe('#getZone', () => {
+    it('should find a zone by id inside the template', () => {
+      const zone = document.createElement('div');
+      zone.id = 'content';
+      template.node.appendChild(zone);
+      expect(template.getZone('content')).to.equal(zone);
+    });
+
+    it('should return the template node itself when no zone is named', () => {
+      expect(template.getZone(undefined)).to.equal(template.node);
+    });
+
+    it('should fall back to the template node when the zone is not there', () => {
+      expect(template.getZone('missing')).to.equal(template.node);
+    });
   });
 
-  it('should get the zone node in the template', () => {
-    const zone = document.createElement('div');
-    zone.id = 'test';
-    template.node.appendChild(zone);
-    expect(template.getZone('test')).to.equal(zone);
+  describe('state', () => {
+    it('should mark the template as cached', () => {
+      template.cache();
+      expect(template.node.getAttribute('state')).to.equal('cached');
+    });
+
+    it('should mark the template as active', () => {
+      template.activate();
+      expect(template.node.getAttribute('state')).to.equal('active');
+    });
+
+    it('should mark the template as inactive', () => {
+      template.deactivate();
+      expect(template.node.getAttribute('state')).to.equal('inactive');
+    });
   });
 
-  it('should set the attribute cache in the template node to cached', () => {
-    template.cache();
-    expect(template.node.getAttribute('state')).to.equal('cached');
+  describe('attributes', () => {
+    it('should set an attribute on the template node', () => {
+      template._setAttribute('test', 'value');
+      expect(template.node.getAttribute('test')).to.equal('value');
+    });
+
+    it('should read an attribute back', () => {
+      template.node.setAttribute('test', 'value');
+      expect(template._getAttribute('test')).to.equal('value');
+    });
+
+    it('should read a missing attribute as an empty string', () => {
+      expect(template._getAttribute('missing')).to.equal('');
+    });
+
+    it('should complain when the node cannot hold attributes', () => {
+      const broken = new Template({ node: document.createElement('div') });
+      broken.node = { tagName: 'DIV' };
+      expect(() => broken._setAttribute('state', 'active')).to.throw('has no valid template');
+    });
+
+    it('should complain when reading from a node that cannot hold attributes', () => {
+      const broken = new Template({ node: document.createElement('div') });
+      broken.node = { tagName: 'DIV' };
+      expect(() => broken._getAttribute('state')).to.throw('has no valid template');
+    });
   });
 
-  it('should set the attribute cache in the template node to active', () => {
-    template.activate();
-    expect(template.node.getAttribute('state')).to.equal('active');
+  describe('#_getTemplate', () => {
+    it('should return a plain node as the template', () => {
+      expect(template._getTemplate(template.node)).to.equal(template.node);
+    });
+
+    it('should look inside a page for its cells-template', () => {
+      const page = document.createElement('home-page');
+      const inner = document.createElement('cells-template');
+      page.appendChild(inner);
+      expect(template._getTemplate(page)).to.equal(inner);
+    });
+
+    it('should accept a node marked with data-cells-type', () => {
+      const page = document.createElement('home-page');
+      const inner = document.createElement('div');
+      inner.setAttribute('data-cells-type', 'template');
+      page.appendChild(inner);
+      expect(template._getTemplate(page)).to.equal(inner);
+    });
+
+    it('should fall back to the page itself when it holds no template', () => {
+      const page = document.createElement('home-page');
+      expect(template._getTemplate(page)).to.equal(page);
+    });
+
+    it('should look in the shadow root when the page has one', () => {
+      const page = document.createElement('shadow-page');
+      const root = page.attachShadow({ mode: 'open' });
+      const inner = document.createElement('cells-template');
+      root.appendChild(inner);
+      expect(template._getTemplate(page)).to.equal(inner);
+    });
   });
 
-  it('should set the attribute cache in the template node to inactive', () => {
-    template.deactivate();
-    expect(template.node.getAttribute('state')).to.equal('inactive');
-  });
-
-  it('should set given value to corresponding attribute name of current template', () => {
-    template._setAttribute('test', 'value');
-    expect(template.node.getAttribute('test')).to.equal('value');
-  });
-
-  it('should get given attribute value from the current template', () => {
-    template.node.setAttribute('test', 'value');
-    expect(template._getAttribute('test')).to.equal('value');
-  });
-
-  it('should return current template based on node type', () => {
-    const node = template._getTemplate(template.node);
-    expect(node).to.equal(template.node);
-  });
-
-  it('should configure the Template with the provided configuration', () => {
-    const config = {
-      name: 'test',
-      template: { id: 'templateId', name: 'templateName' },
-    };
-    template.config(config);
-    expect(template.name).to.equal('test');
-    expect(template.node.id).to.equal('templateId');
-    expect(template.node.name).to.equal('templateName');
+  describe('#config', () => {
+    it('should name the template and its node', () => {
+      template.config({ name: 'home', template: { id: 'templateId', name: 'templateName' } });
+      expect(template.name).to.equal('home');
+      expect(template.node.id).to.equal('templateId');
+      expect(template.node.name).to.equal('templateName');
+    });
   });
 });

@@ -105,7 +105,9 @@ export class CorePlugin {
   }
 
   addCellsCoreToPrototype(element) {
-    _plugCellsCoreToPrototype(element, false);
+    // Was calling the bare identifier, which is not in scope: every call threw a
+    // ReferenceError instead of installing the API on the prototype.
+    this._plugCellsCoreToPrototype(element, false);
   }
 }
 

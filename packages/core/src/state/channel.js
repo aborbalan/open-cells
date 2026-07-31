@@ -89,18 +89,23 @@ export class Channel extends ReplaySubject {
   //   }
   // }
 
-  /** 
-   * Unsubscribes all observers from the channel keeping the channel open.
-   */
+  /** Unsubscribes all observers from the channel keeping the channel open. */
   unsubscribe() {
     super.unsubscribe();
+    // Reopen the channel. RxJS marks a Subject as closed *and* stopped when it is
+    // unsubscribed, and drops its observer lists. The flag is `isStopped`; writing to
+    // `stoped` left the subject stopped, so a channel that had been reset never emitted
+    // again and everything published after a logout was silently dropped.
     this.closed = false;
-    this.stoped = false;
+    this.isStopped = false;
+    this.observers = [];
+    // `currentObservers` is private in RxJS's declarations; clearing it is what reopens the
+    // subject, so the cast is deliberate rather than a way around a type error.
+    const internals = /** @type {{ currentObservers: unknown }} */ (/** @type {unknown} */ (this));
+    internals.currentObservers = null;
   }
 
-  /** 
-   * Unsubscribes all observers from the channel and closes it.
-   */
+  /** Unsubscribes all observers from the channel and closes it. */
   close() {
     super.unsubscribe();
   }

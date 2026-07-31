@@ -16,9 +16,73 @@ We sincerely appreciate your understanding and cooperation in this matter. Your 
 
 Please note that while we are not currently accepting pull requests, we plan to revisit this decision in the future as our project evolves. We appreciate your patience and understanding.
 
+## Running the tests
+
+Every suite runs in a real browser, so the browsers have to be fetched once after installing.
+The monorepo currently resolves more than one Playwright version — vitest's browser provider and
+`@playwright/test` do not agree on one — so the download has to be triggered per workspace:
+
+```sh
+npm ci
+npx playwright install --with-deps chromium
+npm exec -w @open-cells/recipes-app -- playwright install --with-deps chromium webkit
+```
+
+Then, from the repository root:
+
+```sh
+npm test
+```
+
+That runs every workspace's suite **one after the other** (`npm run test --workspaces`). Almost
+all of them drive a real browser, and starting several at once exhausts the machine, so the
+sequential order is deliberate — do not parallelise it.
+
+To run a single workspace:
+
+```sh
+npm run -w @open-cells/core test              # unit tests + coverage
+npm run -w @open-cells/localize test          # web-test-runner
+npm run -w @open-cells/page-transitions test  # any other package
+npm run -w @open-cells/create-app test        # scaffolder smoke test, runs in Node
+npm run -w @open-cells/recipes-app test       # end-to-end
+```
+
+`@open-cells/core` enforces a coverage floor on every run. It is a **ratchet**: raise it in the PR
+that adds the coverage, never lower it to make a run pass. Current status and targets live in
+[`docs/testing-scorecard.md`](./docs/testing-scorecard.md).
+
+## Linting and commits
+
+`npm ci` installs git hooks through husky. Two of them run:
+
+- **pre-commit** runs `lint-staged`, which lints and formats **only the files being committed**
+  (`eslint --fix` then `prettier --write`). It does not run the test suite: that drives real
+  browsers and takes minutes, so it belongs in CI.
+- **commit-msg** runs `commitlint`, which requires [Conventional
+  Commits](https://www.conventionalcommits.org/en/v1.0.0/) with the package as the scope:
+
+  ```
+  fix(core): stop dropping values published after a channel reset
+  ```
+
+To check the whole repository yourself:
+
+```sh
+npm run lint        # eslint over everything
+npm run lint:fix    # and fix what can be fixed
+npm run format      # prettier over everything
+```
+
+Formatting is being adopted file by file rather than in one sweep: `npm run format` would
+rewrite around sixty files that predate the configuration, so CI does not check formatting yet.
+Anything you touch gets formatted on commit.
+
+To skip the hooks for a work-in-progress commit, `git commit --no-verify`. CI still checks.
+
 <!--
 
-## Getting Started 
+## Getting Started
 
 First, create a fork of the [BBVA/open-cells](https://github.com/BBVA/open-cells) repository by hitting the `fork` button on the GitHub page.
 

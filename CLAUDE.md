@@ -61,23 +61,46 @@ the monorepo root finds several routes files and the tool will ask you to disamb
 ```sh
 npm install                              # workspaces
 npm run build                            # wireit graph: core, controllers, mcp-server, recipes-app
-npm run test                             # core (vitest, browser), recipes-app (playwright), mcp-server
+npm run test                             # the three gates below, then every workspace suite
+npm run lint                             # eslint, flat config, zero errors
+npm run coverage:report                  # merges every workspace's lcov into one report
 npm run build -w @open-cells/mcp-server  # tsc
 npm run test  -w @open-cells/mcp-server  # vitest, node
 npx prettier --write <files>             # repo style: single quotes, 100 columns, trailing commas
 ```
 
+Browsers come from Playwright, one version for the whole monorepo:
+`npx playwright install --with-deps chromium firefox webkit`.
+
 Changes to published packages need a changeset: `npm run changeset`.
+
+## Gates
+
+`npm test` runs these before any suite, so a failure names itself:
+
+- `npm run test:toolchain` — exactly one version of each test runner, and no test or test config
+  importing something its package does not declare.
+- `npm run test:types` — core's `typchk`, plus `types-contract/` compiled the way a consumer
+  compiles (strict, no access to the sources), plus every declared entry point checked to be
+  inside the tarball `npm publish` would produce.
+
+Browser selection is shared by all three runners (vitest, web-test-runner, Playwright) through
+`test-browsers.mjs`: `OPEN_CELLS_BROWSERS=chromium,webkit` narrows the matrix, and
+`OPEN_CELLS_CHROMIUM_EXECUTABLE=/path/to/chrome` points at a browser the environment already
+provides instead of one Playwright downloads.
+
+The coverage thresholds in each `vite.config.ts` are a **ratchet**: raise them in the pull
+request that adds the coverage, never lower them to make a run pass.
 
 ## Known red, do not chase
 
-These fail on `main` and are unrelated to whatever you are working on:
+- `npx prettier --check .` fails on 62 files that predate the configuration. `lint-staged`
+  formats each file as it is touched, so the repository converges instead; it is not a CI gate.
+- `npm audit` reports 34 advisories, almost all transitive through eslint and vite.
 
-- `npm run build -w @open-cells/recipes-app` — `tsc` errors on `_categoriesList` / `_likedRecipes`
-  (the `inbounds` getters described above) and on the `createRenderRoot` return type.
-- `npm run typchk -w @open-cells/core` — the hand written `types/` are out of sync with `src/`.
-- Root ESLint config is `.eslintrc.json` while ESLint 9 defaults to flat config, so `npm run lint`
-  does not work as-is in the packages.
+Everything else is green. The three entries that used to live here — the `recipes-app` build,
+`npm run typchk -w @open-cells/core` and `npm run lint` — were fixed by the testing audit
+(`docs/testing-scorecard.md`). If one of them fails now, it is your change.
 
 ## Repository conventions
 
