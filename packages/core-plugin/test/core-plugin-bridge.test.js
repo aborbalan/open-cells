@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2024 Bilbao Vizcaya Argentaria, S.A.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,80 +16,40 @@
 
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
-import { Bridge } from '@open-cells/core';
-import { eventManager } from '@open-cells/core/src/manager/events.js';
+import { useBridge } from '@open-cells/core/test/helpers/bridge-fixture.js';
 import { CorePlugin, plugCellsCore } from '../src/CorePlugin.js';
-
-class MockPage extends HTMLElement {
-  constructor() {
-    super();
-    this.updateComplete = Promise.resolve(true);
-    this.params = {};
-  }
-}
-
-// The bridge asks loadCellsPage() for any page whose tag is not in the registry, and that
-// route action does not return a promise. Registering the tags keeps it off that path.
-['home-page', 'category-page'].forEach(tagName => {
-  if (!customElements.get(tagName)) {
-    customElements.define(tagName, class extends MockPage {});
-  }
-});
 
 /**
  * `$bridge` is module state in core: once a Bridge exists it stays. These cases therefore
  * live apart from the ones that need the queue, which only fills while no bridge is up.
  */
 describe('CorePlugin with a live bridge', () => {
-  let bridge;
+  const bridgeFixture = useBridge({
+    routes: {
+      home: { path: '/', action: () => Promise.resolve() },
+      category: { path: '/categories/:name', action: () => Promise.resolve() },
+    },
+  });
   let corePlugin;
-  let container;
   let sandbox;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-
-    container = document.createElement('div');
-    const mainNode = document.createElement('div');
-    mainNode.setAttribute('id', '__main_node__');
-    container.appendChild(mainNode);
-    document.body.appendChild(container);
-
-    bridge = new Bridge({
-      debug: true,
-      mainNode: '__main_node__',
-      routes: {
-        home: { path: '/', action: () => {} },
-        category: { path: '/categories/:name', action: () => {} },
-      },
-    });
-
     corePlugin = new CorePlugin();
   });
 
   afterEach(() => {
-    bridge.Router.destroy();
-    bridge.Router.setInterceptorContext({});
-    bridge.ComponentConnector.unregisterAllSubscriptors(true);
-    const channels = bridge.ComponentConnector.getChannels();
-    Object.keys(channels).forEach(name => delete channels[name]);
-    // Each Bridge registers listeners on the module-level emitter and none are removed,
-    // so without this the emitter warns about a leak after twenty or so tests.
-    eventManager.removeAllListeners();
     sandbox.restore();
-    container.remove();
-    document.querySelectorAll('#cells-template-__cross').forEach(node => node.remove());
-    window.location.hash = '';
   });
 
   describe('#__callBridge', () => {
     it('should run the command on the bridge and hand back its result', () => {
-      bridge.setInterceptorContext({ token: 'abc' });
+      bridgeFixture.bridge.setInterceptorContext({ token: 'abc' });
       expect(corePlugin.__callBridge('getInterceptorContext')).to.deep.equal({ token: 'abc' });
     });
 
     it('should pass the parameters through', () => {
-      const go = sandbox.stub(bridge.Router, 'go');
+      const go = sandbox.stub(bridgeFixture.bridge.Router, 'go');
       corePlugin.__callBridge('navigate', 'category', { name: 'beef' });
       expect(go.calledOnceWith('category', { name: 'beef' })).to.be.true;
     });
@@ -139,7 +99,7 @@ describe('CorePlugin with a live bridge', () => {
 
     it('should publish an element event onto a channel', () => {
       const received = [];
-      bridge.ComponentConnector.getChannel('recipes').subscribe(evt => received.push(evt));
+      bridgeFixture.bridge.ComponentConnector.getChannel('recipes').subscribe(evt => received.push(evt));
 
       element.publishOn('recipes', element, 'picked');
       element.dispatchEvent(new CustomEvent('picked', { detail: { id: 2 } }));
@@ -149,7 +109,7 @@ describe('CorePlugin with a live bridge', () => {
     });
 
     it('should navigate through the router', () => {
-      const go = sandbox.stub(bridge.Router, 'go');
+      const go = sandbox.stub(bridgeFixture.bridge.Router, 'go');
       element.navigate('category', { name: 'beef' });
       expect(go.calledOnceWith('category', { name: 'beef' })).to.be.true;
     });
@@ -159,7 +119,7 @@ describe('CorePlugin with a live bridge', () => {
     });
 
     it('should update the subroute', () => {
-      const update = sandbox.stub(bridge.Router, 'updateSubrouteInBrowser');
+      const update = sandbox.stub(bridgeFixture.bridge.Router, 'updateSubrouteInBrowser');
       element.updateSubroute('/step-2');
       expect(update.calledOnceWith('/step-2')).to.be.true;
     });
@@ -181,7 +141,8 @@ describe('CorePlugin with a live bridge', () => {
         element.recipe = value;
       });
 
-      expect(bridge.ComponentConnector.subscriptors.has(element)).to.be.true;
+      expect(bridgeFixture.bridge.ComponentConnector.subscriptors.has(element)).to.be.true;
     });
   });
 });
+

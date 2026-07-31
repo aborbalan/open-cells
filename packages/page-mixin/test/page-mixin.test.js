@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2024 Bilbao Vizcaya Argentaria, S.A.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,7 @@
 
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
-import { Bridge } from '@open-cells/core';
-import { eventManager } from '@open-cells/core/src/manager/events.js';
+import { useBridge } from '@open-cells/core/test/helpers/bridge-fixture.js';
 import { PageMixin } from '../src/PageMixin.js';
 
 /** The mixin calls super.connectedCallback(), which HTMLElement does not have. */
@@ -43,40 +42,19 @@ class MixedPage extends PageMixin(PageBase) {
 });
 
 describe('PageMixin', () => {
-  let bridge;
-  let container;
+  const bridgeFixture = useBridge();
   let sandbox;
   let page;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-
-    container = document.createElement('div');
-    const mainNode = document.createElement('div');
-    mainNode.setAttribute('id', '__main_node__');
-    container.appendChild(mainNode);
-    document.body.appendChild(container);
-
-    bridge = new Bridge({
-      debug: true,
-      mainNode: '__main_node__',
-      routes: { home: { path: '/', action: () => Promise.resolve() } },
-    });
   });
 
   afterEach(() => {
     page?.remove();
     page = undefined;
     Object.keys(hooks).forEach(key => delete hooks[key]);
-    bridge.Router.destroy();
-    bridge.ComponentConnector.unregisterAllSubscriptors(true);
-    const channels = bridge.ComponentConnector.getChannels();
-    Object.keys(channels).forEach(name => delete channels[name]);
-    eventManager.removeAllListeners();
     sandbox.restore();
-    container.remove();
-    document.querySelectorAll('#cells-template-__cross').forEach(node => node.remove());
-    window.location.hash = '';
   });
 
   /** Mounts a page of the given tag, with the lifecycle hooks it should carry. */
@@ -154,7 +132,7 @@ describe('PageMixin', () => {
       const onPageEnter = sandbox.spy();
       mount('entering-page', { onPageEnter });
 
-      bridge.BridgeChannelManager.publishPrivatePageStatus('entering', true);
+      bridgeFixture.bridge.BridgeChannelManager.publishPrivatePageStatus('entering', true);
 
       expect(onPageEnter.calledOnce).to.be.true;
     });
@@ -163,7 +141,7 @@ describe('PageMixin', () => {
       const onPageLeave = sandbox.spy();
       mount('leaving-page', { onPageLeave });
 
-      bridge.BridgeChannelManager.publishPrivatePageStatus('leaving', false);
+      bridgeFixture.bridge.BridgeChannelManager.publishPrivatePageStatus('leaving', false);
 
       expect(onPageLeave.calledOnce).to.be.true;
     });
@@ -173,8 +151,8 @@ describe('PageMixin', () => {
       const onPageLeave = sandbox.spy();
       mount('both-page', { onPageEnter, onPageLeave });
 
-      bridge.BridgeChannelManager.publishPrivatePageStatus('both', true);
-      bridge.BridgeChannelManager.publishPrivatePageStatus('both', false);
+      bridgeFixture.bridge.BridgeChannelManager.publishPrivatePageStatus('both', true);
+      bridgeFixture.bridge.BridgeChannelManager.publishPrivatePageStatus('both', false);
 
       expect(onPageEnter.calledOnce).to.be.true;
       expect(onPageLeave.calledOnce).to.be.true;
@@ -185,14 +163,14 @@ describe('PageMixin', () => {
       mount('entering-page', { onPageEnter });
 
       expect(() =>
-        bridge.BridgeChannelManager.publishPrivatePageStatus('entering', false),
+        bridgeFixture.bridge.BridgeChannelManager.publishPrivatePageStatus('entering', false),
       ).to.not.throw();
       expect(onPageEnter.called).to.be.false;
     });
 
     it('should not subscribe a page that declares no hooks', () => {
       const element = mount('plain-page');
-      expect(bridge.ComponentConnector.subscriptors.has(element)).to.be.false;
+      expect(bridgeFixture.bridge.ComponentConnector.subscriptors.has(element)).to.be.false;
     });
   });
 
@@ -216,3 +194,4 @@ describe('PageMixin', () => {
     });
   });
 });
+

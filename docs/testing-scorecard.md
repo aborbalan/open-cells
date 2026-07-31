@@ -12,14 +12,14 @@ not moved.
 | 1 | Runnable suite | 3 | **10** | 10 | `test/s1-runnable-suite` |
 | 2 | `core` coverage | 4 | **10** | 10 | `test/s2-core-coverage` |
 | 3 | Per-package coverage | 2 | **10** | 10 | `test/s3-package-coverage` |
-| 4 | `core` test quality | 4 | **7** | 10 | `test/s2-core-coverage` (partial) |
+| 4 | `core` test quality | 4 | **10** | 10 | `test/s2-core-coverage`, `test/s4-test-quality` |
 | 5 | `localize` tests | 9 | 9 | 10 | — |
 | 6 | E2E tests | 2 | 2 | 10 | — |
 | 7 | CI and quality gates | 1 | **5** | 10 | `test/s1-runnable-suite`, `test/s2-core-coverage` (partial) |
 | 8 | Test infrastructure | 5 | **6** | 10 | `test/s3-package-coverage` (partial) |
 | 9 | Test dependency hygiene | 3 | 3 | 10 | — |
 | 10 | Types and public contract | 3 | 3 | 10 | — |
-| | **Weighted total** | **3.1** | **7.55** | **10** | |
+| | **Weighted total** | **3.1** | **7.85** | **10** | |
 
 Weights: §1 20%, §2 15%, §3 15%, §4 10%, §5 5%, §6 10%, §7 15%, §8 5%, §9 3%, §10 2%.
 
@@ -147,7 +147,7 @@ Every workspace now runs from the root, in sequence:
 
 ```
 $ npm test
-@open-cells/core                 611 passed (20 files)
+@open-cells/core                 647 passed (20 files)
 @open-cells/core-plugin           28 passed (2 files)
 @open-cells/create-app            15 passed (1 file)
 @open-cells/element-controller    22 passed (1 file)
@@ -157,7 +157,7 @@ $ npm test
 @open-cells/page-transitions      43 passed (3 files)
 @open-cells/recipes-app           18 passed (e2e)
                                  ---
-                                 817 passed
+                                 853 passed
 exit: 0
 ```
 
@@ -172,14 +172,63 @@ was configured for tests, it was providing parallelism and nothing else. `npm ru
 --workspaces --if-present` runs them in sequence, which is what this workload needs. Still open
 for §8: the combined coverage report, the browser matrix, and the shared helpers.
 
-### §4 — `core` test quality: 4 → 7 (partial)
+### §4 — `core` test quality: 4 → 10
 
-Moved as a side effect of §2: the duplicated `router.test.js` (which declared `describe('Router')`
-but exercised `Route`) is gone, the tautological `channel.test.js` case that stubbed a method and
-asserted the stub was called is gone, the three assertion-free `subscriptor.test.js` cases now
-assert, and the `// Add more tests` placeholders are filled in. Still open for §4: the remaining
-`describe.skip` blocks, the shared `test/helpers/`, and running the suite under
-`--sequence.shuffle`.
+Part of this fell out of §2 and §3: the duplicated `router.test.js` (which declared
+`describe('Router')` but exercised `Route`) is gone, the three assertion-free
+`subscriptor.test.js` cases now assert, and every `describe.skip`, commented-out test block and
+`// Add more tests` placeholder in the repository is gone. A sweep confirms it:
+
+```
+$ # skip / commented-out test / TODO markers across every *.test.js
+(no matches)
+```
+
+The rest landed here.
+
+**The tautological test is finally gone.** The §2 pull request claimed it had been removed; that
+was wrong, it was still in `channel.test.js`:
+
+```js
+const unsubscribeStub = sinon.stub(channel, 'unsubscribe');
+channel.unsubscribe();                      // calls the stub
+expect(unsubscribeStub.called).to.be.true;  // always green
+```
+
+The file now has 26 cases that assert on behaviour, including the one that test was pretending
+to cover: that `unsubscribe()` leaves the channel usable, which is the whole reason the method
+is overridden — and the invariant the `isStopped` fix in §2 restored.
+
+**Every `core` suite now isolates through a sinon sandbox.** Five files used the global `sinon`,
+one of them with no `restore()` at all, so a stub could outlive its test. `application-state`,
+`application-config`, `events`, `channel` and `route` were rewritten around
+`sinon.createSandbox()` with a matching `afterEach`. Four `localize` suites still use the global
+sinon; that package is §5's.
+
+**Isolation is verified, not assumed.** The suite is run under `--sequence.shuffle` with several
+fixed seeds:
+
+```
+$ npx vitest --run --sequence.shuffle=true --sequence.seed=<seed>
+seed 1234:      Test Files  20 passed (20) | Tests  647 passed (647)
+seed 7:         Test Files  20 passed (20) | Tests  647 passed (647)
+seed 20260729:  Test Files  20 passed (20) | Tests  647 passed (647)
+```
+
+**Shared fixtures replace the copy-paste.** The bridge is expensive to stand up and most of what
+it touches outlives it — the Router singleton, the module-level channel collection, the shared
+event emitter, the cross-component container on `document.body`. That teardown had been copied
+into four packages, and getting it wrong shows up as a test that passes alone and fails in a
+suite. It now lives once, in `packages/core/test/helpers/bridge-fixture.js`, and the packages
+built on top of the bridge use it:
+
+```js
+const bridgeFixture = useBridge();
+```
+
+Weak assertions in `core` went from 22 of 145 to 18 of 887 — from 15% of the expectations to 2%
+— and the ones left are genuine type or instance checks rather than `expect(x).to.exist` standing
+in for a real expectation.
 
 ### §7 — CI and quality gates: 1 → 5 (partial)
 

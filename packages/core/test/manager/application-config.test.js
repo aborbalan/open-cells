@@ -19,48 +19,106 @@ import sinon from 'sinon';
 import { ApplicationConfigManager } from '../../src/manager/application-config.js';
 import { ActionChannelManager } from '../../src/manager/action-channels.js';
 import { CellsStorage } from '../../src/manager/storage.js';
-import { Bridge } from '../../src/bridge.js';
 
 describe('ApplicationConfigManager', () => {
-  let actionChannelManager;
   let applicationConfigManager;
-  let storageMock;
+  let actionChannelManager;
+  let storageStub;
   let bridge;
+  let sandbox;
 
   beforeEach(() => {
-    bridge = sinon.createStubInstance(Bridge);
-    actionChannelManager = new ActionChannelManager(bridge);
+    sandbox = sinon.createSandbox();
 
-    actionChannelManager.isAllowedProperty = sinon.stub().returns(true);
-    sinon.stub(actionChannelManager, 'bridge').value({});
+    // A bare object rather than a stubbed Bridge: updateProperty writes onto it, and
+    // isAllowedProperty asks whether the target is already a function.
+    bridge = { logout() {} };
+    actionChannelManager = new ActionChannelManager({
+      BridgeChannelManager: {},
+      TemplateManager: {},
+      ...bridge,
+    });
+    actionChannelManager.bridge = bridge;
 
-    storageMock = sinon.createStubInstance(CellsStorage);
+    storageStub = sandbox.createStubInstance(CellsStorage);
+    sandbox.stub(ApplicationConfigManager.prototype, '_getAppConfigStorage').returns(storageStub);
 
     applicationConfigManager = new ApplicationConfigManager({
       ActionChannelManager: actionChannelManager,
     });
-    applicationConfigManager.storage = storageMock;
   });
 
-  it('should be created', () => {
-    expect(applicationConfigManager).to.be.an.instanceOf(ApplicationConfigManager);
+  afterEach(() => {
+    sandbox.restore();
+    delete window.AppConfig;
   });
 
-  describe('saveAppConfig', () => {
-    it('should save the application configuration', () => {
-      const config = { key1: 'value1', key2: 'value2' };
+  describe('#constructor', () => {
+    it('should keep the action channel manager it was given', () => {
+      expect(applicationConfigManager.ActionChannelManager).to.equal(actionChannelManager);
+    });
 
-      applicationConfigManager.saveAppConfig(config);
-      expect(storageMock.setItem.calledOnce).to.be.true;
+    it('should open its own storage', () => {
+      expect(applicationConfigManager.storage).to.equal(storageStub);
     });
   });
 
-  describe('loadAppConfig', () => {
-    it('should load the application configuration', () => {
-      const config = { key1: 'value1', key2: 'value2' };
-      applicationConfigManager.storage.getItem.returns(config);
+  describe('#saveAppConfig', () => {
+    it('should store the properties the bridge allows', () => {
+      applicationConfigManager.saveAppConfig({ debug: true, mainNode: 'app' });
+
+      expect(storageStub.setItem.calledOnce).to.be.true;
+      expect(storageStub.setItem.firstCall.args[0]).to.equal('config');
+      expect(storageStub.setItem.firstCall.args[1]).to.deep.equal({
+        debug: true,
+        mainNode: 'app',
+      });
+    });
+
+    it('should leave out a property that would overwrite a method', () => {
+      applicationConfigManager.saveAppConfig({ debug: true, logout: 'nope' });
+
+      expect(storageStub.setItem.firstCall.args[1]).to.deep.equal({ debug: true });
+    });
+
+    it('should store nothing when no property is allowed', () => {
+      applicationConfigManager.saveAppConfig({ logout: 'nope' });
+
+      expect(storageStub.setItem.called).to.be.false;
+    });
+
+    it('should store nothing for an empty configuration', () => {
+      applicationConfigManager.saveAppConfig({});
+
+      expect(storageStub.setItem.called).to.be.false;
+    });
+  });
+
+  describe('#loadAppConfig', () => {
+    it('should apply every stored property to the bridge', () => {
+      storageStub.getItem.returns({ debug: true, mainNode: 'app' });
+
       applicationConfigManager.loadAppConfig();
-      expect(actionChannelManager.bridge).to.to.deep.equal({ key1: 'value1', key2: 'value2' });
+
+      expect(bridge.debug).to.be.true;
+      expect(bridge.mainNode).to.equal('app');
+    });
+
+    it('should read the configuration under the config key', () => {
+      storageStub.getItem.returns({});
+
+      applicationConfigManager.loadAppConfig();
+
+      expect(storageStub.getItem.calledOnceWith('config')).to.be.true;
+    });
+
+    it('should do nothing when nothing was stored', () => {
+      storageStub.getItem.returns(null);
+      const update = sandbox.spy(actionChannelManager, 'updateProperty');
+
+      applicationConfigManager.loadAppConfig();
+
+      expect(update.called).to.be.false;
     });
   });
 });

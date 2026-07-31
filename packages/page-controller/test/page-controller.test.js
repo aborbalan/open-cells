@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2024 Bilbao Vizcaya Argentaria, S.A.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,7 @@
 
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
-import { Bridge } from '@open-cells/core';
-import { eventManager } from '@open-cells/core/src/manager/events.js';
+import { useBridge } from '@open-cells/core/test/helpers/bridge-fixture.js';
 import { ElementController } from '@open-cells/element-controller';
 import { PageController } from '../src/PageController.js';
 
@@ -45,39 +44,18 @@ customElements.define('leaving-page', class extends TestPage {});
 customElements.define('both-page', class extends TestPage {});
 
 describe('PageController', () => {
-  let bridge;
-  let container;
+  const bridgeFixture = useBridge();
   let sandbox;
   let page;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-
-    container = document.createElement('div');
-    const mainNode = document.createElement('div');
-    mainNode.setAttribute('id', '__main_node__');
-    container.appendChild(mainNode);
-    document.body.appendChild(container);
-
-    bridge = new Bridge({
-      debug: true,
-      mainNode: '__main_node__',
-      routes: { home: { path: '/', action: () => Promise.resolve() } },
-    });
   });
 
   afterEach(() => {
     page?.remove();
     page = undefined;
-    bridge.Router.destroy();
-    bridge.ComponentConnector.unregisterAllSubscriptors(true);
-    const channels = bridge.ComponentConnector.getChannels();
-    Object.keys(channels).forEach(name => delete channels[name]);
-    eventManager.removeAllListeners();
     sandbox.restore();
-    container.remove();
-    document.querySelectorAll('#cells-template-__cross').forEach(node => node.remove());
-    window.location.hash = '';
   });
 
   /** Mounts a page of the given tag and attaches a connected PageController. */
@@ -151,7 +129,7 @@ describe('PageController', () => {
       const onPageEnter = sandbox.spy();
       build('entering-page', { onPageEnter });
 
-      bridge.BridgeChannelManager.publishPrivatePageStatus('entering', true);
+      bridgeFixture.bridge.BridgeChannelManager.publishPrivatePageStatus('entering', true);
 
       expect(onPageEnter.calledOnce).to.be.true;
     });
@@ -160,7 +138,7 @@ describe('PageController', () => {
       const onPageLeave = sandbox.spy();
       build('leaving-page', { onPageLeave });
 
-      bridge.BridgeChannelManager.publishPrivatePageStatus('leaving', false);
+      bridgeFixture.bridge.BridgeChannelManager.publishPrivatePageStatus('leaving', false);
 
       expect(onPageLeave.calledOnce).to.be.true;
     });
@@ -170,8 +148,8 @@ describe('PageController', () => {
       const onPageLeave = sandbox.spy();
       build('both-page', { onPageEnter, onPageLeave });
 
-      bridge.BridgeChannelManager.publishPrivatePageStatus('both', true);
-      bridge.BridgeChannelManager.publishPrivatePageStatus('both', false);
+      bridgeFixture.bridge.BridgeChannelManager.publishPrivatePageStatus('both', true);
+      bridgeFixture.bridge.BridgeChannelManager.publishPrivatePageStatus('both', false);
 
       expect(onPageEnter.calledOnce).to.be.true;
       expect(onPageLeave.calledOnce).to.be.true;
@@ -182,14 +160,14 @@ describe('PageController', () => {
       build('entering-page', { onPageEnter });
 
       expect(() =>
-        bridge.BridgeChannelManager.publishPrivatePageStatus('entering', false),
+        bridgeFixture.bridge.BridgeChannelManager.publishPrivatePageStatus('entering', false),
       ).to.not.throw();
       expect(onPageEnter.called).to.be.false;
     });
 
     it('should not subscribe a page that declares no hooks', () => {
       const { page: element } = build('plain-page');
-      expect(bridge.ComponentConnector.subscriptors.has(element)).to.be.false;
+      expect(bridgeFixture.bridge.ComponentConnector.subscriptors.has(element)).to.be.false;
     });
   });
 
@@ -213,3 +191,4 @@ describe('PageController', () => {
     });
   });
 });
+

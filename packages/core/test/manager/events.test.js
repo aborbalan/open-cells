@@ -19,24 +19,98 @@ import sinon from 'sinon';
 import { eventManager } from '../../src/manager/events.js';
 
 describe('CustomEventEmitter', () => {
-  let nodeStub;
+  let sandbox;
 
   beforeEach(() => {
-    nodeStub = { addEventListener: sinon.stub(), removeEventListener: sinon.stub() };
+    sandbox = sinon.createSandbox();
   });
 
-  it('should listen to an event on a given node and execute the callback function once', () => {
-    const callback = sinon.stub();
-    eventManager.listenToOnce(nodeStub, 'testEvent', callback);
-    const cb = nodeStub.addEventListener.firstCall.args[1];
-    cb({ currentTarget: nodeStub, type: 'testEvent' });
-    expect(callback.calledOnce).to.be.true;
-    expect(nodeStub.removeEventListener.calledWith('testEvent', cb)).to.be.true;
+  afterEach(() => {
+    sandbox.restore();
   });
 
-  it('should create an event', () => {
-    const event = eventManager.createEvent('testEvent', 'testValue');
-    expect(event).to.be.instanceOf(Event);
-    expect(event.detail).to.deep.equal({ value: 'testValue' });
+  describe('#listenToOnce', () => {
+    it('should call back when the event fires on the node', () => {
+      const node = document.createElement('div');
+      const callback = sandbox.spy();
+      eventManager.listenToOnce(node, 'testEvent', callback);
+
+      node.dispatchEvent(new Event('testEvent'));
+
+      expect(callback.calledOnce).to.be.true;
+    });
+
+    it('should stop listening after the first time', () => {
+      const node = document.createElement('div');
+      const callback = sandbox.spy();
+      eventManager.listenToOnce(node, 'testEvent', callback);
+
+      node.dispatchEvent(new Event('testEvent'));
+      node.dispatchEvent(new Event('testEvent'));
+
+      expect(callback.calledOnce).to.be.true;
+    });
+
+    it('should take the listener off the node itself', () => {
+      const node = { addEventListener: sandbox.stub(), removeEventListener: sandbox.stub() };
+      const callback = sandbox.spy();
+      eventManager.listenToOnce(node, 'testEvent', callback);
+
+      const registered = node.addEventListener.firstCall.args[1];
+      registered({ currentTarget: node, type: 'testEvent' });
+
+      expect(node.removeEventListener.calledOnceWith('testEvent', registered)).to.be.true;
+    });
+
+    it('should keep listening on other events', () => {
+      const node = document.createElement('div');
+      const callback = sandbox.spy();
+      eventManager.listenToOnce(node, 'testEvent', callback);
+
+      node.dispatchEvent(new Event('otherEvent'));
+
+      expect(callback.called).to.be.false;
+    });
+  });
+
+  describe('#createEvent', () => {
+    it('should build an event of the given type', () => {
+      const event = eventManager.createEvent('testEvent', 'testValue');
+      expect(event).to.be.instanceOf(Event);
+      expect(event.type).to.equal('testEvent');
+    });
+
+    it('should wrap the value in the detail', () => {
+      expect(eventManager.createEvent('testEvent', 'testValue').detail).to.deep.equal({
+        value: 'testValue',
+      });
+    });
+
+    it('should carry an object value through', () => {
+      expect(eventManager.createEvent('testEvent', { id: 1 }).detail).to.deep.equal({
+        value: { id: 1 },
+      });
+    });
+
+    it('should carry a false value rather than dropping it', () => {
+      expect(eventManager.createEvent('page-load', false).detail).to.deep.equal({ value: false });
+    });
+  });
+
+  describe('the shared emitter', () => {
+    it('should be raised above the default listener limit', () => {
+      // Every bridge, template and page registers on this one emitter.
+      expect(eventManager.getMaxListeners()).to.equal(20);
+    });
+
+    it('should deliver an emitted event to its listeners', () => {
+      const listener = sandbox.spy();
+      eventManager.on('a-test-event', listener);
+
+      eventManager.emit('a-test-event', { id: 1 });
+
+      expect(listener.calledOnceWith({ id: 1 })).to.be.true;
+      eventManager.off('a-test-event', listener);
+    });
   });
 });
