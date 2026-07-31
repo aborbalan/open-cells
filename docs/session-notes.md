@@ -26,7 +26,7 @@ aquí solo queda el índice de por dónde entró cada cosa.
 | 5    | `localize`                               | `test/s5-localize`                         | #12 |
 | 6    | E2E                                      | `test/s6-e2e`                              | #13 |
 | 7    | CI y quality gates                       | `test/s7-ci-gates`                         | #14 |
-| 8–10 | Infraestructura, deps y contrato público | `claude/test-audit-worktree-status-3vvdim` | —   |
+| 8–10 | Infraestructura, deps y contrato público | `claude/test-audit-worktree-status-3vvdim` | #15 |
 
 **Total: 3.1 → 10.0.** 920 tests en la matriz completa (866 con un solo navegador),
 96.11 % de líneas combinadas.
