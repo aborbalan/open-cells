@@ -30,6 +30,15 @@ export class CategoryPage extends PageTransitionsMixin(LitElement) {
     _likedRecipes: { channel: 'liked-recipes' },
   };
 
+  /*
+   * Properties declared in `inbounds` are installed at runtime by
+   * ElementController._inOut() via Object.defineProperties, so TypeScript cannot
+   * see them. `declare` describes them without emitting a field that would
+   * shadow the accessors.
+   */
+  declare _categoriesList: Category[] | null;
+  declare _likedRecipes: Set<Recipe>;
+
   @state()
   protected _currentCategory: Category | null = null;
 
@@ -74,10 +83,11 @@ export class CategoryPage extends PageTransitionsMixin(LitElement) {
   }
 
   async setCategory() {
-    this._currentCategory = this._categoriesList?.find(
-      (category: { strCategory: string }) =>
-        category.strCategory?.toLowerCase() === this.params.category?.toLowerCase(),
-    );
+    this._currentCategory =
+      this._categoriesList?.find(
+        (category: { strCategory: string }) =>
+          category.strCategory?.toLowerCase() === this.params.category?.toLowerCase(),
+      ) ?? null;
     if (this._currentCategory) {
       this._getCurrentCategoryRecipes(this._currentCategory.strCategory);
     }

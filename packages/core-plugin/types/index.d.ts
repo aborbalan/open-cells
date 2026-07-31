@@ -1,7 +1,6 @@
 import { RouteData } from '@open-cells/core/types';
 
 export interface CoreAPI {
-  constructor(host: any);
   subscribe: (channelName: string, callback: Function) => void;
   unsubscribe: (channels: string | string[]) => void;
   publish: (channelName: string, value: any, options?: Object) => void;

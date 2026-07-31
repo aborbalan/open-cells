@@ -18,9 +18,7 @@ import { ReplaySubject } from 'rxjs';
 import { WCEvent } from '../manager/events';
 
 export interface Channel extends ReplaySubject<PublishableValue> {
-  /**
-   * The name of the channel.
-   */
+  /** The name of the channel. */
   readonly name: string;
 
   /**
@@ -47,18 +45,23 @@ export interface Channel extends ReplaySubject<PublishableValue> {
   unsubscribeAllObservers(): void;
 
   /**
-   * Cleans the channel by resetting the buffer and observers.
+   * Unsubscribes all observers from the channel and closes it for good.
+   *
+   * `unsubscribe()` is overridden to keep the channel usable; this is the one that does not.
    */
+  close(): void;
+
+  /** Cleans the channel by resetting the buffer and observers. */
   clean(): void;
 
   /**
    * Gets the internal buffer of the channel.
-   * 
-   * **Note:** This property should not be directly modified. Use the `next` method to send values to the channel.
+   *
+   * **Note:** This property should not be directly modified. Use the `next` method to send values
+   * to the channel.
    */
   readonly buffer: PublishableValue[];
 }
-
 
 export type PublishableValue = WCEvent & {
   uuid?: string;

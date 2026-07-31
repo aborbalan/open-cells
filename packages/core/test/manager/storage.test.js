@@ -15,52 +15,143 @@
  */
 
 import { expect } from '@esm-bundle/chai';
+import sinon from 'sinon';
 import { CellsStorage } from '../../src/manager/storage.js';
 
 describe('CellsStorage', () => {
   let cellsStorage;
+  let sandbox;
 
   beforeEach(() => {
+    sandbox = sinon.createSandbox();
+    window.sessionStorage.clear();
+    window.localStorage.clear();
     cellsStorage = new CellsStorage({ prefix: 'test_', persistent: false });
   });
 
-  it('should be created', () => {
-    expect(cellsStorage).to.be.an.instanceOf(CellsStorage);
+  afterEach(() => {
+    sandbox.restore();
+    window.sessionStorage.clear();
+    window.localStorage.clear();
   });
 
-  it('should have a prefix property', () => {
-    expect(cellsStorage).to.have.property('prefix');
-  });
+  describe('#constructor', () => {
+    it('should take the prefix and the persistence flag from its options', () => {
+      expect(cellsStorage.prefix).to.equal('test_');
+      expect(cellsStorage.persistent).to.be.false;
+    });
 
-  it('should have a persistent property', () => {
-    expect(cellsStorage).to.have.property('persistent');
-  });
+    it('should default to an empty prefix and no persistence', () => {
+      const bare = new CellsStorage({});
+      expect(bare.prefix).to.equal('');
+      expect(bare.persistent).to.be.false;
+    });
 
-  it('should have an internalStorage property', () => {
-    expect(cellsStorage).to.have.property('internalStorage');
-  });
+    it('should wipe its own keys when it is persistent', () => {
+      window.localStorage.setItem('test_stale', JSON.stringify('old'));
+      window.localStorage.setItem('other_kept', JSON.stringify('keep'));
 
-  describe('getItem', () => {
-    it('should get an item from the storage', () => {
-      cellsStorage.setItem('key', 'value');
-      expect(cellsStorage.getItem('key')).to.equal('value');
+      new CellsStorage({ prefix: 'test_', persistent: true });
+
+      expect(window.localStorage.getItem('test_stale')).to.be.null;
+      expect(window.localStorage.getItem('other_kept')).to.not.be.null;
     });
   });
 
-  describe('setItem', () => {
-    it('should set an item in the storage', () => {
-      cellsStorage.setItem('key', 'value');
-      expect(cellsStorage.getItem('key')).to.equal('value');
+  describe('#storage', () => {
+    it('should use session storage when it is not persistent', () => {
+      expect(cellsStorage.storage).to.equal(window.sessionStorage);
+    });
+
+    it('should use local storage when it is persistent', () => {
+      const persistent = new CellsStorage({ prefix: 'test_', persistent: true });
+      expect(persistent.storage).to.equal(window.localStorage);
+    });
+
+    it('should fall back to memory when web storage is unavailable', () => {
+      // Private browsing and some embedded webviews make setItem throw.
+      //
+      // The stub goes on `Storage.prototype`, not on `window.sessionStorage`. A Storage object
+      // is a legacy platform object with a named property setter: outside Chromium, defining
+      // `setItem` on the instance writes a storage *entry* called "setItem" instead of shadowing
+      // the method, so the stub never runs and the fallback never engages. The prototype is an
+      // ordinary object in every engine.
+      sandbox.stub(Storage.prototype, 'setItem').throws(new DOMException('QuotaExceeded'));
+      expect(cellsStorage.storage).to.equal(cellsStorage.internalStorage);
     });
   });
 
-  describe('clear', () => {
-    it('should clear all items from the storage', () => {
+  describe('#setItem / #getItem', () => {
+    it('should round-trip a value', () => {
+      cellsStorage.setItem('key', 'value');
+      expect(cellsStorage.getItem('key')).to.equal('value');
+    });
+
+    it('should round-trip an object', () => {
+      cellsStorage.setItem('key', { a: 1, b: [2, 3] });
+      expect(cellsStorage.getItem('key')).to.deep.equal({ a: 1, b: [2, 3] });
+    });
+
+    it('should store the value under the prefixed key', () => {
+      cellsStorage.setItem('key', 'value');
+      expect(window.sessionStorage.getItem('test_key')).to.equal('"value"');
+    });
+
+    it('should return null for a key that was never set', () => {
+      expect(cellsStorage.getItem('missing')).to.be.null;
+    });
+
+    it('should keep the storages of two prefixes apart', () => {
+      const other = new CellsStorage({ prefix: 'other_', persistent: false });
+      cellsStorage.setItem('key', 'mine');
+      other.setItem('key', 'theirs');
+
+      expect(cellsStorage.getItem('key')).to.equal('mine');
+      expect(other.getItem('key')).to.equal('theirs');
+    });
+  });
+
+  describe('#clear', () => {
+    it('should remove the items carrying its prefix', () => {
       cellsStorage.setItem('key1', 'value1');
       cellsStorage.setItem('key2', 'value2');
+
       cellsStorage.clear();
+
       expect(cellsStorage.getItem('key1')).to.be.null;
       expect(cellsStorage.getItem('key2')).to.be.null;
+    });
+
+    it('should leave the items of another prefix alone', () => {
+      const other = new CellsStorage({ prefix: 'other_', persistent: false });
+      cellsStorage.setItem('key', 'mine');
+      other.setItem('key', 'theirs');
+
+      cellsStorage.clear();
+
+      expect(other.getItem('key')).to.equal('theirs');
+    });
+  });
+
+  describe('the in-memory fallback', () => {
+    beforeEach(() => {
+      // Force the fallback for the whole block.
+      sandbox.stub(Storage.prototype, 'setItem').throws(new DOMException('QuotaExceeded'));
+    });
+
+    it('should round-trip a value', () => {
+      cellsStorage.setItem('key', 'value');
+      expect(cellsStorage.getItem('key')).to.equal('value');
+    });
+
+    it('should return null for a key that was never set', () => {
+      expect(cellsStorage.getItem('missing')).to.be.null;
+    });
+
+    it('should remove an item', () => {
+      cellsStorage.setItem('key', 'value');
+      cellsStorage.internalStorage.removeItem('test_key');
+      expect(cellsStorage.getItem('key')).to.be.null;
     });
   });
 });

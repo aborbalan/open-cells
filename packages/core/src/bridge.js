@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// eslint-disable-next-line no-unused-vars../types
 import { ComponentConnector } from './component-connector';
 import { Router } from './router';
 /** @type {EventEmitter} */
@@ -27,6 +26,7 @@ import { Constants } from './constants';
 import { PostMessageManager } from './manager/post-message';
 import { ApplicationConfigManager } from './manager/application-config';
 import { ApplicationStateManager } from './manager/application-state';
+// eslint-disable-next-line no-unused-vars -- referenced by the JSDoc types below
 import { Template } from './template';
 import { BRIDGE_CHANNEL_PREFIX } from './constants';
 
@@ -301,7 +301,6 @@ const {
   externalEventsCodes,
   initialTemplate: DEFAULT_INITIAL_TEMPLATE,
   pagesPath: DEFAULT_PAGES_PATH,
-  renderEngines,
 } = Constants;
 
 /** @type {Object<string, Channel>} */
@@ -692,7 +691,11 @@ export class Bridge {
     cellsBridgeQueue = $queueCommands;
     if (Array.isArray(cellsBridgeQueue)) {
       cellsBridgeQueue.forEach(({ command, parameters }) => {
-        const queuedCommand = this[command];
+        // A queued command names a method by string, so the lookup is an index into the
+        // instance. Only the guard below decides whether it is a real command.
+        const queuedCommand = /** @type {Record<string, Function | undefined>} */ (
+          /** @type {unknown} */ (this)
+        )[command];
 
         if (!queuedCommand) {
           console.log(`WARNING: Invalid cells bridge command execution: ${command} (QUEUE).`);

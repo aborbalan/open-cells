@@ -24,6 +24,7 @@ describe('config methods', () => {
   let resources;
   let key;
   let lang;
+  let sandbox;
 
   before(async () => {
     intl.resetIntl();
@@ -35,7 +36,15 @@ describe('config methods', () => {
     resources = intlState.getResources();
   });
 
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+  });
+
   afterEach(() => {
+    // These cases silence console.error and console.warn. Restoring from the sandbox
+    // rather than at the end of the test body means a failure cannot leave the console
+    // muted for everything that runs afterwards.
+    sandbox.restore();
     fixtureCleanup();
   });
 
@@ -81,7 +90,7 @@ describe('config methods', () => {
     });
 
     it('non-existing url shows error in console', async () => {
-      const stub = sinon.stub(console, 'error');
+      const stub = sandbox.stub(console, 'error');
       expect(stub.notCalled).to.be.true;
 
       intl.setUrl('non-existing-locales.json');
@@ -92,7 +101,6 @@ describe('config methods', () => {
       intl.setUrl('locales/locales.json');
       await intlState.resourcesLoadComplete;
       resources = intlState.getResources();
-      stub.restore();
     });
 
     it('url can be used without localesHost', async () => {
@@ -117,14 +125,13 @@ describe('config methods', () => {
 
     it('setWarnOnMissingKeys invokes console warns when key is missing', () => {
       intl.setWarnOnMissingKeys(true);
-      const stub = sinon.stub(console, 'warn');
+      const stub = sandbox.stub(console, 'warn');
       expect(stub.notCalled).to.be.true;
 
       key = 'non-existing-key';
       t(key);
       expect(stub.calledOnce).to.be.true;
 
-      stub.restore();
       intl.setWarnOnMissingKeys(false);
     });
 

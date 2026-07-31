@@ -18,8 +18,7 @@ import { PageMixin } from '@open-cells/page-mixin';
 export class HomePage extends PageTransitionsMixin(PageMixin(LitElement)) {
   private _layout: PageLayout | null = null;
 
-  protected createRenderRoot(): Element | ShadowRoot {
-    // @ts-ignore
+  protected createRenderRoot(): HTMLElement | DocumentFragment {
     return this;
   }
 

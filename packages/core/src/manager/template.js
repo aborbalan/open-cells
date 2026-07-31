@@ -240,12 +240,10 @@ export class TemplateManager {
     const { TEMPLATE_TRANSITION_END } = externalEventsCodes;
     const template = this.get(name);
     const cache = this.cache;
-    let oldPageName;
 
     for (let tplName in cache) {
       if (cache.hasOwnProperty(tplName)) {
         if (tplName === this.selected) {
-          oldPageName = tplName;
           cache[tplName].deactivate();
         } else if (name !== tplName) {
           cache[tplName].cache();

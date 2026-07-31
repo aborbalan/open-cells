@@ -8,10 +8,12 @@
     "target": "ESNext",
     "lib": ["ESNext", "DOM"],
     "esModuleInterop": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    // Only what the sources import. Otherwise every `@types/*` in the workspace is loaded and
+    // this check fails on other packages' declarations — `@types/sinon` disagreeing with the
+    // `@sinonjs/fake-timers` it resolves to, which has nothing to do with core's own types.
+    "types": []
   },
-  "include": [
-    "src/*.js",
-    "types/**/*.ts"],
+  "include": ["src/*.js", "types/**/*.ts"],
   "exclude": ["node_modules"]
 }

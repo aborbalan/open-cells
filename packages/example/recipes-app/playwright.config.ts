@@ -1,77 +1,46 @@
 import { defineConfig, devices } from '@playwright/test';
+import { browserExecutable, requestedBrowsers } from '../../../test-browsers.mjs';
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+const DEVICE = {
+  chromium: devices['Desktop Chrome'],
+  firefox: devices['Desktop Firefox'],
+  webkit: devices['Desktop Safari'],
+};
 
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
+/* Unlike the unit suites, this one defaults to the whole matrix: running the application in
+ * one engine is not what an end-to-end suite is for. `OPEN_CELLS_BROWSERS` narrows it. */
+const projects = requestedBrowsers(['chromium', 'firefox', 'webkit']).map(name => {
+  const executablePath = browserExecutable(name);
+  return {
+    name,
+    use: {
+      ...DEVICE[name],
+      ...(executablePath ? { launchOptions: { executablePath } } : {}),
+    },
+  };
+});
+
+/** See https://playwright.dev/docs/test-configuration. */
 export default defineConfig({
   testDir: './tests',
-  /* Run tests in files in parallel */
   fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  /* Fail the build on CI if a test.only was left behind. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  /* One worker on CI, and on Windows too: concurrent WebKit workers crash the browser
+   * process there (STATUS_STACK_BUFFER_OVERRUN, 0xC0000409), failing tests that pass
+   * perfectly well when run one at a time. */
+  workers: process.env.CI || process.platform === 'win32' ? 1 : undefined,
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: 'http://localhost:4173/',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    
-    /* Bypass CORS and other security features for testing */
-    bypassCSP: true,
+    /* No bypassCSP and no --disable-web-security. They were needed to reach the recipes
+     * API cross-origin; the suite now serves it from fixtures, so the pages run under the
+     * same security rules as in a browser and a real CSP or CORS regression is visible. */
   },
 
-  /* Configure projects for major browsers */
-  projects: [
-    {
-      name: 'chromium',
-      use: { 
-        ...devices['Desktop Chrome'],
-        launchOptions: {
-          args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process'],
-        },
-      },
-    },
+  projects,
 
-
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
-  ],
-
-  /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run preview',
     url: 'http://localhost:4173/',

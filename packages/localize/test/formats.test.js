@@ -96,5 +96,55 @@ describe('formats', () => {
 
       intl.setFormats({});
     });
+
+    describe('currency given per call', () => {
+      const currencyFormats = {
+        number: {
+          currency: {
+            style: 'currency',
+            currency: 'USD',
+            currencyDisplay: 'symbol',
+          },
+        },
+      };
+
+      beforeEach(() => {
+        intl.setFormats(currencyFormats);
+        key = 'simple-key-currency';
+      });
+
+      afterEach(() => {
+        intl.setFormats({});
+      });
+
+      it('overrides the currency declared in the formats', () => {
+        const translation = t(key, { exampleBalance: 3600.12 }, { currency: 'EUR' });
+        expect(translation).to.be.equal('Your available balance is €3,600.12');
+      });
+
+      it('leaves the configured formats untouched', () => {
+        t(key, { exampleBalance: 3600.12 }, { currency: 'EUR' });
+
+        const translation = t(key, { exampleBalance: 3600.12 });
+        expect(translation).to.be.equal('Your available balance is $3,600.12');
+      });
+
+      it('caches each currency separately', () => {
+        expect(t(key, { exampleBalance: 1 }, { currency: 'EUR' })).to.be.equal(
+          'Your available balance is €1.00',
+        );
+        expect(t(key, { exampleBalance: 1 }, { currency: 'GBP' })).to.be.equal(
+          'Your available balance is £1.00',
+        );
+        expect(t(key, { exampleBalance: 1 }, { currency: 'EUR' })).to.be.equal(
+          'Your available balance is €1.00',
+        );
+      });
+
+      it('ignores an options object that names no currency', () => {
+        const withOptions = t(key, { exampleBalance: 3600.12 }, { locale: 'en' });
+        expect(withOptions).to.be.equal('Your available balance is $3,600.12');
+      });
+    });
   });
 });

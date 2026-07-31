@@ -1,0 +1,2 @@
+# Conventional Commits, which CONTRIBUTING.md asks for and nothing checked until now.
+npx --no -- commitlint --edit "$1"

@@ -1,0 +1,16 @@
+{
+  // How a consumer compiles: strict, no `allowJs`, and no access to the packages' sources —
+  // only what their `types` field points at. If this passes, `npm i @open-cells/core` and
+  // `import { startApp } from '@open-cells/core'` works in a TypeScript application.
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
+    "skipLibCheck": false,
+    "types": []
+  },
+  "include": ["*.ts"]
+}
