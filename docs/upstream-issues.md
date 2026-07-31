@@ -32,6 +32,8 @@ luego 7 y 8 (la release y la suite), y el resto cuando haya hueco.
 | 10  | Dos versiones de Playwright, seis descargas de navegador  | Baja      | tooling       |
 | 11  | La app de ejemplo no tiene ruta 404                       | Media     | ejemplo       |
 | 12  | Botones del ejemplo que devuelven el handler en vez de él | Baja      | ejemplo       |
+| 13  | El e2e depende de una API de terceros en vivo             | Media     | tests         |
+| 14  | El e2e desactiva CSP y CORS para poder correr             | Media     | tests         |
 
 ---
 
@@ -615,3 +617,92 @@ button that does nothing, with no error.
 
 or bind the method directly. The pattern is worth a grep across the example — it is duplicated in
 three files.
+
+---
+
+# 13 · El e2e depende de una API de terceros en vivo
+
+**Título:** The end-to-end suite depends on the live TheMealDB API, so "green" depends on a
+third party being up
+
+**Labels:** `bug` · `tests` — **Severidad:** media
+
+## Cuerpo
+
+### Summary
+
+`packages/example/recipes-app/tests/example.spec.ts` is the whole end-to-end suite, and it
+intercepts nothing: no `page.route`, no fixtures, no stub server. The application it drives
+fetches from `https://www.themealdb.com/api/json/v1` (`src/config/app.config.js`), so every run
+makes real requests to a free third-party service.
+
+### Impact
+
+The suite passes or fails for reasons that have nothing to do with the code under test:
+
+- the service being up;
+- the service not rate-limiting the runner, which CI makes likely — every job, every retry;
+- the catalogue never changing, since assertions about "the daily special" or a category's
+  recipes depend on data the project does not control.
+
+A suite that can go red without a code change trains people to re-run it rather than read it,
+and a suite that needs the network cannot run in a sandboxed or offline environment at all.
+
+### Suggested fix
+
+Serve the endpoints the application uses from fixtures — Playwright's `page.route` is enough —
+and resolve images to an inline placeholder. Two details worth building in:
+
+- answer an unmapped endpoint with a 501 rather than letting it reach the network, so a new
+  call site is a loud failure instead of a silent dependency;
+- add one test that blocks every off-origin request at the browser and still passes, which is
+  what proves the suite is actually self-contained rather than merely usually lucky.
+
+With the API served locally the assertions can also move from `page.url()` to what is on
+screen, which is a separate improvement the current setup makes impractical.
+
+---
+
+# 14 · El e2e desactiva CSP y CORS para poder correr
+
+**Título:** The end-to-end suite runs with bypassCSP and --disable-web-security, so it cannot
+see a CSP or CORS regression
+
+**Labels:** `bug` · `tests` · `security` — **Severidad:** media
+
+## Cuerpo
+
+### Summary
+
+`packages/example/recipes-app/playwright.config.ts` disables two browser security mechanisms
+for the whole suite:
+
+    use: {
+      bypassCSP: true,
+      ...
+    }
+
+and, for Chromium:
+
+    args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process']
+
+They are there to let the pages reach the recipes API cross-origin.
+
+### Impact
+
+The end-to-end suite is the only place the application runs in a real browser, and it runs it
+under rules no user's browser applies. A Content-Security-Policy mistake, a CORS regression or
+a mixed-content problem cannot fail this suite — the suite is configured not to see them. The
+tests are green precisely because the checks that would catch that class of bug are off.
+
+`--disable-features=IsolateOrigins,site-per-process` also turns off site isolation, so the
+pages run in a process model that no production browser uses.
+
+### Suggested fix
+
+These flags exist to work around the cross-origin API call. Serving the API from fixtures
+removes the reason for them, and both can then go: the pages run under the same rules as in a
+real browser, and a genuine CSP or CORS regression becomes visible.
+
+If some case genuinely needs the escape, scope it to that one test rather than to the whole
+project, so the rest of the suite keeps the protection.
