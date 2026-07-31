@@ -1,4 +1,5 @@
 import { CoreAPI } from '@open-cells/core-plugin/types';
+import { RouteData } from '@open-cells/core/types';
 
 export declare class ElementController implements CoreAPI {
   constructor(host: any);

@@ -256,12 +256,15 @@ export class ComponentConnector {
     };
 
     // REVIEW: check if this does not override the node property set in the subscribe method
-    Object.defineProperty(wrappedCallback, /** @type {WCNode} */ 'node', {
+    // The key is the string 'node'; it used to carry a `@type {WCNode}` cast that told
+    // TypeScript the *key* was a node, leaving the property unassignable. The node is defined
+    // with the descriptor now rather than assigned right after it.
+    Object.defineProperty(wrappedCallback, 'node', {
+      value: node,
       writable: true,
       configurable: true,
       enumerable: true,
     });
-    wrappedCallback.node = node;
     return wrappedCallback;
   }
 
@@ -278,7 +281,12 @@ export class ComponentConnector {
     // RxJS renamed the child-subscription list from `_subscriptions` to `_finalizers`
     // in v7. Reading only the old name made this always return false, so
     // addPublication() registered a duplicate listener on every call.
-    const registered = publications._finalizers || publications._subscriptions || [];
+    // `_finalizers` is private in RxJS's own declarations, hence the cast.
+    const internals = /** @type {{ _finalizers?: WCSubscription[] }} */ (
+      /** @type {unknown} */ (publications)
+    );
+    /** @type {WCSubscription[]} */
+    const registered = internals._finalizers || publications._subscriptions || [];
 
     return Boolean(
       registered.find(

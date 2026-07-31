@@ -2,86 +2,126 @@
 
 > Documento vivo para retomar el trabajo en futuras sesiones.
 > Consolida descubrimientos, estado y mejoras pendientes del fork.
-> Última actualización: 2026-07-02
+> Última actualización: 2026-07-31
 
 ## Contexto del fork
 
 - `origin` = `aborbalan/open-cells` (fork del usuario) — **todos los PRs van aquí**.
 - `upstream` = `BBVA/open-cells` — **nunca se abren PRs contra BBVA** (no aceptan externos).
 - Monorepo de web components (npm workspaces + wireit). Paquetes en `packages/*`.
+- `develop` es la rama de integración de la auditoría de tests; `main` lleva el `mcp-server`.
 
-## Objetivo en curso
+## Auditoría de tests — completada
 
-Rama `fix/build-break`: hacer **usables los tipos publicados** de `@open-cells/core`.
-El paquete apuntaba `"types"` a un glob (`types/**/*.ts`) sin enviar `.d.ts`, así que
-los consumidores estrictos recibían `TS7016`.
+Las diez secciones de la auditoría de julio de 2026 están en 10/10. El detalle, con la salida
+de cada comando que lo demuestra, está en [`testing-scorecard.md`](./testing-scorecard.md);
+aquí solo queda el índice de por dónde entró cada cosa.
 
-## Estado (hecho)
+| §    | Sección                                  | Rama                                       | PR  |
+| ---- | ---------------------------------------- | ------------------------------------------ | --- |
+| 1    | Suite ejecutable                         | `test/s1-runnable-suite`                   | #8  |
+| 2    | Cobertura `core`                         | `test/s2-core-coverage`                    | #9  |
+| 3    | Cobertura por paquete                    | `test/s3-package-coverage`                 | #10 |
+| 4    | Calidad de tests                         | `test/s4-test-quality`                     | #11 |
+| 5    | `localize`                               | `test/s5-localize`                         | #12 |
+| 6    | E2E                                      | `test/s6-e2e`                              | #13 |
+| 7    | CI y quality gates                       | `test/s7-ci-gates`                         | #14 |
+| 8–10 | Infraestructura, deps y contrato público | `claude/test-audit-worktree-status-3vvdim` | #15 |
 
-| Cambio | Commit / PR | Estado |
-|--------|-------------|--------|
-| Renombrar `types/index.ts` → `index.d.ts` + declarar API runtime de core | `ee249f7` | En `origin/main` |
-| `package.json` de core: `"types"` → `types/index.d.ts` | `ee249f7` | En `origin/main` |
-| Changeset (patch) `.changeset/young-suns-joke.md` | `ee249f7` | En `origin/main` |
-| Newline final en `types/index.d.ts` | `2803b14` · PR #2 | En rama `fix/build-break` |
-| Borrar stub `open-cells-fork/package-lock.json` (fuera del repo) | — | Hecho en disco |
+**Total: 3.1 → 10.0.** 920 tests en la matriz completa (866 con un solo navegador),
+96.11 % de líneas combinadas.
 
-**Verificado:** `vite build` de core OK (✓ 250 módulos, `dist/` generado).
-El `index.d.ts` compila sin errores propios. `npm run typchk` está en rojo por errores
-**pre-existentes** (ver #4).
+### Lo que dejó de estar en rojo
 
-## Descubrimientos / mejoras pendientes
+Estas tres cosas estaban documentadas como «known red, do not chase». Ya no lo están, y
+`CLAUDE.md` —que vive en `main`, no en `develop`— **hay que actualizarlo al integrar**:
 
-Ordenadas por prioridad. Las 1–3 son del mismo dominio que el arreglo de tipos y conviene
-cerrarlas en el mismo esfuerzo; 4–7 son pre-existentes en upstream.
+- `npm run build -w @open-cells/recipes-app` → verde desde §1 (`tsc` exit 0).
+- `npm run typchk -w @open-cells/core` → verde desde §10 (eran 13 errores).
+- `npm run lint` → funciona desde §7 (hay `eslint.config.js`); 0 errores, 29 warnings.
 
-### 1 · [Alta] `core-plugin` apunta `types` a ruta absoluta
-`packages/core-plugin/package.json` → `"types": "/types/index.d.ts"`. La barra inicial hace
-que TS lo resuelva como ruta absoluta del filesystem → `TS7016`. **Mismo bug que se arregló en
-core.** Fix: quitar la `/` (`"types": "types/index.d.ts"`).
+### Gates que hay que mantener verdes
 
-### 2 · [Media] Paquetes sin declaraciones de tipos
-`page-mixin`, `page-transitions`, `localize` no tienen campo `types` ni ningún `.d.ts` →
-`TS7016` al importarlos. Fix: añadir `types/index.d.ts` + campo `types` en cada uno.
+Los tres corren dentro de `npm test`, antes que las suites:
 
-### 3 · [Media] `Bridge`: valor en runtime, solo tipo en `.d.ts`
-`src/index.js` exporta `Bridge` como valor (clase), pero `types/index.d.ts` lo expone dentro de
-`export type { … }` (type-only) → `new Bridge()` / `instanceof` no compilan. Fix: si es API
-pública, `export declare class Bridge {…}`; si es interno, quitarlo del index.
+```sh
+npm run test:toolchain   # una sola versión de cada runner, sin imports sin declarar
+npm run test:types       # typchk de core + types-contract/ + los .d.ts van en el tarball
+npm run coverage:report  # informe combinado (--check en CI)
+```
 
-### 4 · [Media] `typchk` en rojo (tipos a mano desincronizados)
-`tsc -p tsconfig-typchk.json` reporta ~10 errores. El clave: dos definiciones de `Channel`
-(`types/state/channel.ts` vs `src/state/channel`) que no coinciden (a la de `types/` le faltan
-`stoped`, `close`). Pre-existente. Fix ideal: alinear `types/` con `src/` o generar los `.d.ts`.
+### Navegadores
 
-### 5 · [Baja] Build genera `dist/` pero se publica `src/`
-`vite build` produce `dist/core.*`, pero `main` → `src/index.js` y `files` no incluye `dist`.
-El output del build no se usa. Decidir: (a) enviar fuente y el build sobra, o (b) publicar el
-bundle (mover `main`/`exports` a `dist`, incluir `dist` en `files`).
+Los tres runners (vitest, web-test-runner, Playwright) leen las mismas dos variables desde
+`test-browsers.mjs`:
 
-### 6 · [Baja] `core` sin mapa `exports`
-El subpath `@open-cells/core/types` (usado por core-plugin) resuelve por directorio, no por
-`exports`. Fix: añadir `"exports"` con `"."` y `"./types"` explícitos.
+```sh
+OPEN_CELLS_BROWSERS=chromium,webkit          # matriz; e2e usa las tres por defecto
+OPEN_CELLS_CHROMIUM_EXECUTABLE=/ruta/chrome  # binario ya provisionado por la imagen
+```
 
-### 7 · [Baja] Higiene
-- Newline final en `types/index.d.ts` → **resuelto** en PR #2.
-- Stub `package-lock.json` en la raíz del contenedor → **borrado** (estaba fuera del repo).
+La segunda es la que permite correr la suite en entornos sin acceso a la CDN de Playwright.
+
+## Estado del fork: tipos publicados
+
+Cerrado en §10. De la lista de mejoras que arrastraba este documento:
+
+| #   | Hallazgo                                        | Estado                                     |
+| --- | ----------------------------------------------- | ------------------------------------------ |
+| 1   | `core-plugin` con `types` en ruta absoluta      | Resuelto                                   |
+| 2   | Paquetes sin declaraciones                      | Resuelto: los 7 publicables tienen `.d.ts` |
+| 3   | `Bridge` valor en runtime, solo tipo en `.d.ts` | Resuelto en §10                            |
+| 4   | `typchk` en rojo por tipos desincronizados      | Resuelto en §10                            |
+| 5   | El build genera `dist/` pero se publica `src/`  | **Abierto** — ver abajo                    |
+| 6   | `core` sin mapa `exports`                       | **Abierto** — ver abajo                    |
+| 7   | Higiene (newline, stub de lockfile)             | Resuelto                                   |
+
+## Pendiente
+
+### `core` sin mapa `exports` (#6)
+
+Sigue resolviendo subpaths por directorio. Añadir `"exports"` es correcto pero **rompe cuatro
+suites** si se hace sin cuidado: `core-plugin`, `element-controller`, `page-controller` y
+`page-mixin` importan el fixture compartido como
+`@open-cells/core/test/helpers/bridge-fixture.js`, y `core-plugin` importa
+`@open-cells/core/types`. Un mapa `exports` tiene que declarar `"."`, `"./types"` y
+`"./test/*"` o mover el fixture a otro sitio primero.
+
+### `dist/` vs `src/` (#5)
+
+`vite build` produce `dist/core.*`, pero `main` apunta a `src/index.js` y `files` no incluye
+`dist`. Decidir si se distribuye fuente ESM o bundle antes de tocar `exports`/`files`.
+
+### Avisos de `npm audit`
+
+34 advisories, casi todos transitivos vía eslint y vite. Se dejaron fuera de §9 a propósito:
+no son dependencias que este repositorio eligiera y merecen su propio cambio.
+
+### Formato como gate de CI
+
+`prettier --check` falla en 62 ficheros anteriores a la configuración. `lint-staged` formatea
+cada fichero que se toca, así que el repositorio converge solo; convertirlo en gate es una
+decisión aparte.
+
+### Protección de rama
+
+No es un fichero, es un ajuste del repositorio. El check al que apuntar ya existe: activar
+_Require status checks to pass_ en `develop` para el job `build`.
 
 ## Cómo retomar
 
-```bash
-cd open-cells
+```sh
 git fetch origin
-git switch fix/build-break            # rama de trabajo de tipos
-npm run build  -w @open-cells/core    # vite build — debe seguir verde
-npm run typchk -w @open-cells/core    # rojo esperado (pre-existente, ver #4)
+git switch develop
+npm ci
+npx playwright install --with-deps chromium firefox webkit   # una sola vez, una sola versión
+
+npm test                    # gates + las nueve suites
+npm run coverage:report     # informe combinado
 
 # Al abrir PRs: SIEMPRE al fork, nunca a BBVA
-gh pr create --repo aborbalan/open-cells --base main --head <rama>
+gh pr create --repo aborbalan/open-cells --base develop --head <rama>
 ```
 
-## Decisiones abiertas
-
-- ¿Alcance del branch de tipos = solo `core` o todo el monorepo? Recomendación: incluir al
-  menos el #1 (idéntico al bug ya arreglado en core).
-- ¿Se distribuye `src/` (fuente ESM) o `dist/` (bundle)? Aclararlo antes de tocar `exports`/`files`.
+`develop` va por delante de `main` en toda la auditoría y por detrás en el `mcp-server`
+(PRs #5–#7). Antes de subir la auditoría a `main` hay que integrar en esa dirección.

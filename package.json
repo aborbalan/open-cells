@@ -9,7 +9,7 @@
   "scripts": {
     "clean": "find . -name \"node_modules\" -type d -prune -exec rm -rf '{}' +",
     "build": "wireit",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run test:toolchain && npm run test:types && npm run test --workspaces --if-present",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -22,7 +22,10 @@
     "rc:on": "node scripts/preEnter.js rc",
     "rc:off": "node scripts/preExit.js",
     "version": "npm run changeset version && npm run create-app:update",
-    "create-app:update": "npm --prefix ./packages/create-app run update"
+    "create-app:update": "npm --prefix ./packages/create-app run update",
+    "test:toolchain": "node scripts/check-test-toolchain.mjs",
+    "test:types": "npm run typchk -w @open-cells/core && node scripts/check-public-types.mjs",
+    "coverage:report": "node scripts/coverage-report.mjs"
   },
   "keywords": [],
   "lint-staged": {
@@ -42,6 +45,7 @@
     "@types/node": "^20.16.10",
     "@typescript-eslint/eslint-plugin": "^8.8.0",
     "@typescript-eslint/parser": "^8.8.0",
+    "@vitest/browser-playwright": "4.0.18",
     "camelcase": "^8.0.0",
     "changelogen": "^0.6.2",
     "eslint": "^9.12.0",
@@ -54,7 +58,7 @@
     "prettier-plugin-jsdoc": "^1.0.0",
     "typescript": "^5.6.2",
     "vite": "^7.3.1",
-    "vitest": "^4.0.18",
+    "vitest": "4.0.18",
     "wireit": "^0.14.1"
   },
   "wireit": {
@@ -75,6 +79,9 @@
     "minimatch@3.x": "3.1.3",
     "minimatch@5.x": "5.1.9",
     "minimatch@10.x": "10.2.1",
-    "tar": "^7.5.8"
+    "tar": "^7.5.8",
+    "playwright": "1.58.2",
+    "playwright-core": "1.58.2",
+    "@playwright/test": "1.58.2"
   }
 }

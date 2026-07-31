@@ -70,7 +70,13 @@ describe('CellsStorage', () => {
 
     it('should fall back to memory when web storage is unavailable', () => {
       // Private browsing and some embedded webviews make setItem throw.
-      sandbox.stub(window.sessionStorage, 'setItem').throws(new DOMException('QuotaExceeded'));
+      //
+      // The stub goes on `Storage.prototype`, not on `window.sessionStorage`. A Storage object
+      // is a legacy platform object with a named property setter: outside Chromium, defining
+      // `setItem` on the instance writes a storage *entry* called "setItem" instead of shadowing
+      // the method, so the stub never runs and the fallback never engages. The prototype is an
+      // ordinary object in every engine.
+      sandbox.stub(Storage.prototype, 'setItem').throws(new DOMException('QuotaExceeded'));
       expect(cellsStorage.storage).to.equal(cellsStorage.internalStorage);
     });
   });
@@ -130,7 +136,7 @@ describe('CellsStorage', () => {
   describe('the in-memory fallback', () => {
     beforeEach(() => {
       // Force the fallback for the whole block.
-      sandbox.stub(window.sessionStorage, 'setItem').throws(new DOMException('QuotaExceeded'));
+      sandbox.stub(Storage.prototype, 'setItem').throws(new DOMException('QuotaExceeded'));
     });
 
     it('should round-trip a value', () => {

@@ -7,19 +7,19 @@ The baseline was **3.1/10**; the target is 10/10 in every section.
 quotes the output of the command that proves it. If there is no pasted output, the section has
 not moved.
 
-| #   | Section                   | Baseline |  Current | Target | Moved by                                                              |
-| --- | ------------------------- | -------: | -------: | -----: | --------------------------------------------------------------------- |
-| 1   | Runnable suite            |        3 |   **10** |     10 | `test/s1-runnable-suite`                                              |
-| 2   | `core` coverage           |        4 |   **10** |     10 | `test/s2-core-coverage`                                               |
-| 3   | Per-package coverage      |        2 |   **10** |     10 | `test/s3-package-coverage`                                            |
-| 4   | `core` test quality       |        4 |   **10** |     10 | `test/s2-core-coverage`, `test/s4-test-quality`                       |
-| 5   | `localize` tests          |        9 |   **10** |     10 | `test/s5-localize`                                                    |
-| 6   | E2E tests                 |        2 |   **10** |     10 | `test/s6-e2e`                                                         |
-| 7   | CI and quality gates      |        1 |   **10** |     10 | `test/s1-runnable-suite`, `test/s2-core-coverage`, `test/s7-ci-gates` |
-| 8   | Test infrastructure       |        5 |    **6** |     10 | `test/s3-package-coverage` (partial)                                  |
-| 9   | Test dependency hygiene   |        3 |        3 |     10 | —                                                                     |
-| 10  | Types and public contract |        3 |        3 |     10 | —                                                                     |
-|     | **Weighted total**        |  **3.1** | **9.45** | **10** |                                                                       |
+| #   | Section                   | Baseline |  Current | Target | Moved by                                                               |
+| --- | ------------------------- | -------: | -------: | -----: | ---------------------------------------------------------------------- |
+| 1   | Runnable suite            |        3 |   **10** |     10 | `test/s1-runnable-suite`                                               |
+| 2   | `core` coverage           |        4 |   **10** |     10 | `test/s2-core-coverage`                                                |
+| 3   | Per-package coverage      |        2 |   **10** |     10 | `test/s3-package-coverage`                                             |
+| 4   | `core` test quality       |        4 |   **10** |     10 | `test/s2-core-coverage`, `test/s4-test-quality`                        |
+| 5   | `localize` tests          |        9 |   **10** |     10 | `test/s5-localize`                                                     |
+| 6   | E2E tests                 |        2 |   **10** |     10 | `test/s6-e2e`                                                          |
+| 7   | CI and quality gates      |        1 |   **10** |     10 | `test/s1-runnable-suite`, `test/s2-core-coverage`, `test/s7-ci-gates`  |
+| 8   | Test infrastructure       |        5 |   **10** |     10 | `test/s3-package-coverage`, `claude/test-audit-worktree-status-3vvdim` |
+| 9   | Test dependency hygiene   |        3 |   **10** |     10 | `claude/test-audit-worktree-status-3vvdim`                             |
+| 10  | Types and public contract |        3 |   **10** |     10 | `claude/test-audit-worktree-status-3vvdim`                             |
+|     | **Weighted total**        |  **3.1** | **10.0** | **10** |                                                                        |
 
 Weights: §1 20%, §2 15%, §3 15%, §4 10%, §5 5%, §6 10%, §7 15%, §8 5%, §9 3%, §10 2%.
 
@@ -378,3 +378,212 @@ Two things deliberately left out:
 - **Branch protection is a repository setting, not a file.** It cannot be committed. What the
   workflow now provides is the required check to point it at: enable _Require status checks to
   pass_ on `develop` for the `build` job.
+
+### §9 — Test dependency hygiene: 3 → 10
+
+The monorepo resolved **two Playwright versions**: 1.58.2 for vitest's browser provider and
+web-test-runner, 1.62.0 for `@playwright/test` in the example app. Playwright keys its browser
+downloads by version, so a clean install fetched six browser builds instead of three:
+
+```
+1.58.2 -> chromium-1208 firefox-1509 webkit-2248
+1.62.0 -> chromium-1234 firefox-1538 webkit-2336
+```
+
+The example app also declared a bare `playwright: ^1.0.0` next to `@playwright/test`, which is
+where the second copy came in. Every runner is pinned to an exact version now, with root
+`overrides` so a future install cannot re-split them, and CI installs browsers once:
+
+```
+$ find . -name browsers.json -path '*playwright-core*'
+./node_modules/playwright-core/browsers.json
+chromium-1208 firefox-1509 webkit-2248
+```
+
+The vitest family is pinned exactly too, for a different reason:
+`@vitest/browser-playwright` pins its peer on the exact `vitest` version, so a second copy there
+is a broken run rather than a slow one.
+
+**Eight packages imported something they did not declare** — `vite` in seven test configs,
+`camelcase` in core's, `vitest` in create-app's suite. They worked because the root hoisted
+them, which is a property of the install rather than of the package.
+
+Both failures are now a check rather than a description. `npm run test:toolchain` runs first in
+`npm test`, and it reproduces the two findings above when they come back:
+
+```
+$ npm run test:toolchain            # before
+Test toolchain check failed:
+  - playwright resolves to 2 versions:
+      1.58.2  (node_modules/playwright)
+      1.62.0  (packages/example/recipes-app/node_modules/playwright)
+  - @open-cells/core imports "vite" without declaring it:
+      packages/core/vite.config.ts
+  ... 10 problems
+
+$ npm run test:toolchain            # after
+Test toolchain OK: 7 runners single-versioned, no undeclared test imports.
+exit: 0
+```
+
+Deliberately left alone: the 34 `npm audit` advisories. They are almost all transitive through
+eslint, vite and their dependencies rather than anything this repository picked, and chasing
+them belongs in its own change rather than buried in a test refactor.
+
+### §8 — Test infrastructure: 6 → 10
+
+**One test configuration.** Six packages carried near-identical copies of the same vitest
+configuration — which is how a browser matrix or a coverage reporter ends up applied to five of
+them. `vitest.shared.mjs` decides how a suite runs; a package says only what it covers and how
+much:
+
+```ts
+export default defineConfig({
+  test: browserTestConfig({ thresholds: DEFAULT_THRESHOLDS }),
+});
+```
+
+**One browser policy, across three runners.** vitest drives the unit suites, web-test-runner
+drives `localize`, Playwright drives the e2e suite. They read the same two variables from
+`test-browsers.mjs`, so "run the suite on WebKit" is one thing to know rather than three:
+
+- `OPEN_CELLS_BROWSERS` selects them. The unit suites default to chromium; the e2e suite
+  defaults to all three, because that is the point of it.
+- `OPEN_CELLS_<BROWSER>_EXECUTABLE` points at a browser the environment already provides,
+  for images that provision their own instead of letting Playwright download them.
+
+**The browser matrix.** The unit suites drove chromium and nothing else, so "it passes" was a
+claim about one engine. CI runs them against firefox and webkit as well, in a matrix job, in
+sequence — two browser stacks at once is what crashed the runner in §2.
+
+**One coverage report.** Nine workspaces each wrote their own `coverage/lcov.info`, which is
+what their own gate needs but left nobody able to answer how covered the framework is:
+
+```
+$ npm run coverage:report
+
+Package                        |  Lines | Branches | Functions
+-------------------------------+--------+----------+----------
+@open-cells/core               |  92.79 |  85.79   |  92.07
+@open-cells/core-plugin        | 100.00 | 100.00   | 100.00
+@open-cells/element-controller | 100.00 |  94.74   | 100.00
+@open-cells/localize           |  99.81 |  97.96   |  97.30
+@open-cells/page-controller    | 100.00 |  91.67   | 100.00
+@open-cells/page-mixin         | 100.00 |  91.67   | 100.00
+@open-cells/page-transitions   | 100.00 |  96.77   | 100.00
+-------------------------------+--------+----------+----------
+All packages                   |  96.11 |  87.98   |  93.60
+
+Merged 7 reports into coverage/lcov.info
+```
+
+Each `SF:` path is re-rooted at the repo root, so `page-mixin/src/index.js` stops colliding with
+`core-plugin/src/index.js`. `--check` fails if a suite that should have produced coverage left
+none — the way a suite silently stops being counted — and CI keeps the merged report.
+
+The shared helpers §3 left open are in place: the bridge fixture from §4 is the one the four
+packages built on the bridge use, and core now counts every source file
+(`include: ['src/**/*.js']`) the way the others already did.
+
+### §10 — Types and public contract: 3 → 10
+
+This section had never been measured, because nothing compiled the packages the way a consumer
+does. `types-contract/` is that measurement: an application that imports every package's public
+API under `strict`, with no access to the sources — only what each `types` field points at.
+
+Pointed at the packages as they were, it failed on **four defects a consumer hit on the first
+import**:
+
+```
+$ npx tsc -p types-contract/tsconfig.json
+packages/core/types/bridge.ts(20,24): error TS7016: Could not find a declaration file for
+  module '../src/bridge'. 'packages/core/src/bridge.js' implicitly has an 'any' type.
+packages/core-plugin/types/index.d.ts(4,3): error TS7010: 'constructor', which lacks
+  return-type annotation, implicitly has an 'any' return type.
+packages/element-controller/types/index.d.ts(3,22): error TS2420: Class 'ElementController'
+  incorrectly implements interface 'CoreAPI'.
+packages/element-controller/types/index.d.ts(14,26): error TS2304: Cannot find name 'RouteData'.
+types-contract/core.ts(46,25): error TS1362: 'Bridge' cannot be used as a value because it was
+  exported using 'export type'.
+exit: 2
+```
+
+1. **`Bridge`'s declaration pointed at a `.js` file.** `types/bridge.ts` did
+   `export { Bridge } from '../src/bridge'`, so the published declarations resolved to a source
+   file that ships no types of its own. It is declared properly now, with its public surface.
+2. **`Bridge` was exported as a type**, so `new Bridge(config)` did not compile even though
+   `src/index.js` exports it as a value — the whole reason the class is public.
+3. **`CoreAPI` declared `constructor(host: any)` inside an interface**, which is a method with
+   an implicit `any` return rather than a constructor signature. It broke `CoreAPI` under
+   `strict` and made `ElementController implements CoreAPI` fail with it.
+4. **`element-controller` used `RouteData` without importing it.**
+
+After:
+
+```
+$ npm run test:types
+> tsc -p ./tsconfig-typchk.json --noEmit
+Public types: types-contract compiles under strict.
+Public types: every declared entry point ships in its tarball.
+exit: 0
+```
+
+**`typchk` is green.** `npm run typchk -w @open-cells/core` had 13 errors and was documented in
+`CLAUDE.md` as known-red. Getting to zero was mostly making the hand-written declarations agree
+with the code they describe:
+
+- `Channel` was missing `close()`, so three call sites passing a channel did not type-check.
+  It is the method §2's `isStopped` fix depends on being distinct from `unsubscribe()`.
+- `publishInterceptedNavigation` was declared as taking a `Navigation`, whose `from`/`to` are
+  plain strings, while the router passes it a `NavigationWithParams`.
+- `window.cellsBridgeQueue` was undeclared, though `enqueueCommand` is public API and that is
+  where it writes.
+- `Object.defineProperty(wrappedCallback, /** @type {WCNode} */ 'node', …)` cast the property
+  _key_ to a node, which left the property unassignable. The node is defined with the descriptor
+  now.
+- The two reads of RxJS's private `_finalizers` — the ones §2 found the bug in — carry an
+  explicit cast rather than being `any` by accident.
+- `tsconfig-typchk.json` sets `"types": []`, so the check no longer fails on `@types/sinon`
+  disagreeing with the `@sinonjs/fake-timers` it resolves to, which has nothing to do with core.
+
+The internal managers now type against `import('../bridge').Bridge`, the implementation, rather
+than the narrower public declaration: they reach into internals the contract does not expose,
+and conflating the two is what let the declaration drift in the first place.
+
+**The declarations are also checked to be published.** A `types` field pointing at a file that
+`files` does not ship type-checks inside the monorepo and gives consumers TS7016 anyway, so the
+check packs each workspace exactly as `npm publish` would and looks for every declared entry
+point. Verified to bite:
+
+```
+$ npm run test:types              # types field temporarily pointed at a file that is not shipped
+  - @open-cells/page-mixin declares entry points its tarball does not ship:
+      types/not-shipped.d.ts
+exit: 1
+```
+
+### Whole suite, after §8–§10
+
+```
+$ npm test
+Test toolchain OK: 7 runners single-versioned, no undeclared test imports.
+Public types: types-contract compiles under strict.
+Public types: every declared entry point ships in its tarball.
+@open-cells/core                 647 passed (20 files)
+@open-cells/core-plugin           28 passed (2 files)
+@open-cells/create-app            15 passed (1 file)
+@open-cells/element-controller    22 passed (1 file)
+@open-cells/localize              46 passed (7 files)
+@open-cells/page-controller       18 passed (1 file)
+@open-cells/page-mixin            20 passed (1 file)
+@open-cells/page-transitions      43 passed (3 files)
+@open-cells/recipes-app           27 passed (e2e, chromium)
+exit: 0
+
+$ npm run lint
+✖ 29 problems (0 errors, 29 warnings)
+```
+
+The e2e count is 27 rather than 81 because this run set `OPEN_CELLS_BROWSERS=chromium`: the
+environment it ran in cannot reach Playwright's CDN, so it used the Chromium the image already
+provides through `OPEN_CELLS_CHROMIUM_EXECUTABLE`. CI runs the full matrix.
