@@ -13,13 +13,13 @@ not moved.
 | 2 | `core` coverage | 4 | **10** | 10 | `test/s2-core-coverage` |
 | 3 | Per-package coverage | 2 | **10** | 10 | `test/s3-package-coverage` |
 | 4 | `core` test quality | 4 | **10** | 10 | `test/s2-core-coverage`, `test/s4-test-quality` |
-| 5 | `localize` tests | 9 | 9 | 10 | — |
+| 5 | `localize` tests | 9 | **10** | 10 | `test/s5-localize` |
 | 6 | E2E tests | 2 | 2 | 10 | — |
 | 7 | CI and quality gates | 1 | **5** | 10 | `test/s1-runnable-suite`, `test/s2-core-coverage` (partial) |
 | 8 | Test infrastructure | 5 | **6** | 10 | `test/s3-package-coverage` (partial) |
 | 9 | Test dependency hygiene | 3 | 3 | 10 | — |
 | 10 | Types and public contract | 3 | 3 | 10 | — |
-| | **Weighted total** | **3.1** | **7.85** | **10** | |
+| | **Weighted total** | **3.1** | **7.90** | **10** | |
 
 Weights: §1 20%, §2 15%, §3 15%, §4 10%, §5 5%, §6 10%, §7 15%, §8 5%, §9 3%, §10 2%.
 
@@ -151,13 +151,13 @@ $ npm test
 @open-cells/core-plugin           28 passed (2 files)
 @open-cells/create-app            15 passed (1 file)
 @open-cells/element-controller    22 passed (1 file)
-@open-cells/localize              42 passed (7 files)
+@open-cells/localize              46 passed (7 files)
 @open-cells/page-controller       18 passed (1 file)
 @open-cells/page-mixin            20 passed (1 file)
 @open-cells/page-transitions      43 passed (3 files)
 @open-cells/recipes-app           18 passed (e2e)
                                  ---
-                                 853 passed
+                                 857 passed
 exit: 0
 ```
 
@@ -171,6 +171,52 @@ run died with `VirtualAlloc ... failed` before a single suite finished. Since no
 was configured for tests, it was providing parallelism and nothing else. `npm run test
 --workspaces --if-present` runs them in sequence, which is what this workload needs. Still open
 for §8: the combined coverage report, the browser matrix, and the shared helpers.
+
+### §5 — `localize` tests: 9 → 10
+
+This was already the best suite in the repository. What it lacked was a gate and a couple of
+loose ends.
+
+**It now has a coverage gate at 95/95**, and the gate is verified to bite rather than merely
+declared — setting it to an impossible value fails the run with a clear message:
+
+```
+$ npx web-test-runner              # threshold temporarily set to 99.9% branches
+Coverage for branches failed with 97.95 % compared to configured 99.9 %
+Finished running tests in 2.4s, failed to meet coverage threshold.
+exit: 1
+```
+
+At the real threshold:
+
+```
+$ npm run -w @open-cells/localize test
+7/7 test files | 46 passed, 0 failed
+Code coverage: 98.72 %
+
+lines     1054/1056 = 99.81%
+branches      96/98 = 97.96%
+functions     36/37 = 97.30%
+exit: 0
+```
+
+**The one untested feature is covered.** The only real gap was the per-call currency override —
+`t(key, params, { currency: 'EUR' })`, which rewrites the currency the formats declare and keys
+the message cache by it. Four cases now cover it: the override itself, that it leaves the
+configured formats alone, that each currency is cached separately, and that an options object
+naming no currency changes nothing.
+
+**The console stubs cannot leak any more.** `config-methods.test.js` silenced `console.error` and
+`console.warn` and restored them at the end of the test body, so a failure part-way through would
+have left the console muted for everything after it. They come from a sandbox restored in
+`afterEach` now.
+
+**The runner configuration is honest.** It carried a commented-out `files` override, `devtools:
+true`, an `args: ['--some-flag']` that means nothing to Chromium, and three blocks of
+commented-out context factories. All gone.
+
+The package was wired into the root orchestration in §3, when the root `test` script moved to
+`npm run test --workspaces`.
 
 ### §4 — `core` test quality: 4 → 10
 
