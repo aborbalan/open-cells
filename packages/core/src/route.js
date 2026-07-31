@@ -86,8 +86,8 @@ export class Route {
    * @param {string | string[]} pattern - The pattern(s) of the route.
    * @param {Function} action - The action to be performed when the route is matched.
    * @param {boolean} [notFound=false] - Indicates whether the route represents the 404 page.
-   * @param {string | undefined} component - The name of component.
    *   Default is `false`
+   * @param {string | undefined} component - The name of component. Default is `false`
    */
   constructor(name, pattern, action, notFound = false, component = undefined) {
     this.name = name;
@@ -106,7 +106,6 @@ export class Route {
    */
   _getRegExp(p) {
     let urlPattern = p;
-    let regex;
     let trailingSlashesReplacement = '/*';
     let regExEnding = '$';
 

@@ -52,9 +52,37 @@ npm run -w @open-cells/recipes-app test       # end-to-end
 that adds the coverage, never lower it to make a run pass. Current status and targets live in
 [`docs/testing-scorecard.md`](./docs/testing-scorecard.md).
 
+## Linting and commits
+
+`npm ci` installs git hooks through husky. Two of them run:
+
+- **pre-commit** runs `lint-staged`, which lints and formats **only the files being committed**
+  (`eslint --fix` then `prettier --write`). It does not run the test suite: that drives real
+  browsers and takes minutes, so it belongs in CI.
+- **commit-msg** runs `commitlint`, which requires [Conventional
+  Commits](https://www.conventionalcommits.org/en/v1.0.0/) with the package as the scope:
+
+  ```
+  fix(core): stop dropping values published after a channel reset
+  ```
+
+To check the whole repository yourself:
+
+```sh
+npm run lint        # eslint over everything
+npm run lint:fix    # and fix what can be fixed
+npm run format      # prettier over everything
+```
+
+Formatting is being adopted file by file rather than in one sweep: `npm run format` would
+rewrite around sixty files that predate the configuration, so CI does not check formatting yet.
+Anything you touch gets formatted on commit.
+
+To skip the hooks for a work-in-progress commit, `git commit --no-verify`. CI still checks.
+
 <!--
 
-## Getting Started 
+## Getting Started
 
 First, create a fork of the [BBVA/open-cells](https://github.com/BBVA/open-cells) repository by hitting the `fork` button on the GitHub page.
 

@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-console, import/no-cycle */
+/* This module and ./app/index.js import each other; the cycle is deliberate and is why the
+ * app mixin lives in its own file. eslint-plugin-import is not installed, so there is no
+ * import/no-cycle rule to disable here. */
 import path from 'path';
 import { writeFilesToDisk, optionsToCommand } from '@open-wc/create/dist/core.js';
 import _Generator from '@open-wc/create/dist/Generator.js';
