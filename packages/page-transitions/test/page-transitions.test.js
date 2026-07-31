@@ -243,7 +243,9 @@ describe('transitionPage', () => {
     });
 
     it('should not announce anything while the other page is still animating', async () => {
-      const leaving = page('inactive');
+      // The leaving page has to exist for a transition to happen, but this case never
+      // touches it: what it checks is that the entering page stays quiet on its own.
+      page('inactive');
       const entering = page('active');
       const listener = sandbox.spy();
       entering.addEventListener('page-active', listener);
@@ -273,7 +275,7 @@ describe('transitionPage', () => {
     });
 
     it('should also clean up on a cancelled animation', async () => {
-      const leaving = page('inactive');
+      page('inactive');
       const entering = page('active');
 
       transitionPage(entering, { animations: defaultPageTransitions, type: 'fade' });

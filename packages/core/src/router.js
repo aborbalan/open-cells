@@ -317,7 +317,7 @@ export class Router {
   }
 
   /** @param {Route} route */
-  // eslint-disable-next-line no-unused-vars
+
   handler(route) {
     // Overwrite to make something after all matched routes
   }
@@ -471,8 +471,6 @@ export class Router {
 
     // We check if 404 route have a pattern...
     if (route404 && route404.patterns.length === 1) {
-      const routeWithSamePattern = this.getRouteWithPattern(route404.patterns[0]);
-
       route404.redirectPage = route404.name;
       route404.isAccessible = true;
     }

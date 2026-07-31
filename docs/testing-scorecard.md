@@ -7,28 +7,28 @@ The baseline was **3.1/10**; the target is 10/10 in every section.
 quotes the output of the command that proves it. If there is no pasted output, the section has
 not moved.
 
-| # | Section | Baseline | Current | Target | Moved by |
-|---|---|---:|---:|---:|---|
-| 1 | Runnable suite | 3 | **10** | 10 | `test/s1-runnable-suite` |
-| 2 | `core` coverage | 4 | **10** | 10 | `test/s2-core-coverage` |
-| 3 | Per-package coverage | 2 | **10** | 10 | `test/s3-package-coverage` |
-| 4 | `core` test quality | 4 | **10** | 10 | `test/s2-core-coverage`, `test/s4-test-quality` |
-| 5 | `localize` tests | 9 | **10** | 10 | `test/s5-localize` |
-| 6 | E2E tests | 2 | **10** | 10 | `test/s6-e2e` |
-| 7 | CI and quality gates | 1 | **5** | 10 | `test/s1-runnable-suite`, `test/s2-core-coverage` (partial) |
-| 8 | Test infrastructure | 5 | **6** | 10 | `test/s3-package-coverage` (partial) |
-| 9 | Test dependency hygiene | 3 | 3 | 10 | — |
-| 10 | Types and public contract | 3 | 3 | 10 | — |
-| | **Weighted total** | **3.1** | **8.70** | **10** | |
+| #   | Section                   | Baseline |  Current | Target | Moved by                                                              |
+| --- | ------------------------- | -------: | -------: | -----: | --------------------------------------------------------------------- |
+| 1   | Runnable suite            |        3 |   **10** |     10 | `test/s1-runnable-suite`                                              |
+| 2   | `core` coverage           |        4 |   **10** |     10 | `test/s2-core-coverage`                                               |
+| 3   | Per-package coverage      |        2 |   **10** |     10 | `test/s3-package-coverage`                                            |
+| 4   | `core` test quality       |        4 |   **10** |     10 | `test/s2-core-coverage`, `test/s4-test-quality`                       |
+| 5   | `localize` tests          |        9 |   **10** |     10 | `test/s5-localize`                                                    |
+| 6   | E2E tests                 |        2 |   **10** |     10 | `test/s6-e2e`                                                         |
+| 7   | CI and quality gates      |        1 |   **10** |     10 | `test/s1-runnable-suite`, `test/s2-core-coverage`, `test/s7-ci-gates` |
+| 8   | Test infrastructure       |        5 |    **6** |     10 | `test/s3-package-coverage` (partial)                                  |
+| 9   | Test dependency hygiene   |        3 |        3 |     10 | —                                                                     |
+| 10  | Types and public contract |        3 |        3 |     10 | —                                                                     |
+|     | **Weighted total**        |  **3.1** | **9.45** | **10** |                                                                       |
 
 Weights: §1 20%, §2 15%, §3 15%, §4 10%, §5 5%, §6 10%, §7 15%, §8 5%, §9 3%, §10 2%.
 
 ## Agreed thresholds
 
-| Package | Lines | Branches |
-|---|---:|---:|
-| `@open-cells/core` | 90% | 85% |
-| `@open-cells/localize` | 95% | 95% |
+| Package                | Lines | Branches |
+| ---------------------- | ----: | -------: |
+| `@open-cells/core`     |   90% |      85% |
+| `@open-cells/localize` |   95% |      95% |
 
 `packages/core/vite.config.ts` carries a **ratchet**: raise it in the PR that adds the coverage,
 never lower it to make a run pass. It now sits at the agreed target and CI fails below it.
@@ -85,20 +85,20 @@ script now declares a wireit dependency on the unit suite so they run in sequenc
 
 Per file, statements / branches, from the audit baseline:
 
-| File | Before | After |
-|---|---|---|
-| `router.js` | 52.91 / 41.74 | 89.86 / 80.95 |
-| `component-connector.js` | 25.00 / 8.97 | 89.60 / 87.34 |
-| `bridge.js` | 53.33 / 38.01 | 89.00 / 86.77 |
-| `external/event-emitter.js` | 45.96 / 30.30 | 80.64 / 70.90 |
-| `manager/bridge-channels.js` | 46.57 / 7.69 | 100 / 73.33 |
-| `manager/action-channels.js` | 25.80 / 0 | 100 / 94.11 |
-| `manager/template.js` | 53.94 / 29.72 | 98.68 / 91.89 |
-| `manager/storage.js` | 77.27 / 60.00 | 100 / 100 |
-| `manager/post-message.js` | 36.36 / 20.00 | 100 / 100 |
-| `adapter/element-adapter.js` | 25.00 / 11.11 | 100 / 96.29 |
-| `navigation-stack.js` | 67.50 / 64.70 | 100 / 100 |
-| `route.js`, `template.js`, `utils.js` | — | 100 / 100 |
+| File                                  | Before        | After         |
+| ------------------------------------- | ------------- | ------------- |
+| `router.js`                           | 52.91 / 41.74 | 89.86 / 80.95 |
+| `component-connector.js`              | 25.00 / 8.97  | 89.60 / 87.34 |
+| `bridge.js`                           | 53.33 / 38.01 | 89.00 / 86.77 |
+| `external/event-emitter.js`           | 45.96 / 30.30 | 80.64 / 70.90 |
+| `manager/bridge-channels.js`          | 46.57 / 7.69  | 100 / 73.33   |
+| `manager/action-channels.js`          | 25.80 / 0     | 100 / 94.11   |
+| `manager/template.js`                 | 53.94 / 29.72 | 98.68 / 91.89 |
+| `manager/storage.js`                  | 77.27 / 60.00 | 100 / 100     |
+| `manager/post-message.js`             | 36.36 / 20.00 | 100 / 100     |
+| `adapter/element-adapter.js`          | 25.00 / 11.11 | 100 / 96.29   |
+| `navigation-stack.js`                 | 67.50 / 64.70 | 100 / 100     |
+| `route.js`, `template.js`, `utils.js` | —             | 100 / 100     |
 
 #### Three defects the coverage work uncovered
 
@@ -122,14 +122,14 @@ user meets first — had none either. Every package now has its own vitest harne
 dependencies declared explicitly, and `include: ['src/**/*.js']` so the report counts every
 source file rather than only the ones a test happened to import.
 
-| Package | Tests | Statements / branches |
-|---|---:|---|
-| `core-plugin` | 28 | 100 / 100 |
-| `element-controller` | 22 | 100 / 94.7 |
-| `page-controller` | 18 | 100 / 91.7 |
-| `page-mixin` | 20 | 100 / 91.7 |
-| `page-transitions` | 43 | 100 / 96.8 |
-| `create-app` | 15 | smoke test, see below |
+| Package              | Tests | Statements / branches |
+| -------------------- | ----: | --------------------- |
+| `core-plugin`        |    28 | 100 / 100             |
+| `element-controller` |    22 | 100 / 94.7            |
+| `page-controller`    |    18 | 100 / 91.7            |
+| `page-mixin`         |    20 | 100 / 91.7            |
+| `page-transitions`   |    43 | 100 / 96.8            |
+| `create-app`         |    15 | smoke test, see below |
 
 `create-app` carries no coverage gate on purpose: the suite runs the published entry point as a
 child process, the way `npx @open-cells/create-app` does, so the generator's statements execute
@@ -197,11 +197,11 @@ between two recipes swaps the content.
 
 **The framework's own behaviour is covered.** 27 tests across three files:
 
-| File | What it covers |
-|---|---|
-| `app-shell.spec.ts` | boot, the daily special, the category list order, dark mode, running with the network cut |
-| `navigation.spec.ts` | route params, direct URL entry, back links, browser back and forward, template caching, unmatched URLs |
-| `channels.spec.ts` | state shared between pages that never import each other, persistence across a reload, and that a page does not refetch what a channel already carries |
+| File                 | What it covers                                                                                                                                        |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app-shell.spec.ts`  | boot, the daily special, the category list order, dark mode, running with the network cut                                                             |
+| `navigation.spec.ts` | route params, direct URL entry, back links, browser back and forward, template caching, unmatched URLs                                                |
+| `channels.spec.ts`   | state shared between pages that never import each other, persistence across a reload, and that a page does not refetch what a channel already carries |
 
 **Two things it recorded rather than fixed:**
 
@@ -289,8 +289,8 @@ was wrong, it was still in `channel.test.js`:
 
 ```js
 const unsubscribeStub = sinon.stub(channel, 'unsubscribe');
-channel.unsubscribe();                      // calls the stub
-expect(unsubscribeStub.called).to.be.true;  // always green
+channel.unsubscribe(); // calls the stub
+expect(unsubscribeStub.called).to.be.true; // always green
 ```
 
 The file now has 26 cases that assert on behaviour, including the one that test was pretending
@@ -328,10 +328,53 @@ Weak assertions in `core` went from 22 of 145 to 18 of 887 — from 15% of the e
 — and the ones left are genuine type or instance checks rather than `expect(x).to.exist` standing
 in for a real expectation.
 
-### §7 — CI and quality gates: 1 → 5 (partial)
+### §7 — CI and quality gates: 1 → 10
 
-CI ran no tests at all; it now installs browsers, runs the full suite on every push, and fails
-when coverage drops below 90% lines / 85% branches. Still open: the ungated `npm publish` that
-swallows its own failures, coverage reporting, the local husky/lint-staged/commitlint gate, and
-branch protection.
+CI ran no tests at all. §1 gave it the suite and §2 the coverage floor; this closes the rest.
 
+**Nothing reaches npm untested any more.** `publish.yml` ran `npm ci` and `npm run build` and
+went straight to publishing. It now calls `build.yml` through `workflow_call` and publishes only
+if that job passes.
+
+**A failed publish now fails the build.** Every one of the nine publish steps ended in
+`npm publish || echo "Publish failed"`, so the workflow went green whether or not the package
+reached the registry. That is gone, and the nine near-identical blocks are one loop that still
+skips a version already on npm — a re-run stays harmless, a genuine failure does not.
+
+**ESLint had not run since ESLint 9 was installed.** The repository carried a `.eslintrc.json`
+that ESLint 9 does not read, so `npm run lint` failed with "couldn't find an eslint.config.js".
+The file also pointed its parser at `./packages/bridge/tsconfig-typchk.json`, a path that does
+not exist here. There is an `eslint.config.js` now, and lint runs in CI:
+
+```
+$ npm run lint
+✖ 32 problems (0 errors, 32 warnings)
+```
+
+Getting to zero errors turned up dead code the linter had never been able to report: an unused
+`regex` in `route.js`, an unused `renderEngines` in `bridge.js`, an unused `oldPageName` in the
+template manager, and the `routeWithSamePattern` in `_setup404()` that the audit had spotted by
+eye. A malformed disable comment in `bridge.js` — `no-unused-vars../types`, a path fragment
+glued to the rule name — and a reference to an `import/no-cycle` rule from a plugin that is not
+installed were both making ESLint error out on the file rather than lint it.
+
+**The local gate exists.** `@commitlint/cli`, `@commitlint/config-conventional` and
+`lint-staged` had been devDependencies with nothing configured to read them and no hook to run
+them, so CONTRIBUTING.md described a rule that was never checked. husky now installs two hooks
+on `npm ci`:
+
+- `pre-commit` runs `lint-staged` over the staged files only;
+- `commit-msg` runs `commitlint`, verified to accept `test: wire the local quality gate`
+  (exit 0) and reject `made some changes` (exit 1).
+
+**Coverage and failure reports are kept.** CI uploads every `lcov.info` and HTML report, and the
+Playwright report when the e2e job fails, so a drop can be looked at instead of guessed at.
+
+Two things deliberately left out:
+
+- **Formatting is not a CI gate yet.** `prettier --check` fails on 62 files that predate the
+  configuration. Reformatting them in this pull request would bury the change; `lint-staged`
+  formats each file as it is touched instead.
+- **Branch protection is a repository setting, not a file.** It cannot be committed. What the
+  workflow now provides is the required check to point it at: enable _Require status checks to
+  pass_ on `develop` for the `build` job.

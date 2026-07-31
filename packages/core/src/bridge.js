@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// eslint-disable-next-line no-unused-vars../types
 import { ComponentConnector } from './component-connector';
 import { Router } from './router';
 /** @type {EventEmitter} */
@@ -27,6 +26,7 @@ import { Constants } from './constants';
 import { PostMessageManager } from './manager/post-message';
 import { ApplicationConfigManager } from './manager/application-config';
 import { ApplicationStateManager } from './manager/application-state';
+// eslint-disable-next-line no-unused-vars -- referenced by the JSDoc types below
 import { Template } from './template';
 import { BRIDGE_CHANNEL_PREFIX } from './constants';
 
@@ -301,7 +301,6 @@ const {
   externalEventsCodes,
   initialTemplate: DEFAULT_INITIAL_TEMPLATE,
   pagesPath: DEFAULT_PAGES_PATH,
-  renderEngines,
 } = Constants;
 
 /** @type {Object<string, Channel>} */
