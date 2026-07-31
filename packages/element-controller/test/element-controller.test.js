@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2024 Bilbao Vizcaya Argentaria, S.A.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,7 @@
 
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
-import { Bridge } from '@open-cells/core';
-import { eventManager } from '@open-cells/core/src/manager/events.js';
+import { useBridge } from '@open-cells/core/test/helpers/bridge-fixture.js';
 import { ElementController } from '../src/ElementController.js';
 
 /** The smallest thing a ReactiveController host has to be. */
@@ -80,42 +79,18 @@ const TAGS = {
 };
 
 describe('ElementController', () => {
-  let bridge;
-  let container;
+  const bridgeFixture = useBridge();
   let sandbox;
   let host;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-
-    container = document.createElement('div');
-    const mainNode = document.createElement('div');
-    mainNode.setAttribute('id', '__main_node__');
-    container.appendChild(mainNode);
-    document.body.appendChild(container);
-
-    bridge = new Bridge({
-      debug: true,
-      mainNode: '__main_node__',
-      // The bridge chains `.then()` onto whatever loadCellsPage() returns, and it goes
-      // down that path for any page tag that is not registered — as `home-page` is not
-      // here. A real route action dynamically imports the page, so it returns a promise.
-      routes: { home: { path: '/', action: () => Promise.resolve() } },
-    });
   });
 
   afterEach(() => {
     host?.remove();
     host = undefined;
-    bridge.Router.destroy();
-    bridge.ComponentConnector.unregisterAllSubscriptors(true);
-    const channels = bridge.ComponentConnector.getChannels();
-    Object.keys(channels).forEach(name => delete channels[name]);
-    eventManager.removeAllListeners();
     sandbox.restore();
-    container.remove();
-    document.querySelectorAll('#cells-template-__cross').forEach(node => node.remove());
-    window.location.hash = '';
   });
 
   /** Builds a host of the given kind with its controller attached. */
@@ -149,8 +124,8 @@ describe('ElementController', () => {
     it('should subscribe on behalf of the host, not of itself', () => {
       const { host: element, controller } = build('inbound');
       controller.hostConnected();
-      expect(bridge.ComponentConnector.subscriptors.has(element)).to.be.true;
-      expect(bridge.ComponentConnector.subscriptors.has(controller)).to.be.false;
+      expect(bridgeFixture.bridge.ComponentConnector.subscriptors.has(element)).to.be.true;
+      expect(bridgeFixture.bridge.ComponentConnector.subscriptors.has(controller)).to.be.false;
     });
   });
 
@@ -210,7 +185,7 @@ describe('ElementController', () => {
       const { host: element, controller } = build('inbound');
       controller.hostConnected();
 
-      bridge.publish('recipes', { id: 1 });
+      bridgeFixture.bridge.publish('recipes', { id: 1 });
 
       expect(element.recipe).to.deep.equal({ id: 1 });
     });
@@ -219,7 +194,7 @@ describe('ElementController', () => {
       const { host: element, controller } = build('inbound');
       controller.hostConnected();
 
-      bridge.publish('recipes', { id: 1 });
+      bridgeFixture.bridge.publish('recipes', { id: 1 });
 
       expect(element.updateCount).to.equal(1);
     });
@@ -228,7 +203,7 @@ describe('ElementController', () => {
       const { host: element, controller } = build('transforming');
       controller.hostConnected();
 
-      bridge.publish('recipes', { id: 1 });
+      bridgeFixture.bridge.publish('recipes', { id: 1 });
 
       expect(element.recipe).to.deep.equal({ id: 1, seen: true });
     });
@@ -237,7 +212,7 @@ describe('ElementController', () => {
       const { host: element, controller } = build('quiet');
       controller.hostConnected();
 
-      bridge.publish('recipes', { id: 1 });
+      bridgeFixture.bridge.publish('recipes', { id: 1 });
 
       expect(element.recipe).to.deep.equal({ id: 1 });
       expect(element.updateCount).to.equal(0);
@@ -255,7 +230,7 @@ describe('ElementController', () => {
     it('should publish on assignment', () => {
       const { host: element } = build('outbound');
       const received = [];
-      bridge.ComponentConnector.getChannel('picks').subscribe(evt => received.push(evt));
+      bridgeFixture.bridge.ComponentConnector.getChannel('picks').subscribe(evt => received.push(evt));
 
       element.picked = { id: 3 };
 
@@ -284,7 +259,7 @@ describe('ElementController', () => {
       const { host: element, controller } = build('inbound');
 
       controller.hostConnected();
-      bridge.publish('recipes', { id: 1 });
+      bridgeFixture.bridge.publish('recipes', { id: 1 });
 
       expect(element.recipe).to.deep.equal({ id: 1 });
     });
@@ -292,10 +267,10 @@ describe('ElementController', () => {
     it('should stop listening once disconnected', () => {
       const { host: element, controller } = build('inbound');
       controller.hostConnected();
-      bridge.publish('recipes', { id: 1 });
+      bridgeFixture.bridge.publish('recipes', { id: 1 });
 
       controller.hostDisconnected();
-      bridge.publish('recipes', { id: 2 });
+      bridgeFixture.bridge.publish('recipes', { id: 2 });
 
       expect(element.recipe).to.deep.equal({ id: 1 });
     });
@@ -309,3 +284,4 @@ describe('ElementController', () => {
     });
   });
 });
+

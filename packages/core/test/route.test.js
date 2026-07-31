@@ -21,10 +21,16 @@ import { Route } from '../src/route';
 describe('Route', () => {
   let route;
   let mockAction;
+  let sandbox;
 
   beforeEach(() => {
-    mockAction = sinon.stub();
+    sandbox = sinon.createSandbox();
+    mockAction = sandbox.stub();
     route = new Route('test', '/test/:id', mockAction);
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   describe('#constructor', () => {
