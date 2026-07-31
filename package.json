@@ -9,7 +9,7 @@
   "scripts": {
     "clean": "find . -name \"node_modules\" -type d -prune -exec rm -rf '{}' +",
     "build": "wireit",
-    "test": "npm run test:toolchain && npm run test --workspaces --if-present",
+    "test": "npm run test:toolchain && npm run test:types && npm run test --workspaces --if-present",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -24,6 +24,7 @@
     "version": "npm run changeset version && npm run create-app:update",
     "create-app:update": "npm --prefix ./packages/create-app run update",
     "test:toolchain": "node scripts/check-test-toolchain.mjs",
+    "test:types": "npm run typchk -w @open-cells/core && node scripts/check-public-types.mjs",
     "coverage:report": "node scripts/coverage-report.mjs"
   },
   "keywords": [],

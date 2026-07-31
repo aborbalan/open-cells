@@ -19,11 +19,16 @@ import { eventManager } from './events';
 /**
  * @typedef {import('../../types').AugmentedFunction} AugmentedFunction
  *
- * @typedef {import('../../types').Bridge} Bridge
+ *   The bridge these managers hang off is the implementation, not the narrower public declaration in
+ *   `types/`: they reach into internals the contract does not expose.
+ *
+ * @typedef {import('../bridge').Bridge} Bridge
  *
  * @typedef {import('../../types').Channel} Channel
  *
  * @typedef {import('../../types').Navigation} Navigation
+ *
+ * @typedef {import('../../types').NavigationWithParams} NavigationWithParams
  *
  * @typedef {import('../../types').Binding} Binding
  *
@@ -279,7 +284,11 @@ export class BridgeChannelManager {
   /**
    * Publishes the intercepted navigation event.
    *
-   * @param {Navigation} navigation - The navigation details.
+   * The router publishes both endpoints with their params, so this takes a `NavigationWithParams`.
+   * It was declared as `Navigation`, whose `from`/`to` are plain strings, and the call site did not
+   * type-check.
+   *
+   * @param {NavigationWithParams} navigation - The navigation details.
    */
   publishInterceptedNavigation(navigation) {
     const evt = eventManager.createEvent('intercepted-navigation', navigation);
@@ -350,13 +359,19 @@ export class BridgeChannelManager {
     );
 
     /**
-     * RxJS 7 renamed Subscription's child list from `_subscriptions` to `_finalizers`.
-     * Reading only the old name made every out connection silently disappear.
+     * RxJS 7 renamed Subscription's child list from `_subscriptions` to `_finalizers`. Reading only
+     * the old name made every out connection silently disappear.
      *
      * @param {Subscriptor} c
-     * @returns {WCSubscription[]}
+     * @returns {WCSubscription[] | undefined}
      */
-    const publicationsOf = c => c.publications?._finalizers || c.publications?._subscriptions;
+    const publicationsOf = c => {
+      // `_finalizers` is private in RxJS's own declarations, hence the cast.
+      const internals = /** @type {{ _finalizers?: WCSubscription[] } | undefined} */ (
+        /** @type {unknown} */ (c.publications)
+      );
+      return internals?._finalizers || c.publications?._subscriptions;
+    };
 
     /** @type {OutConnection[]} */
     const outConnections =

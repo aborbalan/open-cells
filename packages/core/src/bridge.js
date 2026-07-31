@@ -691,7 +691,11 @@ export class Bridge {
     cellsBridgeQueue = $queueCommands;
     if (Array.isArray(cellsBridgeQueue)) {
       cellsBridgeQueue.forEach(({ command, parameters }) => {
-        const queuedCommand = this[command];
+        // A queued command names a method by string, so the lookup is an index into the
+        // instance. Only the guard below decides whether it is a real command.
+        const queuedCommand = /** @type {Record<string, Function | undefined>} */ (
+          /** @type {unknown} */ (this)
+        )[command];
 
         if (!queuedCommand) {
           console.log(`WARNING: Invalid cells bridge command execution: ${command} (QUEUE).`);

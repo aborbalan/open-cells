@@ -15,7 +15,10 @@
  */
 
 /**
- * @typedef {import('../../types').Bridge} Bridge
+ * The bridge these managers hang off is the implementation, not the narrower public declaration in
+ * `types/`: they reach into internals the contract does not expose.
+ *
+ * @typedef {import('../bridge').Bridge} Bridge
  *
  * @typedef {import('./bridge-channels').BridgeChannelManager} BridgeChannelManager
  *

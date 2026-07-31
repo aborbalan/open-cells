@@ -89,9 +89,7 @@ export class Channel extends ReplaySubject {
   //   }
   // }
 
-  /** 
-   * Unsubscribes all observers from the channel keeping the channel open.
-   */
+  /** Unsubscribes all observers from the channel keeping the channel open. */
   unsubscribe() {
     super.unsubscribe();
     // Reopen the channel. RxJS marks a Subject as closed *and* stopped when it is
@@ -101,12 +99,13 @@ export class Channel extends ReplaySubject {
     this.closed = false;
     this.isStopped = false;
     this.observers = [];
-    this.currentObservers = null;
+    // `currentObservers` is private in RxJS's declarations; clearing it is what reopens the
+    // subject, so the cast is deliberate rather than a way around a type error.
+    const internals = /** @type {{ currentObservers: unknown }} */ (/** @type {unknown} */ (this));
+    internals.currentObservers = null;
   }
 
-  /** 
-   * Unsubscribes all observers from the channel and closes it.
-   */
+  /** Unsubscribes all observers from the channel and closes it. */
   close() {
     super.unsubscribe();
   }

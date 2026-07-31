@@ -22,6 +22,11 @@ jobs:
         run: npx playwright install --with-deps chromium firefox webkit
       - name: Lint
         run: npm run lint
+      # The published contract: core's own declarations type-check, `types-contract/` compiles
+      # against every package the way an application does, and each declared entry point is in
+      # the tarball. `npm test` runs it too; it is a separate step so a failure names itself.
+      - name: Public type contract
+        run: npm run test:types
       - run: npm run build --if-present
       - name: Run tests
         run: npm test
