@@ -21,7 +21,7 @@ jobs:
       - name: Install Playwright browsers
         run: |
           npx playwright install --with-deps chromium
-          npm exec -w @open-cells/recipes-app -- playwright install --with-deps chromium webkit
+          npm exec -w @open-cells/recipes-app -- playwright install --with-deps chromium firefox webkit
       - run: npm run build --if-present
       - name: Run tests
         run: npm test

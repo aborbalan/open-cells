@@ -14,12 +14,12 @@ not moved.
 | 3 | Per-package coverage | 2 | **10** | 10 | `test/s3-package-coverage` |
 | 4 | `core` test quality | 4 | **10** | 10 | `test/s2-core-coverage`, `test/s4-test-quality` |
 | 5 | `localize` tests | 9 | **10** | 10 | `test/s5-localize` |
-| 6 | E2E tests | 2 | 2 | 10 | — |
+| 6 | E2E tests | 2 | **10** | 10 | `test/s6-e2e` |
 | 7 | CI and quality gates | 1 | **5** | 10 | `test/s1-runnable-suite`, `test/s2-core-coverage` (partial) |
 | 8 | Test infrastructure | 5 | **6** | 10 | `test/s3-package-coverage` (partial) |
 | 9 | Test dependency hygiene | 3 | 3 | 10 | — |
 | 10 | Types and public contract | 3 | 3 | 10 | — |
-| | **Weighted total** | **3.1** | **7.90** | **10** | |
+| | **Weighted total** | **3.1** | **8.70** | **10** | |
 
 Weights: §1 20%, §2 15%, §3 15%, §4 10%, §5 5%, §6 10%, §7 15%, §8 5%, §9 3%, §10 2%.
 
@@ -155,9 +155,9 @@ $ npm test
 @open-cells/page-controller       18 passed (1 file)
 @open-cells/page-mixin            20 passed (1 file)
 @open-cells/page-transitions      43 passed (3 files)
-@open-cells/recipes-app           18 passed (e2e)
+@open-cells/recipes-app           81 passed (e2e, 3 browsers)
                                  ---
-                                 857 passed
+                                 920 passed
 exit: 0
 ```
 
@@ -171,6 +171,58 @@ run died with `VirtualAlloc ... failed` before a single suite finished. Since no
 was configured for tests, it was providing parallelism and nothing else. `npm run test
 --workspaces --if-present` runs them in sequence, which is what this workload needs. Still open
 for §8: the combined coverage report, the browser matrix, and the shared helpers.
+
+### §6 — E2E tests: 2 → 10
+
+The suite was one file called `example.spec.ts` — the name Playwright scaffolds — with 9 tests
+that mostly asserted on `page.url()`. It also called the live TheMealDB API, so "green" depended
+on a free third-party service being up, not rate-limiting, and never changing its catalogue.
+
+**The network is gone.** `tests/helpers/recipes-api.ts` serves every endpoint the app uses from
+`tests/fixtures/meals.ts`, and images resolve to an inline transparent GIF. An endpoint the app
+starts calling that is not mapped is answered with a 501 rather than quietly reaching the
+network. One test goes further and blocks every off-origin request at the browser, proving the
+suite is self-contained:
+
+```js
+await forbidExternalRequests(page);
+await page.goto('/');
+await expect(page.locator('.banner .recipe-title')).toHaveText(RANDOM_MEAL.strMeal);
+```
+
+**The assertions moved from the address bar to the screen.** A route that resolves to the wrong
+page now fails: the tests check that the category page renders the category's description and
+exactly its recipes, that the recipe page renders that recipe's ingredients, and that navigating
+between two recipes swaps the content.
+
+**The framework's own behaviour is covered.** 27 tests across three files:
+
+| File | What it covers |
+|---|---|
+| `app-shell.spec.ts` | boot, the daily special, the category list order, dark mode, running with the network cut |
+| `navigation.spec.ts` | route params, direct URL entry, back links, browser back and forward, template caching, unmatched URLs |
+| `channels.spec.ts` | state shared between pages that never import each other, persistence across a reload, and that a page does not refetch what a channel already carries |
+
+**Two things it recorded rather than fixed:**
+
+- `routes.ts` marks its not-found route `notFound: false`, so the application has **no 404 route
+  at all** — an unmatched URL selects nothing and leaves the previous page on screen. The test
+  states that as the current behaviour rather than pretending it is correct.
+- The `Back to home` and `favorite recipes` handlers in the page headers are written
+  `@click="${() => this._navigateToHome}"` — returning the method instead of calling it. The
+  buttons work only because they also carry an `href`.
+
+**The security escapes are gone.** `bypassCSP: true` and `--disable-web-security` existed to
+reach the API cross-origin. With the API served from fixtures they are not needed, so the pages
+now run under the same rules as in a real browser and a genuine CSP or CORS regression is
+visible.
+
+**Firefox is in the matrix**, alongside Chromium and WebKit:
+
+```
+$ npx playwright test
+  81 passed (2.2m)
+```
 
 ### §5 — `localize` tests: 9 → 10
 
@@ -282,3 +334,4 @@ CI ran no tests at all; it now installs browsers, runs the full suite on every p
 when coverage drops below 90% lines / 85% branches. Still open: the ungated `npm publish` that
 swallows its own failures, coverage reporting, the local husky/lint-staged/commitlint gate, and
 branch protection.
+
