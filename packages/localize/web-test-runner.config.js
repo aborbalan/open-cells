@@ -1,21 +1,28 @@
 import { playwrightLauncher } from '@web/test-runner-playwright';
+import { browserExecutable, requestedBrowsers } from '../../test-browsers.mjs';
+
+// This package runs on web-test-runner rather than vitest, but it answers to the same two
+// knobs as every other suite: OPEN_CELLS_BROWSERS and OPEN_CELLS_<BROWSER>_EXECUTABLE.
+const launchers = requestedBrowsers().map(product => {
+  const executablePath = browserExecutable(product);
+  return playwrightLauncher({
+    product,
+    launchOptions: {
+      headless: true,
+      ...(executablePath ? { executablePath } : {}),
+    },
+    contextOptions: {
+      // Start every run from empty browser storage.
+      storageState: {},
+    },
+  });
+});
 
 export default {
   files: 'test/**/*.test.js',
   nodeResolve: true,
   watch: false,
-  browsers: [
-    playwrightLauncher({
-      product: 'chromium',
-      launchOptions: {
-        headless: true,
-      },
-      contextOptions: {
-        // Start every run from empty browser storage.
-        storageState: {},
-      },
-    }),
-  ],
+  browsers: launchers,
   coverage: true,
   coverageConfig: {
     reportDir: 'coverage',

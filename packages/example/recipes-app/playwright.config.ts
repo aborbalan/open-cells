@@ -1,4 +1,24 @@
 import { defineConfig, devices } from '@playwright/test';
+import { browserExecutable, requestedBrowsers } from '../../../test-browsers.mjs';
+
+const DEVICE = {
+  chromium: devices['Desktop Chrome'],
+  firefox: devices['Desktop Firefox'],
+  webkit: devices['Desktop Safari'],
+};
+
+/* Unlike the unit suites, this one defaults to the whole matrix: running the application in
+ * one engine is not what an end-to-end suite is for. `OPEN_CELLS_BROWSERS` narrows it. */
+const projects = requestedBrowsers(['chromium', 'firefox', 'webkit']).map(name => {
+  const executablePath = browserExecutable(name);
+  return {
+    name,
+    use: {
+      ...DEVICE[name],
+      ...(executablePath ? { launchOptions: { executablePath } } : {}),
+    },
+  };
+});
 
 /** See https://playwright.dev/docs/test-configuration. */
 export default defineConfig({
@@ -19,20 +39,7 @@ export default defineConfig({
      * same security rules as in a browser and a real CSP or CORS regression is visible. */
   },
 
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-  ],
+  projects,
 
   webServer: {
     command: 'npm run preview',

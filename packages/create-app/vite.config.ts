@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   test: {
@@ -15,6 +15,6 @@ export default defineConfig({
     // there and well formed, which line coverage would not tell us either way.
     coverage: {
       enabled: false,
-    }
+    },
   },
-})
+});

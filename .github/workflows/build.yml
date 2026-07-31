@@ -16,28 +16,30 @@ jobs:
         with:
           node-version: '20.x'
       - run: npm ci
-      # The monorepo currently resolves more than one Playwright version
-      # (vitest's browser provider and @playwright/test do not agree), so the
-      # browsers have to be fetched for each workspace that launches one.
-      # Unifying the toolchain is tracked as part of the dependency-hygiene work.
+      # One Playwright version across the monorepo, so one set of browsers for every
+      # workspace that launches one. `npm test` fails first if that stops being true.
       - name: Install Playwright browsers
-        run: |
-          npx playwright install --with-deps chromium
-          npm exec -w @open-cells/recipes-app -- playwright install --with-deps chromium firefox webkit
+        run: npx playwright install --with-deps chromium firefox webkit
       - name: Lint
         run: npm run lint
       - run: npm run build --if-present
       - name: Run tests
         run: npm test
 
-      # Keep the coverage reports of the runs that produce them, so a drop can be looked at
-      # rather than guessed at. The suites fail on their own thresholds already.
+      # One report for the whole framework, on top of the per-package ones. `--check` fails if
+      # a suite that should have produced coverage left none — the way a suite silently stops
+      # being counted.
+      - name: Combined coverage report
+        if: always()
+        run: npm run coverage:report -- --check
+
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: |
+            coverage/lcov.info
             packages/*/coverage/lcov.info
             packages/*/coverage/lcov-report/**
           if-no-files-found: warn
@@ -51,3 +53,34 @@ jobs:
           path: packages/example/recipes-app/playwright-report/**
           if-no-files-found: ignore
           retention-days: 14
+
+  # The unit suites drive a real browser, so "it passes" is a claim about one engine unless it
+  # is checked against the others. `build` covers chromium; this covers the rest. The e2e suite
+  # runs all three in `build` already, so it is not repeated here.
+  unit-browser-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, webkit]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      # In sequence: two browser stacks at once is what crashed the runner in section 2.
+      - name: Run unit suites on ${{ matrix.browser }}
+        env:
+          OPEN_CELLS_BROWSERS: ${{ matrix.browser }}
+        run: |
+          for package in core core-plugin element-controller localize \
+                         page-controller page-mixin page-transitions; do
+            echo "::group::@open-cells/$package"
+            npm run test -w "@open-cells/$package"
+            echo "::endgroup::"
+          done

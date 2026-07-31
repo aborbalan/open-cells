@@ -1,11 +1,11 @@
 /// <reference types="vitest" />
-import { resolve } from 'node:path'
-import { defineConfig } from 'vite'
-import camelCase from 'camelcase'
-import packageJson from './package.json'
-import { playwright } from '@vitest/browser-playwright'
+import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+import camelCase from 'camelcase';
+import packageJson from './package.json';
+import { browserTestConfig, DEFAULT_THRESHOLDS } from '../../vitest.shared.mjs';
 
-const packageName = packageJson.name.split('/').pop() || packageJson.name
+const packageName = packageJson.name.split('/').pop() || packageJson.name;
 
 export default defineConfig({
   build: {
@@ -19,35 +19,5 @@ export default defineConfig({
       fileName: packageName,
     },
   },
-  // plugins: [
-  //   dts({ rollupTypes: true }),
-  // ],
-  test: {
-    globals: true,
-    browser: {
-      provider: playwright(),
-      enabled: true,
-      instances: [
-        { browser: 'chromium' }
-      ],
-    },
-    coverage: {
-      enabled: true,
-      provider: 'istanbul',
-      reportOnFailure: true,
-      reporter: [
-        ['lcov', { 'projectRoot': './src' }],
-        ['json', { 'file': 'coverage.json' }],
-        ['text']
-      ],
-      // Ratchet: raise it with every PR that adds coverage, never lower it to make
-      // a run pass. This is the agreed target for the package.
-      thresholds: {
-        lines: 90,
-        statements: 90,
-        functions: 90,
-        branches: 85,
-      }
-    }
-  },
-})
+  test: browserTestConfig({ thresholds: DEFAULT_THRESHOLDS }),
+});
