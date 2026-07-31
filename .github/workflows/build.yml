@@ -79,13 +79,20 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps ${{ matrix.browser }}
       # In sequence: two browser stacks at once is what crashed the runner in section 2.
+      # Every package runs even after one fails, so a browser-specific problem shows up in full
+      # instead of one package per run.
       - name: Run unit suites on ${{ matrix.browser }}
         env:
           OPEN_CELLS_BROWSERS: ${{ matrix.browser }}
         run: |
+          failed=()
           for package in core core-plugin element-controller localize \
                          page-controller page-mixin page-transitions; do
             echo "::group::@open-cells/$package"
-            npm run test -w "@open-cells/$package"
+            npm run test -w "@open-cells/$package" || failed+=("$package")
             echo "::endgroup::"
           done
+          if [ ${#failed[@]} -ne 0 ]; then
+            echo "::error::Failing on ${{ matrix.browser }}: ${failed[*]}"
+            exit 1
+          fi
