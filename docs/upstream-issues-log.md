@@ -7,6 +7,22 @@ documento es el seguimiento.
 > **Estado a 2026-07-31: no se ha abierto ninguna todavía.** Las 14 están redactadas y
 > verificadas, pendientes de subir. La columna _Issue_ se rellena al abrir cada una.
 
+## Cómo se redactan
+
+Una cada vez, en unidades pequeñas y abarcables, y **referenciando nuestro proyecto**: el fork
+`aborbalan/open-cells` es público, así que se puede enlazar el arreglo y su test con permalinks
+a un SHA fijo. Cada una redactada así vive en su propio fichero bajo
+[`upstream/`](./upstream/); `upstream-issues.md` conserva el borrador largo de las que aún no
+se han pasado a ese formato.
+
+| Redactada en formato final                       | Fichero                                                                      |
+| ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| 1 · `Channel.unsubscribe()` deja el canal muerto | [`upstream/01-channel-unsubscribe.md`](./upstream/01-channel-unsubscribe.md) |
+
+Las que siguen en `upstream-issues.md` y hay que trocear al pasarlas, porque hoy agrupan varios
+defectos en un solo issue: la 5 (cuatro defectos de tipos), la 7 (dos), la 8 (dos) y la 9
+(config de ESLint + código muerto).
+
 ## El criterio: qué se manda y qué no
 
 Se manda **solo lo que es de upstream**: defectos que existen en `BBVA/open-cells` tal cual y
