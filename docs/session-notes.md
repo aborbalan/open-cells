@@ -7,7 +7,8 @@
 ## Contexto del fork
 
 - `origin` = `aborbalan/open-cells` (fork del usuario) — **todos los PRs van aquí**.
-- `upstream` = `BBVA/open-cells` — **nunca se abren PRs contra BBVA** (no aceptan externos).
+- `upstream` = `BBVA/open-cells` — **no se les envía absolutamente nada**: ni PRs, ni issues,
+  ni comentarios. No aceptan nada de fuera, y «es solo un issue» no es una excepción.
 - Monorepo de web components (npm workspaces + wireit). Paquetes en `packages/*`.
 - `main` lleva ya el `mcp-server` **y** la auditoría de tests, integrados en esa dirección.
 
@@ -152,7 +153,7 @@ npx playwright install --with-deps chromium firefox webkit   # una sola vez, una
 npm test                    # gates + las diez suites
 npm run coverage:report     # informe combinado
 
-# Al abrir PRs: SIEMPRE al fork, nunca a BBVA
+# Al abrir PRs: SIEMPRE al fork. A BBVA no se le manda nada, en ningún formato.
 gh pr create --repo aborbalan/open-cells --base main --head <rama>
 ```
 

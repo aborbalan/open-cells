@@ -1,16 +1,16 @@
-# Issue 1 — `Channel.unsubscribe()` deja el canal muerto
+# Defecto 1 — `Channel.unsubscribe()` deja el canal muerto
 
-**Estado:** redactada, sin abrir · **Severidad:** crítica · **Área:** `@open-cells/core`
+> ⛔ **Documento interno.** No se envía nada a `BBVA/open-cells` — ni issues, ni PRs, ni
+> comentarios. Esta ficha existe para nosotros.
 
-**Título:**
+**Severidad:** crítica · **Área:** `@open-cells/core` · **En nuestro fork:** arreglado
 
-    Channel.unsubscribe() writes `stoped` instead of `isStopped`, so a reset channel never emits again
-
-**Labels:** `bug`
+**En una línea:** `Channel.unsubscribe()` escribe `stoped` en vez de `isStopped`, así que un
+canal reseteado no vuelve a emitir nunca.
 
 ---
 
-## Cuerpo
+## Detalle
 
 ### What happens
 
@@ -75,10 +75,7 @@ unsubscribe() {
 `currentObservers` is private in RxJS's own declarations, so under `checkJs` it needs an explicit
 cast.
 
-### A working fix and a regression test
-
-We hit this in a fork and fixed it there, in case it saves time — the change and its tests are
-public:
+### Nuestro arreglo y su test
 
 - the fix:
   [`packages/core/src/state/channel.js#L92-L106`](https://github.com/aborbalan/open-cells/blob/7ac7432b82968b906a0d871348dcc4b8a846c6e3/packages/core/src/state/channel.js#L92-L106)
@@ -86,16 +83,15 @@ public:
   [`channel.test.js#L128-L138`](https://github.com/aborbalan/open-cells/blob/7ac7432b82968b906a0d871348dcc4b8a846c6e3/packages/core/test/state/channel.test.js#L128-L138)
   — _"should leave the channel usable, which is the point of overriding it"_
 
-The test is worth having whatever the fix looks like: the previous suite had a case for
-`unsubscribe()` that stubbed the method and asserted the stub was called, so it passed without
-ever exercising the behaviour.
+El test importa tanto como el arreglo: la suite anterior tenía un caso para `unsubscribe()` que
+stubbeaba el propio método y comprobaba que el stub se había llamado, así que pasaba en verde
+sin ejercitar el comportamiento ni una vez.
 
 ---
 
-## Notas internas (no van al issue)
+## Trazabilidad
 
 - **Detectado en:** §2 de la auditoría · nuestro PR #9 · commit `1ea912e`.
-- **En nuestro fork:** arreglado.
-- **Riesgo de conflicto:** alto si upstream lo arregla distinto — mismo fichero,
-  `packages/core/src/state/channel.js`.
-- **Depende de:** nada. Es autocontenida.
+- **Riesgo de conflicto al sincronizar:** alto si upstream lo arregla distinto — tocaríamos el
+  mismo fichero, `packages/core/src/state/channel.js`.
+- **Depende de:** nada. Es autocontenido.

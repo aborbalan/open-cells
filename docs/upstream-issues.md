@@ -1,22 +1,26 @@
-# Issues para reportar en `BBVA/open-cells`
+# Defectos de upstream (`BBVA/open-cells`) — documento interno
+
+> ## ⛔ Nada de esto se sube a `BBVA/open-cells`
+>
+> Ni issues, ni pull requests, ni comentarios. **No se les envía nada, en ningún formato.** Es
+> una norma del upstream y no admite excepciones.
+>
+> Este documento es **interno**: existe para que nosotros sepamos qué está roto ahí arriba, qué
+> hemos arreglado en nuestro fork y qué nos va a doler al sincronizar. No es una cola de envío.
 
 Hallazgos de la auditoría de tests de julio de 2026 que **son de upstream**, no de este fork:
-defectos y huecos que existen en `BBVA/open-cells` tal cual. Lo que es decisión nuestra de
+defectos que existen en `BBVA/open-cells` tal cual. Lo que es decisión nuestra de
 infraestructura de test (config compartida de vitest, informe de cobertura combinado, los
-guards) queda fuera a propósito — a ellos no les sirve.
+guards) queda fuera, porque no describe nada roto.
 
-**Se reportan como _issues_, nunca como PRs**: el upstream no acepta contribuciones externas.
-Por eso cada issue es autocontenido y describe el arreglo en prosa, sin enlazar a este fork:
-alguien de BBVA tiene que poder leerlo y actuar sin acceso a nuestro repositorio.
-
-Los textos van **en inglés** porque el repositorio de upstream lo es. De cada issue, el
-apartado _Título_ va al campo de título y todo lo que hay bajo _Cuerpo_ va al cuerpo.
+Los textos están **en inglés** porque describen código cuyo repositorio lo es, y así se pueden
+citar tal cual en un commit o en una discusión nuestra.
 
 Todo lo citado está verificado contra el código de upstream en el estado previo a la auditoría,
 no de memoria.
 
-**Orden sugerido:** 1 → 4 primero (bugs de runtime con pérdida de datos o de funcionalidad),
-luego 7 y 8 (la release y la suite), y el resto cuando haya hueco.
+**Orden por severidad:** 1 → 4 son los graves (bugs de runtime con pérdida de datos o de
+funcionalidad), luego 7 y 8 (la release y la suite), y el resto por debajo.
 
 | #   | Asunto                                                    | Severidad | Área          |
 | --- | --------------------------------------------------------- | --------- | ------------- |
@@ -39,12 +43,12 @@ luego 7 y 8 (la release y la suite), y el resto cuando haya hueco.
 
 # 1 · Canales muertos tras `logout()`
 
-**Título:** Channel.unsubscribe() reopens the channel by writing the wrong flag, so everything
+**Resumen:** Channel.unsubscribe() reopens the channel by writing the wrong flag, so everything
 published after a reset is silently dropped
 
-**Labels:** `bug` · `core` — **Severidad:** crítica (pérdida de datos silenciosa)
+**Etiquetas:** `bug` · `core` — **Severidad:** crítica (pérdida de datos silenciosa)
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -108,12 +112,12 @@ what distinguishes it from `close()`.
 
 # 2 · `_hasPublisher()` nunca acierta con RxJS 7
 
-**Título:** Duplicate DOM listeners and duplicate channel emissions: `_hasPublisher()` reads an
+**Resumen:** Duplicate DOM listeners and duplicate channel emissions: `_hasPublisher()` reads an
 RxJS 6 property name
 
-**Labels:** `bug` · `core` — **Severidad:** alta
+**Etiquetas:** `bug` · `core` — **Severidad:** alta
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -163,11 +167,11 @@ bind name, and assert exactly one listener and one emission.
 
 # 3 · `Router.stop()` no para el router
 
-**Título:** Router.stop() leaves the location subscription running; every bridge leaks one
+**Resumen:** Router.stop() leaves the location subscription running; every bridge leaks one
 
-**Labels:** `bug` · `core` — **Severidad:** alta
+**Etiquetas:** `bug` · `core` — **Severidad:** alta
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -217,12 +221,12 @@ did not run.
 
 # 4 · `addCellsCoreToPrototype()` lanza `ReferenceError`
 
-**Título:** CorePlugin.addCellsCoreToPrototype() calls an out-of-scope identifier and always
+**Resumen:** CorePlugin.addCellsCoreToPrototype() calls an out-of-scope identifier and always
 throws
 
-**Labels:** `bug` · `core-plugin` — **Severidad:** alta
+**Etiquetas:** `bug` · `core-plugin` — **Severidad:** alta
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -262,12 +266,12 @@ unnoticed.
 
 # 5 · Los tipos publicados no compilan en un consumidor
 
-**Título:** TS7016 on import: the published declarations point at a .js file, and Bridge is
+**Resumen:** TS7016 on import: the published declarations point at a .js file, and Bridge is
 exported as a type
 
-**Labels:** `bug` · `typescript` — **Severidad:** alta
+**Etiquetas:** `bug` · `typescript` — **Severidad:** alta
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -333,11 +337,11 @@ type-checks inside the monorepo and still gives consumers TS7016.
 
 # 6 · `types/` desalineados con `src/`
 
-**Título:** typchk fails: the hand-written declarations have drifted from the code they describe
+**Resumen:** typchk fails: the hand-written declarations have drifted from the code they describe
 
-**Labels:** `bug` · `typescript` — **Severidad:** media
+**Etiquetas:** `bug` · `typescript` — **Severidad:** media
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -379,11 +383,11 @@ Two things make it easier to hold:
 
 # 7 · Un `npm publish` fallido reporta éxito
 
-**Título:** publish.yml swallows publish failures and publishes without running the tests
+**Resumen:** publish.yml swallows publish failures and publishes without running the tests
 
-**Labels:** `bug` · `ci` · `release` — **Severidad:** alta
+**Etiquetas:** `bug` · `ci` · `release` — **Severidad:** alta
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -420,12 +424,12 @@ removes the chance of the blocks drifting apart.
 
 # 8 · La suite no arranca en un clon limpio
 
-**Título:** Neither suite runs on a fresh clone: undeclared test dependencies in core, and the
+**Resumen:** Neither suite runs on a fresh clone: undeclared test dependencies in core, and the
 e2e web server fails to build
 
-**Labels:** `bug` · `tests` — **Severidad:** alta
+**Etiquetas:** `bug` · `tests` — **Severidad:** alta
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -467,12 +471,12 @@ worker on Windows, as CI already does, avoids it.
 
 # 9 · ESLint no corre desde ESLint 9
 
-**Título:** npm run lint fails everywhere: ESLint 9 does not read .eslintrc.json, and the parser
+**Resumen:** npm run lint fails everywhere: ESLint 9 does not read .eslintrc.json, and the parser
 points at a path that does not exist
 
-**Labels:** `bug` · `tooling` — **Severidad:** media
+**Etiquetas:** `bug` · `tooling` — **Severidad:** media
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -512,12 +516,12 @@ and the reference to the uninstalled rule, and run lint in CI.
 
 # 10 · Dos versiones de Playwright
 
-**Título:** The monorepo resolves two Playwright versions, so a clean install downloads two full
+**Resumen:** The monorepo resolves two Playwright versions, so a clean install downloads two full
 browser sets
 
-**Labels:** `tooling` · `dependencies` — **Severidad:** baja
+**Etiquetas:** `tooling` · `dependencies` — **Severidad:** baja
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -551,12 +555,12 @@ one.
 
 # 11 · La app de ejemplo no tiene ruta 404
 
-**Título:** recipes-app declares notFound: false on its not-found route, so unmatched URLs render
+**Resumen:** recipes-app declares notFound: false on its not-found route, so unmatched URLs render
 nothing
 
-**Labels:** `bug` · `example` — **Severidad:** media
+**Etiquetas:** `bug` · `example` — **Severidad:** media
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -588,12 +592,12 @@ not-found page renders, since the current behaviour fails silently.
 
 # 12 · Botones del ejemplo que no llaman al handler
 
-**Título:** "Back to home" and "favorite recipes" buttons bind a function that returns the handler
+**Resumen:** "Back to home" and "favorite recipes" buttons bind a function that returns the handler
 and never calls it
 
-**Labels:** `bug` · `example` — **Severidad:** baja
+**Etiquetas:** `bug` · `example` — **Severidad:** baja
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -622,12 +626,12 @@ three files.
 
 # 13 · El e2e depende de una API de terceros en vivo
 
-**Título:** The end-to-end suite depends on the live TheMealDB API, so "green" depends on a
+**Resumen:** The end-to-end suite depends on the live TheMealDB API, so "green" depends on a
 third party being up
 
-**Labels:** `bug` · `tests` — **Severidad:** media
+**Etiquetas:** `bug` · `tests` — **Severidad:** media
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
@@ -665,12 +669,12 @@ screen, which is a separate improvement the current setup makes impractical.
 
 # 14 · El e2e desactiva CSP y CORS para poder correr
 
-**Título:** The end-to-end suite runs with bypassCSP and --disable-web-security, so it cannot
+**Resumen:** The end-to-end suite runs with bypassCSP and --disable-web-security, so it cannot
 see a CSP or CORS regression
 
-**Labels:** `bug` · `tests` · `security` — **Severidad:** media
+**Etiquetas:** `bug` · `tests` · `security` — **Severidad:** media
 
-## Cuerpo
+## Detalle
 
 ### Summary
 
