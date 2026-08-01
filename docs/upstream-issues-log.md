@@ -28,9 +28,11 @@ defectos en un solo issue: la 5 (cuatro defectos de tipos), la 7 (dos), la 8 (do
 Se manda **solo lo que es de upstream**: defectos que existen en `BBVA/open-cells` tal cual y
 sobre los que ellos pueden actuar. Nada que dependa de decisiones nuestras.
 
-Se manda **como issue, nunca como PR** — el upstream no acepta contribuciones externas. Por eso
-cada borrador es autocontenido, describe el arreglo en prosa y no enlaza a este fork: quien lo
-lea no tiene acceso a nuestro repositorio.
+Se manda **como issue, nunca como PR** — el upstream no acepta contribuciones externas. Cada
+borrador es autocontenido: se entiende y se puede actuar sobre él sin salir del issue. Pero
+además **enlaza nuestro arreglo y su test**, porque el fork es público y tenerlo delante ahorra
+trabajo a quien lo coja. El enlace es un extra al final, nunca el sitio donde está la
+información importante.
 
 Cada cita está verificada contra el código de upstream en el commit previo a la auditoría
 (`398baed`), no reconstruida de memoria.
