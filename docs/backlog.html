@@ -1,0 +1,1275 @@
+<!--
+  Backlog propuesto de aborbalan/open-cells.
+
+  Publicado como artefacto en:
+    https://claude.ai/code/artifact/5cd79bc6-1e6e-45ca-a7f4-63b399cecf78
+
+  Para actualizarlo conservando ese enlace hay que pasar esa URL al republicar.
+  Republicar sin ella crea un artefacto nuevo en vez de actualizar este.
+
+  El fichero se envuelve en <!doctype html><head>…</head><body> al publicarlo,
+  por eso aquí no hay ni <html> ni <head> ni <body>.
+-->
+<title>Backlog propuesto · aborbalan/open-cells</title>
+<style>
+  :root {
+    --canvas: #ffffff;
+    --canvas-subtle: #f6f8fa;
+    --canvas-inset: #f6f8fa;
+    --border: #d1d9e0;
+    --border-muted: #d1d9e0b3;
+    --fg: #1f2328;
+    --fg-muted: #59636e;
+    --accent: #0969da;
+    --open: #1a7f37;
+    --danger: #cf222e;
+    --attention: #9a6700;
+    --done: #8250df;
+    --shadow: 0 1px 0 rgba(31, 35, 40, 0.04);
+    --label-bg: #f6f8fa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --canvas: #0d1117;
+      --canvas-subtle: #151b23;
+      --canvas-inset: #010409;
+      --border: #3d444d;
+      --border-muted: #3d444db3;
+      --fg: #f0f6fc;
+      --fg-muted: #9198a1;
+      --accent: #4493f8;
+      --open: #3fb950;
+      --danger: #f85149;
+      --attention: #d29922;
+      --done: #ab7df8;
+      --shadow: none;
+      --label-bg: #151b23;
+    }
+  }
+  :root[data-theme='light'] {
+    --canvas: #ffffff;
+    --canvas-subtle: #f6f8fa;
+    --canvas-inset: #f6f8fa;
+    --border: #d1d9e0;
+    --border-muted: #d1d9e0b3;
+    --fg: #1f2328;
+    --fg-muted: #59636e;
+    --accent: #0969da;
+    --open: #1a7f37;
+    --danger: #cf222e;
+    --attention: #9a6700;
+    --done: #8250df;
+    --shadow: 0 1px 0 rgba(31, 35, 40, 0.04);
+    --label-bg: #f6f8fa;
+  }
+  :root[data-theme='dark'] {
+    --canvas: #0d1117;
+    --canvas-subtle: #151b23;
+    --canvas-inset: #010409;
+    --border: #3d444d;
+    --border-muted: #3d444db3;
+    --fg: #f0f6fc;
+    --fg-muted: #9198a1;
+    --accent: #4493f8;
+    --open: #3fb950;
+    --danger: #f85149;
+    --attention: #d29922;
+    --done: #ab7df8;
+    --shadow: none;
+    --label-bg: #151b23;
+  }
+
+  body {
+    background: var(--canvas);
+    color: var(--fg);
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+    padding: 24px 16px 64px;
+  }
+  .wrap {
+    max-width: 1012px;
+    margin: 0 auto;
+  }
+
+  code,
+  pre,
+  .mono {
+    font-family:
+      ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  }
+  code {
+    background: var(--canvas-subtle);
+    border-radius: 6px;
+    padding: 0.15em 0.4em;
+    font-size: 85%;
+  }
+  pre {
+    background: var(--canvas-subtle);
+    border-radius: 6px;
+    padding: 14px;
+    overflow-x: auto;
+    font-size: 85%;
+    line-height: 1.45;
+    margin: 12px 0;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: 100%;
+  }
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+  a:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* ---- cabecera ---- */
+  .breadcrumb {
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+  .breadcrumb .owner {
+    color: var(--accent);
+  }
+  .breadcrumb .sep {
+    color: var(--fg-muted);
+    padding: 0 4px;
+  }
+  .breadcrumb .repo {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .lede {
+    color: var(--fg-muted);
+    margin: 0 0 20px;
+    max-width: 68ch;
+  }
+
+  .notice {
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--attention);
+    background: var(--canvas-subtle);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+  }
+  .notice strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+  .notice p {
+    margin: 0;
+    color: var(--fg-muted);
+  }
+  .notice + .notice {
+    margin-top: -12px;
+  }
+  .notice.stop {
+    border-left-color: var(--danger);
+  }
+
+  /* ---- barra de estado ---- */
+  .listhead {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 6px 6px 0 0;
+    background: var(--canvas-subtle);
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .listhead .count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--fg);
+  }
+  .listhead .muted {
+    color: var(--fg-muted);
+    font-weight: 400;
+  }
+
+  /* ---- agrupación ---- */
+  .group {
+    border: 1px solid var(--border);
+    border-top: 0;
+    background: var(--canvas-inset);
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+  }
+  .group .hint {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+
+  /* ---- filas ---- */
+  details.issue {
+    border: 1px solid var(--border);
+    border-top: 0;
+    background: var(--canvas);
+  }
+  details.issue:last-of-type {
+    border-radius: 0 0 6px 6px;
+  }
+  details.issue[open] {
+    background: var(--canvas);
+  }
+  summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    gap: 8px;
+    padding: 8px 16px;
+    align-items: flex-start;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary:hover {
+    background: var(--canvas-subtle);
+  }
+  .icon {
+    flex: none;
+    margin-top: 2px;
+    color: var(--open);
+  }
+  .icon svg {
+    display: block;
+    fill: currentColor;
+  }
+  .row-main {
+    min-width: 0;
+    flex: 1;
+  }
+  .row-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--fg);
+    text-wrap: balance;
+  }
+  .row-meta {
+    color: var(--fg-muted);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--fg-muted);
+    font-weight: 400;
+    font-size: 13px;
+    margin-right: 8px;
+  }
+
+  .labels {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .label {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 18px;
+    padding: 0 10px;
+    border-radius: 2em;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .l-bug {
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
+  }
+  .l-chore {
+    color: var(--fg-muted);
+    border-color: var(--border);
+    background: var(--label-bg);
+  }
+  .l-docs {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+  .l-enh {
+    color: var(--done);
+    border-color: color-mix(in srgb, var(--done) 40%, transparent);
+    background: color-mix(in srgb, var(--done) 8%, transparent);
+  }
+  .l-test {
+    color: var(--open);
+    border-color: color-mix(in srgb, var(--open) 40%, transparent);
+    background: color-mix(in srgb, var(--open) 8%, transparent);
+  }
+  .l-size {
+    color: var(--attention);
+    border-color: color-mix(in srgb, var(--attention) 40%, transparent);
+    background: color-mix(in srgb, var(--attention) 8%, transparent);
+  }
+
+  /* ---- cuerpo ---- */
+  .body {
+    padding: 4px 16px 20px 40px;
+    border-top: 1px solid var(--border-muted);
+    margin-top: 4px;
+  }
+  .body > *:first-child {
+    margin-top: 16px;
+  }
+  .body h4 {
+    font-size: 14px;
+    margin: 20px 0 8px;
+  }
+  .body p {
+    margin: 0 0 12px;
+    max-width: 72ch;
+  }
+  .body ul {
+    margin: 0 0 12px;
+    padding-left: 22px;
+    max-width: 72ch;
+  }
+  .body li {
+    margin-bottom: 4px;
+  }
+  .dod {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--canvas-subtle);
+    padding: 10px 14px;
+    margin-top: 16px;
+    max-width: 72ch;
+  }
+  .dod strong {
+    color: var(--fg);
+  }
+  .dod p {
+    margin: 0;
+    color: var(--fg-muted);
+  }
+  .dep {
+    color: var(--fg-muted);
+    font-size: 12px;
+    margin-top: 10px;
+  }
+  .dep b {
+    color: var(--fg);
+    font-weight: 600;
+  }
+
+  footer {
+    color: var(--fg-muted);
+    font-size: 12px;
+    margin-top: 32px;
+    max-width: 72ch;
+  }
+  footer p {
+    margin: 0 0 8px;
+  }
+
+  @media (max-width: 600px) {
+    .body {
+      padding-left: 16px;
+    }
+    .labels {
+      display: flex;
+      margin-left: 0;
+      margin-top: 6px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+</style>
+
+<div class="wrap">
+  <div class="breadcrumb">
+    <span class="owner">aborbalan</span><span class="sep">/</span
+    ><span class="repo">open-cells</span>
+  </div>
+  <p class="lede">
+    Backlog propuesto, desglosado en unidades pequeñas. Cada una se puede cerrar por separado y
+    lleva su criterio de cierre explícito.
+  </p>
+
+  <div class="notice stop">
+    <strong>Nada de esto va a BBVA/open-cells</strong>
+    <p>
+      Estas issues son para <b>nuestro</b> repositorio. A upstream no se le envía nada &mdash; ni
+      issues, ni PRs, ni comentarios.
+    </p>
+  </div>
+
+  <div class="notice">
+    <strong>Ninguna está abierta todavía</strong>
+    <p>
+      Es una propuesta. Los identificadores (<span class="mono">1A</span>,
+      <span class="mono">2B</span>&hellip;) son de este documento, no números de GitHub.
+    </p>
+  </div>
+
+  <div class="listhead">
+    <span class="count">
+      <svg aria-hidden="true" height="16" width="16" viewBox="0 0 16 16" style="fill: currentColor">
+        <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+        <path
+          d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+        ></path>
+      </svg>
+      21 propuestas
+    </span>
+    <span class="muted">7 grupos &middot; 1 condicional &middot; 4 sin tocar código</span>
+  </div>
+
+  <!-- ============ GRUPO 1 ============ -->
+  <div class="group">
+    <span>1 &middot; Qué publica @open-cells/core</span
+    ><span class="hint">1A suelta &middot; luego 1B → 1C → 1D</span>
+  </div>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">1A</span>lib.entry apunta a un fichero que no existe</span
+        >
+        <span class="labels"
+          ><span class="label l-bug">bug</span><span class="label l-size">~2 líneas</span></span
+        >
+        <div class="row-meta">core &middot; sin dependencias, se puede hacer ya</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p><code>packages/core/vite.config.ts</code> declara la entrada de la librería así:</p>
+      <pre><code>lib: {
+  entry: resolve(__dirname, 'src/index.ts'),   // no existe
+  ...
+}</code></pre>
+      <p>
+        En <code>packages/core/src/</code> sólo hay <code>index.js</code>. El build no falla porque
+        lo que gobierna de verdad la entrada es <code>rollupOptions.input: 'src/index.js'</code>. Es
+        configuración muerta que aparenta mandar.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> <code>lib.entry</code> apunta al fichero real, o desaparece
+          si <code>rollupOptions.input</code> ya lo cubre, y el build produce lo mismo que ahora.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">1B</span>Escribir cuál es la estrategia de consumo soportada</span
+        >
+        <span class="labels"
+          ><span class="label l-docs">docs</span><span class="label l-size">sin código</span></span
+        >
+        <div class="row-meta">desbloquea 1C y 2B</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        No está escrito en ningún sitio, y por eso la pregunta &laquo;&iquest;fuente o
+        bundle?&raquo; se puede reabrir cada seis meses. La evidencia del propio repositorio dice
+        que la estrategia es <strong>npm + bundler, ESM, fuente sin transpilar</strong>.
+      </p>
+      <h4>Lo que la sostiene</h4>
+      <ul>
+        <li>
+          Las dos plantillas de <code>create-app</code> generan <code>type: "module"</code> con Vite
+          (<code>dev</code>, <code>tsc &amp;&amp; vite build</code>) y cargan TypeScript
+          directamente: <code>&lt;script type="module" src="src/components/app-index.ts"&gt;</code>.
+        </li>
+        <li>
+          Ningún paquete declara <code>unpkg</code>, <code>jsdelivr</code>, <code>browser</code> ni
+          <code>module</code>. Ninguno de los ocho.
+        </li>
+        <li>Ningún README ni documento enseña carga por <code>&lt;script&gt;</code> o CDN.</li>
+      </ul>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> el README de <code>core</code> dice qué se publica, qué
+          necesita el consumidor, y que UMD/IIFE no son un camino soportado.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">1C</span>Quitar vite build de la ruta de publicación</span
+        >
+        <span class="labels"
+          ><span class="label l-chore">chore</span><span class="label l-size">1 línea</span></span
+        >
+        <div class="row-meta">core &middot; depende de 1B</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        <code>scripts.prepublish</code> ejecuta <code>vite build</code> en cada publicación, genera
+        cuatro bundles &mdash; <code>core.js</code>, <code>core.cjs</code>,
+        <code>core.umd.cjs</code>, <code>core.iife.js</code> &mdash; y <code>files</code> es
+        <code>["src/**/*", "types/**/*"]</code>. No se publica ninguno.
+      </p>
+      <p>
+        De paso, <code>prepublish</code> es un hook obsoleto. Y tiene una consecuencia: nuestro gate
+        <code>test:types</code> corre <code>npm pack</code>, que dispara <code>prepack</code>,
+        <em>no</em> <code>prepublish</code>. Hoy da igual porque publicamos fuente, que siempre
+        está; si algún día se moviera a <code>dist/</code> sin cambiar el hook, el gate fallaría
+        &mdash; y tendría razón.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> publicar no construye nada,
+          <code>npm run test:types</code> sigue verde, y el tarball contiene lo mismo que antes.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">1D</span>Decidir el destino del build de core</span
+        >
+        <span class="labels"><span class="label l-enh">enhancement</span></span>
+        <div class="row-meta">
+          core &middot; depende de 1C &middot; la única decisión real del grupo
+        </div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        Con 1C hecho, <code>npm run build -w @open-cells/core</code> sigue existiendo pero ya no
+        publica nada. Tres salidas:
+      </p>
+      <ul>
+        <li>borrarlo, si no aporta;</li>
+        <li>
+          conservarlo sólo como comprobación de que el paquete empaqueta &mdash; sale gratis en CI;
+        </li>
+        <li>
+          reducirlo a los formatos que alguien pueda querer. Hoy salen cuatro, y
+          <code>umd</code>/<code>iife</code> sólo sirven para carga por <code>&lt;script&gt;</code>,
+          que 1B habrá declarado no soportada.
+        </li>
+      </ul>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> la salida elegida está aplicada y el motivo escrito en
+          <code>docs/session-notes.md</code>.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"><span class="id">1E</span>Externalizar RxJS del bundle</span>
+        <span class="labels"
+          ><span class="label l-bug">bug</span><span class="label l-size">condicional</span></span
+        >
+        <div class="row-meta">
+          core &middot; sólo existe si 1D decide seguir publicando un bundle
+        </div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        El bundle actual <strong>embebe RxJS entero</strong>: cero imports externos en el ESM, cero
+        <code>require("rxjs")</code> en el CJS. Por eso el ESM son 143&nbsp;KB frente a los
+        67&nbsp;KB del CJS.
+      </p>
+      <p>
+        Si se publicara, cualquier app que ya use RxJS acabaría con dos copias. Y este código es
+        especialmente sensible: hace <code>instanceof</code> sobre tipos de RxJS y lee internals
+        suyos (<code>_finalizers</code>, <code>currentObservers</code>). Con dos instancias eso
+        falla en silencio.
+      </p>
+      <pre><code>rollupOptions: { external: ['rxjs', /^rxjs\//] }</code></pre>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> el bundle importa <code>rxjs</code> en vez de embeberlo.
+          Muy probablemente esta issue no llegue a abrirse, porque 1D apunta a no publicar bundle.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ GRUPO 2 ============ -->
+  <div class="group">
+    <span>2 &middot; Mapa exports</span><span class="hint">2A desbloquea 2B</span>
+  </div>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">2A</span>Decidir cómo se comparte el fixture del bridge</span
+        >
+        <span class="labels"><span class="label l-enh">enhancement</span></span>
+        <div class="row-meta">testing &middot; bloquea 2B</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>Cuatro paquetes importan el fixture cruzando la frontera del paquete:</p>
+      <pre><code>import { useBridge } from '@open-cells/core/test/helpers/bridge-fixture.js';</code></pre>
+      <p>
+        Son <code>core-plugin</code>, <code>element-controller</code>,
+        <code>page-controller</code> y <code>page-mixin</code>. Funciona hoy porque
+        <code>core</code> no tiene <code>exports</code> y los subpaths resuelven por directorio. En
+        cuanto se añada el mapa, esas cuatro suites se rompen salvo que se declare
+        <code>"./test/*"</code>.
+      </p>
+      <p>
+        Dos caminos: exponer <code>./test/*</code> en el mapa (pero <code>test/</code> no se publica
+        en el tarball), o sacar el fixture a un paquete propio.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> el camino está elegido y aplicado, y las cuatro suites
+          siguen verdes.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">2B</span>Añadir mapa exports a @open-cells/core</span
+        >
+        <span class="labels"><span class="label l-enh">enhancement</span></span>
+        <div class="row-meta">core &middot; depende de 2A y 1B</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        <code>core</code> no declara <code>exports</code>, así que cualquier ruta interna del
+        paquete es alcanzable desde fuera. El mapa hace explícito el contrato: como mínimo
+        <code>"."</code> y <code>"./types"</code> &mdash; este último lo usa
+        <code>core-plugin</code>.
+      </p>
+      <p>
+        1B decide a qué apunta <code>"."</code>; 2A decide si hace falta <code>"./test/*"</code>.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> <code>core</code> tiene <code>exports</code>,
+          <code>npm test</code> sigue verde en los cuatro paquetes dependientes, y
+          <code>npm run test:types</code> pasa.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">2C</span>Añadir exports a los cuatro paquetes que no lo tienen</span
+        >
+        <span class="labels"><span class="label l-enh">enhancement</span></span>
+        <div class="row-meta">core-plugin, element-controller, page-controller, page-mixin</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        <code>localize</code> y <code>page-transitions</code> ya declaran <code>exports</code> con
+        condición <code>types</code>. Los otros cuatro no, y sólo tienen <code>main</code> +
+        <code>types</code>.
+      </p>
+      <p>
+        Es repetir el patrón que ya existe en el repositorio, una vez resuelto 2B para
+        <code>core</code>.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> los seis paquetes publicables declaran
+          <code>exports</code> de forma coherente y <code>npm run test:types</code> pasa.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ GRUPO 3 ============ -->
+  <div class="group">
+    <span>3 &middot; App de ejemplo</span
+    ><span class="hint">defectos que el fork registró sin corregir</span>
+  </div>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"><span class="id">3A</span>La app de ejemplo no tiene ruta 404</span>
+        <span class="labels"><span class="label l-bug">bug</span></span>
+        <div class="row-meta">example &middot; hay que dar la vuelta a un test en el mismo PR</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p><code>src/router/routes.ts</code>, línea 39:</p>
+      <pre><code>{
+  path: '/not-found',
+  name: 'not-found',
+  notFound: false,          // desactiva el único candidato a 404
+  component: 'not-found-page',
+}</code></pre>
+      <p>
+        La página 404 es la ruta marcada <code>notFound: true</code>. Con el flag en
+        <code>false</code> la aplicación no tiene 404: una URL sin match no selecciona nada y deja
+        en pantalla lo que hubiera antes. Es lo que copia todo el que empieza.
+      </p>
+      <p>
+        <strong>Ojo:</strong> hay un test e2e que afirma el comportamiento actual &mdash;
+        <em>&laquo;leaves an unmatched URL alone, because the app declares no 404 route&raquo;</em>,
+        en <code>navigation.spec.ts</code>. Se le da la vuelta en el mismo PR.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> <code>notFound: true</code>, y el test afirma que se
+          renderiza la página 404.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">3B</span>Los botones de cabecera no llaman a su handler</span
+        >
+        <span class="labels"
+          ><span class="label l-bug">bug</span><span class="label l-size">5 sitios</span></span
+        >
+        <div class="row-meta">example</div>
+      </span>
+    </summary>
+    <div class="body">
+      <pre><code>@click="${() =&gt; this._navigateToHome}"     // devuelve el método, no lo llama</code></pre>
+      <p>
+        Cinco ocurrencias, en <code>category-page.ts</code>, <code>recipe-page.ts</code> y
+        <code>favorite-recipes-page.ts</code>, para <code>_navigateToHome</code> y
+        <code>_navigateToFavoriteRecipes</code>.
+      </p>
+      <p>
+        Funcionan sólo porque esos elementos llevan además <code>href</code> y navega el navegador.
+        Copiado a un componente sin <code>href</code>, el botón no hace nada y no avisa.
+      </p>
+      <div class="dod">
+        <p><strong>Hecho cuando:</strong> los cinco llaman al handler.</p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"><span class="id">3C</span>Test e2e que pille el fallo de 3B</span>
+        <span class="labels"><span class="label l-test">test</span></span>
+        <div class="row-meta">example &middot; depende de 3B</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        Arreglar 3B sin test deja el fallo libre de volver, y no volvería a notarse por la misma
+        razón por la que no se notó: el <code>href</code> lo tapa.
+      </p>
+      <p>
+        El test tiene que <strong>bloquear la navegación por <code>href</code></strong> &mdash;
+        <code>preventDefault</code> sobre el click, o interceptar la navegación&mdash; y comprobar
+        que el handler se ejecutó igualmente.
+      </p>
+      <div class="dod">
+        <p><strong>Hecho cuando:</strong> el test falla si se revierte 3B.</p>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ GRUPO 4 ============ -->
+  <div class="group">
+    <span>4 &middot; Puertas de calidad</span><span class="hint">4B antes que 4C</span>
+  </div>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"><span class="id">4A</span>Activar protección de rama en main</span>
+        <span class="labels"
+          ><span class="label l-chore">chore</span
+          ><span class="label l-size">sin código</span></span
+        >
+        <div class="row-meta">ci &middot; ajuste del repositorio, no un fichero</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        Los gates existen &mdash; <code>test:toolchain</code>, <code>test:types</code>, cobertura,
+        matriz de navegadores &mdash; pero <strong>no bloquean nada</strong>: hoy se puede mergear
+        con CI en rojo. Toda la auditoría se puede saltar sin querer.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> <em>Require status checks to pass</em> activo en
+          <code>main</code> para el job <code>build</code>.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"><span class="id">4B</span>Commit aislado de formateo</span>
+        <span class="labels"
+          ><span class="label l-chore">chore</span
+          ><span class="label l-size">71 ficheros</span></span
+        >
+        <div class="row-meta">tooling &middot; bloquea 4C</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        <code>npx prettier --check .</code> falla en <strong>71</strong> ficheros anteriores a la
+        configuración. <code>lint-staged</code> formatea lo que se toca, así que el repositorio
+        converge solo, pero mientras no sea gate puede volver a divergir.
+      </p>
+      <p>Va en su propio commit, sin nada más, para que no entierre ningún cambio real.</p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> <code>npx prettier --check .</code> sale en verde, y el
+          commit no toca nada que no sea formato.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"><span class="id">4C</span>Añadir prettier --check a CI</span>
+        <span class="labels"
+          ><span class="label l-chore">chore</span><span class="label l-size">1 paso</span></span
+        >
+        <div class="row-meta">ci &middot; depende de 4B</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>Con 4B hecho, el check pasa a ser una línea en <code>build.yml</code>, junto a lint.</p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> CI ejecuta <code>prettier --check</code> y falla si alguien
+          sube un fichero sin formatear.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ GRUPO 5 ============ -->
+  <div class="group">
+    <span>5 &middot; Dependencias</span><span class="hint">5A antes que 5B</span>
+  </div>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">5A</span>Triaje de los 35 avisos de npm audit</span
+        >
+        <span class="labels"><span class="label l-chore">chore</span></span>
+        <div class="row-meta">dependencies &middot; 5 críticas, 18 altas, 6 moderadas, 6 bajas</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        Casi todas transitivas vía eslint y vite. No es &laquo;ejecutar
+        <code>npm audit fix --force</code>&raquo;: eso rompería el pineado exacto de los runners que
+        monta la sección 9 de la auditoría, que existe por una razón.
+      </p>
+      <p>
+        El entregable es la clasificación, no el arreglo: cuáles nos afectan de verdad, cuáles son
+        ruido transitivo, y cuáles tienen arreglo sin tocar el pineado.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> cada crítica y cada alta está clasificada, con el motivo
+          escrito si se deja.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">5B</span>Resolver las 5 críticas de la familia vitest</span
+        >
+        <span class="labels"><span class="label l-chore">chore</span></span>
+        <div class="row-meta">dependencies &middot; depende de 5A</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        Las cinco críticas son <code>vitest</code>, <code>@vitest/browser</code>,
+        <code>@vitest/browser-playwright</code>, <code>@vitest/coverage-istanbul</code> y
+        <code>basic-ftp</code>.
+      </p>
+      <p>
+        La familia vitest está pineada a <code>4.0.18</code> exacto a propósito:
+        <code>@vitest/browser-playwright</code> fija su peer en la versión exacta de
+        <code>vitest</code>. Subir una obliga a subirlas todas a la vez, y
+        <code>npm run test:toolchain</code> lo comprueba.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> la familia sube en bloque, <code>test:toolchain</code> pasa
+          y la suite sigue verde en los tres navegadores.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ GRUPO 6 ============ -->
+  <div class="group"><span>6 &middot; mcp-server</span><span class="hint">6A → 6B</span></div>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">6A</span>Publicar @open-cells/mcp-server en npm</span
+        >
+        <span class="labels"><span class="label l-enh">enhancement</span></span>
+        <div class="row-meta">mcp-server &middot; hay un changeset sin consumir</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        <code>npm view</code> da 404: hoy sólo se puede usar desde el checkout. Hay un changeset
+        (<code>tidy-pandas-shake.md</code>, minor) esperando.
+      </p>
+      <p>
+        Ya tiene <code>prepack</code>, así que el tarball se construye solo y el gate
+        <code>test:types</code> verifica que los entry points van dentro.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> publicado, e instalable con
+          <code>npm i @open-cells/mcp-server</code>.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">6B</span>Apuntar .mcp.json al paquete publicado</span
+        >
+        <span class="labels"><span class="label l-chore">chore</span></span>
+        <div class="row-meta">mcp-server &middot; depende de 6A</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        Hoy <code>.mcp.json</code> apunta a <code>packages/mcp-server/dist/index.js</code>, así que
+        una sesión nueva tiene que ejecutar <code>npm run build -w @open-cells/mcp-server</code>
+        antes de que aparezcan las herramientas. Con el paquete publicado eso deja de hacer falta.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> las herramientas <code>open_cells_*</code> funcionan en una
+          sesión limpia sin build previo, y <code>CLAUDE.md</code> ya no pide ese paso.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"><span class="id">6C</span>Cubrir scaffold/create-app.ts</span>
+        <span class="labels"><span class="label l-test">test</span></span>
+        <div class="row-meta">mcp-server &middot; 13,04 % de statements, el peor del paquete</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        <code>scaffold/create-app.ts</code> está al <strong>13,04 %</strong>. Lanza el generador
+        real como proceso hijo, así que sus statements se ejecutan fuera del proceso de test y
+        istanbul no los ve.
+      </p>
+      <p>
+        Se puede cubrir la parte que sí vive dentro: construcción de argumentos, validación, manejo
+        de errores y del código de salida. El <code>spawn</code> en sí se stubbea.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> el fichero sube claramente y el umbral del paquete sube en
+          el mismo PR.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ GRUPO 7 ============ -->
+  <div class="group">
+    <span>7 &middot; Ratchets de cobertura</span
+    ><span class="hint">el umbral sube en el PR que añade la cobertura</span>
+  </div>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">7A</span>Cubrir external/event-emitter.js hasta 90/85</span
+        >
+        <span class="labels"><span class="label l-test">test</span></span>
+        <div class="row-meta">core &middot; 80,64 % statements / 70,90 % ramas</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        Es el fichero más flojo de <code>core</code>, muy por debajo del 90/85 que el paquete
+        declara. Pasa el gate porque lo sostiene la media de los demás &mdash; el umbral es del
+        paquete, no por fichero.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> <code>event-emitter.js</code> llega al 90/85 por sí solo, y
+          el umbral del paquete no se ha tocado a la baja.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">7B</span>Decidir qué hacer con index.ts de mcp-server</span
+        >
+        <span class="labels"
+          ><span class="label l-test">test</span><span class="label l-size">decisión</span></span
+        >
+        <div class="row-meta">mcp-server &middot; 0 % &mdash; entry point stdio</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        <code>src/index.ts</code> está al <strong>0 %</strong>. Arranca el servidor sobre stdio, así
+        que no se ejecuta dentro del test. Hoy cuenta en el denominador y hunde el porcentaje del
+        paquete sin que eso signifique nada.
+      </p>
+      <p>
+        Dos salidas: excluirlo del <code>include</code> de cobertura y decir por qué, o extraer su
+        lógica a algo testeable y dejar en <code>index.ts</code> sólo el arranque.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> el número del paquete refleja lo que de verdad está sin
+          cubrir, con la decisión escrita en la config.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <footer>
+    <p>
+      <strong>Cifras verificadas en esta sesión</strong>, no de memoria: 71 ficheros sin formatear,
+      35 avisos de <code>npm audit</code> (5/18/6/6), <code>event-emitter.js</code> 80,64/70,90,
+      <code>mcp-server</code> 82,03/68,89 con <code>create-app.ts</code> al 13,04&nbsp;% e
+      <code>index.ts</code> al 0&nbsp;%, cinco <code>@click</code> rotos, cuatro paquetes importando
+      el fixture del bridge.
+    </p>
+    <p>
+      <strong>No es exhaustivo.</strong> Es lo que salió por el camino de la auditoría y de la
+      integración; no he barrido el repositorio buscando trabajo pendiente más allá de eso.
+    </p>
+  </footer>
+</div>

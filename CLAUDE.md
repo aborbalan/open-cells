@@ -104,7 +104,10 @@ Everything else is green. The three entries that used to live here — the `reci
 
 ## Repository conventions
 
-- PRs go to `aborbalan/open-cells`. **Never open a PR against `BBVA/open-cells`** — the upstream
-  does not accept external contributions.
+- **Nothing at all goes to `BBVA/open-cells`.** Not a pull request, not an issue, not a comment,
+  not a discussion. The upstream does not take anything from outside, and "it is only an issue"
+  is not an exception — it is the mistake this line exists to prevent. Everything, including
+  reports of upstream's own bugs, stays in `aborbalan/open-cells`.
+- PRs go to `aborbalan/open-cells`.
 - `docs/session-notes.md` is a living document with the state of the work in progress; keep it
   current when you finish something substantial.

@@ -7,7 +7,8 @@
 ## Contexto del fork
 
 - `origin` = `aborbalan/open-cells` (fork del usuario) — **todos los PRs van aquí**.
-- `upstream` = `BBVA/open-cells` — **nunca se abren PRs contra BBVA** (no aceptan externos).
+- `upstream` = `BBVA/open-cells` — **no se les envía absolutamente nada**: ni PRs, ni issues,
+  ni comentarios. No aceptan nada de fuera, y «es solo un issue» no es una excepción.
 - Monorepo de web components (npm workspaces + wireit). Paquetes en `packages/*`.
 - `main` lleva ya el `mcp-server` **y** la auditoría de tests, integrados en esa dirección.
 
@@ -111,6 +112,17 @@ Cerrado en §10. De la lista de mejoras que arrastraba este documento:
 
 ## Pendiente
 
+El backlog desglosado en unidades pequeñas está en [`backlog.html`](./backlog.html): 21 issues
+en 7 grupos, cada una con su criterio de cierre y sus dependencias. Ninguna está abierta todavía.
+
+Se publica como artefacto en
+<https://claude.ai/code/artifact/5cd79bc6-1e6e-45ca-a7f4-63b399cecf78>. **Para actualizarlo hay
+que pasar esa URL al republicar**; republicar sin ella crea un artefacto nuevo en vez de
+actualizar ese. El fuente vive en el repositorio precisamente para que una sesión futura pueda
+editarlo sin reconstruirlo.
+
+Lo de abajo es el detalle de lo que arrastramos de antes.
+
 ### `core` sin mapa `exports` (#6)
 
 Sigue resolviendo subpaths por directorio. Añadir `"exports"` es correcto pero **rompe cuatro
@@ -152,7 +164,7 @@ npx playwright install --with-deps chromium firefox webkit   # una sola vez, una
 npm test                    # gates + las diez suites
 npm run coverage:report     # informe combinado
 
-# Al abrir PRs: SIEMPRE al fork, nunca a BBVA
+# Al abrir PRs: SIEMPRE al fork. A BBVA no se le manda nada, en ningún formato.
 gh pr create --repo aborbalan/open-cells --base main --head <rama>
 ```
 

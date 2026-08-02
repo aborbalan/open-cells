@@ -1,44 +1,65 @@
-# Registro de lo reportado a `BBVA/open-cells`
+# Defectos de upstream: registro interno
 
-Qué hemos mandado upstream, por qué, y en qué estado está. Los borradores completos —título,
-labels y cuerpo listos para pegar— están en [`upstream-issues.md`](./upstream-issues.md); este
-documento es el seguimiento.
+> ## ⛔ Nada de esto se sube a `BBVA/open-cells`
+>
+> Ni issues, ni pull requests, ni comentarios. **No se les envía nada, en ningún formato.** Es
+> una norma del upstream y no admite excepciones.
 
-> **Estado a 2026-07-31: no se ha abierto ninguna todavía.** Las 14 están redactadas y
-> verificadas, pendientes de subir. La columna _Issue_ se rellena al abrir cada una.
+Qué está roto en `BBVA/open-cells`, cómo nos afecta y qué hemos hecho al respecto en nuestro
+fork. El detalle técnico de cada uno está en [`upstream-issues.md`](./upstream-issues.md); este
+documento es el índice y el seguimiento.
 
-## El criterio: qué se manda y qué no
+Para qué sirve, entonces, si no se envía: para saber qué heredamos, para no volver a
+diagnosticar lo mismo dos veces, y sobre todo para saber **qué ficheros van a dar conflicto**
+cuando sincronicemos con upstream.
 
-Se manda **solo lo que es de upstream**: defectos que existen en `BBVA/open-cells` tal cual y
-sobre los que ellos pueden actuar. Nada que dependa de decisiones nuestras.
+## Cómo se redactan
 
-Se manda **como issue, nunca como PR** — el upstream no acepta contribuciones externas. Por eso
-cada borrador es autocontenido, describe el arreglo en prosa y no enlaza a este fork: quien lo
-lea no tiene acceso a nuestro repositorio.
+Uno cada vez, en unidades pequeñas y abarcables, y **referenciando nuestro proyecto**: cada
+ficha enlaza nuestro arreglo y su test con permalinks a un SHA fijo, que es lo que convierte la
+ficha en algo accionable para nosotros. Cada defecto redactado así vive en su propio fichero
+bajo [`upstream/`](./upstream/); `upstream-issues.md` conserva el texto largo de los que aún no
+se han pasado a ese formato.
+
+| Redactada en formato final                       | Fichero                                                                      |
+| ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| 1 · `Channel.unsubscribe()` deja el canal muerto | [`upstream/01-channel-unsubscribe.md`](./upstream/01-channel-unsubscribe.md) |
+
+Las que siguen en `upstream-issues.md` y hay que trocear al pasarlas, porque hoy agrupan varios
+defectos en un solo issue: la 5 (cuatro defectos de tipos), la 7 (dos), la 8 (dos) y la 9
+(config de ESLint + código muerto).
+
+## El criterio: qué entra aquí y qué no
+
+Entra **solo lo que es de upstream**: defectos que existen en `BBVA/open-cells` tal cual y que
+heredamos al hacer el fork. Nada que sea decisión nuestra.
+
+Cada ficha es autocontenida: se entiende sin abrir otros documentos, y enlaza nuestro arreglo y
+su test para que nadie tenga que buscarlos.
 
 Cada cita está verificada contra el código de upstream en el commit previo a la auditoría
 (`398baed`), no reconstruida de memoria.
 
 ## Las 14
 
-| #   | Asunto                                 | Sev.    | Issue | Detectado en | En nuestro fork  |
-| --- | -------------------------------------- | ------- | ----- | ------------ | ---------------- |
-| 1   | Canales muertos tras `logout()`        | Crítica | —     | §2 · PR #9   | Arreglado        |
-| 2   | `_hasPublisher()` y RxJS 7             | Alta    | —     | §2 · PR #9   | Arreglado        |
-| 3   | `Router.stop()` no para el router      | Alta    | —     | §2 · PR #9   | Arreglado        |
-| 4   | `addCellsCoreToPrototype()` lanza      | Alta    | —     | §3 · PR #10  | Arreglado        |
-| 5   | Tipos publicados no compilan           | Alta    | —     | §10 · PR #15 | Arreglado        |
-| 6   | `types/` desalineados con `src/`       | Media   | —     | §10 · PR #15 | Arreglado        |
-| 7   | `npm publish` fallido reporta éxito    | Alta    | —     | §7 · PR #14  | Arreglado        |
-| 8   | La suite no arranca en un clon limpio  | Alta    | —     | §1 · PR #8   | Arreglado        |
-| 9   | ESLint no corre desde ESLint 9         | Media   | —     | §7 · PR #14  | Arreglado        |
-| 10  | Dos versiones de Playwright            | Baja    | —     | §9 · PR #15  | Arreglado        |
-| 11  | La app de ejemplo no tiene 404         | Media   | —     | §6 · PR #13  | **Sin arreglar** |
-| 12  | Botones que no llaman al handler       | Baja    | —     | §6 · PR #13  | **Sin arreglar** |
-| 13  | El e2e usa una API de terceros en vivo | Media   | —     | §6 · PR #13  | Arreglado        |
-| 14  | El e2e desactiva CSP y CORS            | Media   | —     | §6 · PR #13  | Arreglado        |
+| #   | Asunto                                 | Sev.    | Detectado en | En nuestro fork  |
+| --- | -------------------------------------- | ------- | ------------ | ---------------- |
+| 1   | Canales muertos tras `logout()`        | Crítica | §2 · PR #9   | Arreglado        |
+| 2   | `_hasPublisher()` y RxJS 7             | Alta    | §2 · PR #9   | Arreglado        |
+| 3   | `Router.stop()` no para el router      | Alta    | §2 · PR #9   | Arreglado        |
+| 4   | `addCellsCoreToPrototype()` lanza      | Alta    | §3 · PR #10  | Arreglado        |
+| 5   | Tipos publicados no compilan           | Alta    | §10 · PR #15 | Arreglado        |
+| 6   | `types/` desalineados con `src/`       | Media   | §10 · PR #15 | Arreglado        |
+| 7   | `npm publish` fallido reporta éxito    | Alta    | §7 · PR #14  | Arreglado        |
+| 8   | La suite no arranca en un clon limpio  | Alta    | §1 · PR #8   | Arreglado        |
+| 9   | ESLint no corre desde ESLint 9         | Media   | §7 · PR #14  | Arreglado        |
+| 10  | Dos versiones de Playwright            | Baja    | §9 · PR #15  | Arreglado        |
+| 11  | La app de ejemplo no tiene 404         | Media   | §6 · PR #13  | **Sin arreglar** |
+| 12  | Botones que no llaman al handler       | Baja    | §6 · PR #13  | **Sin arreglar** |
+| 13  | El e2e usa una API de terceros en vivo | Media   | §6 · PR #13  | Arreglado        |
+| 14  | El e2e desactiva CSP y CORS            | Media   | §6 · PR #13  | Arreglado        |
 
-**Sev.** = severidad para upstream. **Detectado en** = sección de la auditoría y PR nuestro donde
+**Sev.** = gravedad del defecto. **Detectado en** = sección de la auditoría y PR nuestro donde
 salió. **En nuestro fork** = si nuestra rama ya lo corrige.
 
 ### Por qué 11 y 12 siguen sin arreglar aquí
@@ -52,35 +73,37 @@ es el aviso que queremos.
 
 ### Por qué el resto sí está arreglado aquí
 
-No se arreglaron _para_ mandarlos: se arreglaron porque la auditoría los encontró y los
-necesitábamos verdes. Reportarlos es lo que queda por hacer, porque el arreglo vive en un fork
-que upstream no acepta.
+La auditoría los encontró y los necesitábamos verdes, así que se arreglaron. El arreglo se
+queda aquí: upstream seguirá teniendo el defecto mientras no lo encuentre por su cuenta.
 
 **Consecuencia a vigilar:** si upstream arregla alguno de forma distinta a la nuestra, al
 sincronizar habrá conflicto en ese fichero. Los candidatos son 1, 2 y 3 (los tres en
 `packages/core/src/`) y 5 y 6 (los `types/` a mano).
 
-## Qué se consideró y **no** se manda
+## Qué se consideró y **no** entra
 
-Todo lo siguiente salió de la auditoría y se deja fuera a propósito, porque es infraestructura
-nuestra y no un defecto de upstream sobre el que puedan actuar:
+Todo lo siguiente salió de la auditoría y queda fuera de este registro, porque es
+infraestructura nuestra y no algo roto que hayamos heredado:
 
 | Qué                                                      | Por qué no                                                                                         |
 | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Config compartida de vitest (`vitest.shared.mjs`)        | Decisión de organización nuestra, no un fallo                                                      |
 | Política de navegadores (`test-browsers.mjs`, la matriz) | Ídem; upstream puede querer otra                                                                   |
 | Informe de cobertura combinado                           | Herramienta nuestra                                                                                |
-| Guards `test:toolchain` y `test:types`                   | Son la forma que elegimos de sostener 5, 6, 8 y 10; van descritos dentro de esos issues, no aparte |
+| Guards `test:toolchain` y `test:types`                   | Son la forma que elegimos de sostener 5, 6, 8 y 10; se describen dentro de esas fichas, no aparte  |
 | Umbrales de cobertura y su ratchet                       | Política de proyecto, no un defecto                                                                |
 | Hooks locales (husky, commitlint, lint-staged)           | Ídem                                                                                               |
-| Limpieza de calidad de tests (§4)                        | Tests que upstream ni siquiera podía ejecutar (ver issue 8); reportar el original es lo útil       |
+| Limpieza de calidad de tests (§4)                        | Tests que upstream ni siquiera podía ejecutar (ver ficha 8); lo que importa es el defecto original |
 | `prepack` de `mcp-server`                                | Paquete nuestro, no existe upstream                                                                |
 
-La regla que aplicamos: **si el arreglo es "haced esto como nosotros", no se manda; si es "esto
-está roto en vuestro código", sí.**
+La regla que aplicamos: **si es "esto lo hemos organizado así", no entra; si es "esto viene
+roto de origen", sí.**
 
 ## Cómo mantener esto al día
 
-Al abrir cada issue: pegar el número o la URL en la columna _Issue_ y, si upstream la cierra o
-la rechaza, anotarlo en la fila. Cuando una se resuelva upstream y nos toque sincronizar, mirar
-antes la columna _En nuestro fork_ — es donde está el aviso de conflicto.
+Cuando sincronicemos con upstream: mirar antes la columna _En nuestro fork_. Ahí está el aviso
+de conflicto — si upstream ha arreglado algo que nosotros ya habíamos arreglado de otra forma,
+ese fichero va a chocar.
+
+Si alguno deja de existir upstream porque lo han corregido, se marca en su fila y se quita de
+la lista de riesgos.
