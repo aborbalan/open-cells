@@ -1,0 +1,46 @@
+{
+  "name": "pwbrouser",
+  "version": "1.0.1",
+  "description": "Playwright browser automation CLI tool",
+  "type": "module",
+  "main": "dist/src/server.js",
+  "bin": {
+    "pwbrouser": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check *.ts src/ tests/",
+    "lint:fix": "biome check --write --unsafe *.ts src/ tests/",
+    "format": "biome format --write *.ts src/ tests/",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "tsc"
+  },
+  "keywords": [
+    "playwright",
+    "browser",
+    "automation",
+    "cli"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.33.4",
+  "dependencies": {
+    "playwright": "^1.61.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.1",
+    "@types/node": "^22.0.0",
+    "@vitest/runner": "^4.1.9",
+    "tsx": "^4.19.0",
+    "typescript": "^6.0.0-beta",
+    "vitest": "^4.1.9"
+  }
+}

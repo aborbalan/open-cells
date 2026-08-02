@@ -32,6 +32,14 @@ const SINGLETONS = [
 const readJson = path => JSON.parse(readFileSync(path, 'utf8'));
 const show = path => relative(ROOT, path) || '.';
 
+/**
+ * `packages/labs/*` is upstream's experimental shelf, and each package there ships its own
+ * toolchain — `pwbrouser` is pnpm, biome and TypeScript 6 beta, with its own lockfile. They share
+ * none of our test infrastructure, and `workspaces()` below already leaves them out, so their
+ * nested installs must not read as a second version of a runner we share.
+ */
+const EXCLUDED_TREES = [join(ROOT, 'packages', 'labs')];
+
 /** Every `node_modules` directory in the tree, hoisted and nested alike. */
 function nodeModulesDirs(dir, found = []) {
   let entries;
@@ -43,6 +51,7 @@ function nodeModulesDirs(dir, found = []) {
   for (const entry of entries) {
     if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
     const path = join(dir, entry.name);
+    if (EXCLUDED_TREES.includes(path)) continue;
     if (entry.name === 'node_modules') found.push(path);
     nodeModulesDirs(path, found);
   }

@@ -1,6 +1,6 @@
 {
   "name": "@open-cells/page-controller",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "scripts": {
     "build": "echo \"Building page...\"",
     "test": "vitest --run",
@@ -18,7 +18,7 @@
   ],
   "main": "index.js",
   "dependencies": {
-    "@open-cells/element-controller": "^1.0.4"
+    "@open-cells/element-controller": "1.0.5"
   },
   "devDependencies": {
     "@esm-bundle/chai": "^4.3.4-fix.0",

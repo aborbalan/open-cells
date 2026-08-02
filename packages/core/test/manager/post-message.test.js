@@ -100,6 +100,8 @@ describe('PostMessageManager', () => {
 
       expect(postMessage.calledOnce).to.be.true;
       expect(postMessage.firstCall.args[0]).to.deep.equal({
+        event: `${P}-ready`,
+        detail: undefined,
         eventName: `${P}-ready`,
         eventDetail: undefined,
       });
@@ -144,6 +146,8 @@ describe('PostMessageManager', () => {
 
       expect(postMessage.calledOnce).to.be.true;
       expect(postMessage.firstCall.args[0]).to.deep.equal({
+        event: 'checkout',
+        detail: { total: 10 },
         eventName: 'checkout',
         eventDetail: { total: 10 },
       });
@@ -158,7 +162,10 @@ describe('PostMessageManager', () => {
       manager._sendPostMessage({ event: 'ping', detail: { a: 1 } });
 
       expect(
-        postMessage.calledOnceWith({ eventName: 'ping', eventDetail: { a: 1 } }, ORIGIN),
+        postMessage.calledOnceWith(
+          { event: 'ping', detail: { a: 1 }, eventName: 'ping', eventDetail: { a: 1 } },
+          ORIGIN,
+        ),
       ).to.be.true;
     });
   });
