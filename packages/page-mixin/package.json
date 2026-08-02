@@ -1,6 +1,6 @@
 {
   "name": "@open-cells/page-mixin",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "",
   "files": [
     "/src/",
@@ -10,7 +10,7 @@
   "main": "index.js",
   "types": "types/index.d.ts",
   "dependencies": {
-    "@open-cells/core-plugin": "^1.2.2",
+    "@open-cells/core-plugin": "1.2.3",
     "@open-wc/dedupe-mixin": "^1.4.0"
   },
   "scripts": {

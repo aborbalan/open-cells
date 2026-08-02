@@ -519,6 +519,7 @@ export class Bridge {
     } else {
       $bridge = {
         // bridge
+        getBridgeEventManager: () => this.getBridgeEventManager(),
         logout: () => this.logout(),
         subscribeToEvent: (/** @type {string} */ eventName, /** @type {Function} */ callback) =>
           this.subscribeToEvent(eventName, callback),
@@ -679,6 +680,15 @@ export class Bridge {
    */
   handleBack() {
     this.goBack();
+  }
+
+  /**
+   * Returns the event manager.
+   *
+   * @returns {Object} The event manager.
+   */
+  getBridgeEventManager() {
+    return eventManager;
   }
 
   /**

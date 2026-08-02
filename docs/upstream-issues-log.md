@@ -48,8 +48,8 @@ Cada cita está verificada contra el código de upstream en el commit previo a l
 | 2   | `_hasPublisher()` y RxJS 7             | Alta    | §2 · PR #9   | Arreglado        |
 | 3   | `Router.stop()` no para el router      | Alta    | §2 · PR #9   | Arreglado        |
 | 4   | `addCellsCoreToPrototype()` lanza      | Alta    | §3 · PR #10  | Arreglado        |
-| 5   | Tipos publicados no compilan           | Alta    | §10 · PR #15 | Arreglado        |
-| 6   | `types/` desalineados con `src/`       | Media   | §10 · PR #15 | Arreglado        |
+| 5   | Tipos publicados no compilan           | Alta    | §10 · PR #15 | Arreglado · ⬆️   |
+| 6   | `types/` desalineados con `src/`       | Media   | §10 · PR #15 | Arreglado · ⬆️   |
 | 7   | `npm publish` fallido reporta éxito    | Alta    | §7 · PR #14  | Arreglado        |
 | 8   | La suite no arranca en un clon limpio  | Alta    | §1 · PR #8   | Arreglado        |
 | 9   | ESLint no corre desde ESLint 9         | Media   | §7 · PR #14  | Arreglado        |
@@ -60,7 +60,21 @@ Cada cita está verificada contra el código de upstream en el commit previo a l
 | 14  | El e2e desactiva CSP y CORS            | Media   | §6 · PR #13  | Arreglado        |
 
 **Sev.** = gravedad del defecto. **Detectado en** = sección de la auditoría y PR nuestro donde
-salió. **En nuestro fork** = si nuestra rama ya lo corrige.
+salió. **En nuestro fork** = si nuestra rama ya lo corrige. **⬆️** = upstream también lo ha
+corregido, por su cuenta y de otra forma que nosotros.
+
+### 5 y 6 ya no existen upstream
+
+`core@1.2.0` los corrige, y la sincronización de esta rama los trajo. Su arreglo no es el nuestro:
+
+| Defecto | Upstream                                                      | Nosotros                                                         |
+| ------- | ------------------------------------------------------------- | ---------------------------------------------------------------- |
+| 5       | Quita `export { Bridge } from '../src/bridge'` de `bridge.ts` | Lo mismo, pero además declara la clase con su superficie pública |
+| 6       | Crea `types/index.d.ts` con los reexports                     | Ídem, más la API runtime (`startApp`, `navigate`, `publish`, …)  |
+
+Al mezclar se conservó la nuestra por ser más estricta, tomando de la suya `let $bridge` y
+`getConfig(): CellsConfig | undefined`, que describen mejor lo que hace `src/bridge.js`, y
+añadiendo `getBridgeEventManager` a `BridgeAPI`, que es método nuevo de `core@1.2.0`.
 
 ### Por qué 11 y 12 siguen sin arreglar aquí
 
@@ -77,8 +91,8 @@ La auditoría los encontró y los necesitábamos verdes, así que se arreglaron.
 queda aquí: upstream seguirá teniendo el defecto mientras no lo encuentre por su cuenta.
 
 **Consecuencia a vigilar:** si upstream arregla alguno de forma distinta a la nuestra, al
-sincronizar habrá conflicto en ese fichero. Los candidatos son 1, 2 y 3 (los tres en
-`packages/core/src/`) y 5 y 6 (los `types/` a mano).
+sincronizar habrá conflicto en ese fichero. Pasó exactamente eso con 5 y 6 en `core@1.2.0`, que
+es el aviso funcionando. Quedan como candidatos 1, 2 y 3, los tres en `packages/core/src/`.
 
 ## Qué se consideró y **no** entra
 

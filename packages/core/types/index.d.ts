@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+import type { BridgeAPI, CellsConfig } from './bridge';
+import type { QueryParams } from './navigation-stack';
+import type { RouteData } from './route';
+
 export type {
   Component,
   ComponentConnector,
@@ -63,14 +67,13 @@ export type {
 export { EventEmitter } from './event-emitter';
 
 // ---- API runtime pública (alineada con src/index.js) ----
-import type { CellsConfig, BridgeAPI } from './bridge';
-import type { QueryParams } from './navigation-stack';
-import type { RouteData } from './route';
 
-export declare const $bridge: BridgeAPI | null;
+// `let`, not `const`: `src/bridge.js` declares `export let $bridge = null` and reassigns it on
+// `startApp`. `getConfig` returns `$config`, which is undefined until then.
+export declare let $bridge: BridgeAPI | null;
 
 export declare function startApp(config: CellsConfig): BridgeAPI | null;
-export declare function getConfig(): CellsConfig;
+export declare function getConfig(): CellsConfig | undefined;
 export declare function enqueueCommand(command: string, parameters: unknown[]): void;
 export declare function subscribe(
   channelName: string,

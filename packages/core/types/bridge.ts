@@ -103,9 +103,13 @@ export declare class Bridge {
 
   /** The node the application renders into. */
   getMainNode(): HTMLElement;
+
+  /** The bridge's event manager. */
+  getBridgeEventManager(): object;
 }
 
 export type BridgeAPI = {
+  getBridgeEventManager: Function;
   logout: Function;
   subscribeToEvent: Function;
   registerInConnection: Function;
