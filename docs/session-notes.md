@@ -2,13 +2,17 @@
 
 > Documento vivo para retomar el trabajo en futuras sesiones.
 > Consolida descubrimientos, estado y mejoras pendientes del fork.
-> Última actualización: 2026-07-31
+> Última actualización: 2026-08-02
 
 ## Contexto del fork
 
 - `origin` = `aborbalan/open-cells` (fork del usuario) — **todos los PRs van aquí**.
 - `upstream` = `BBVA/open-cells` — **no se les envía absolutamente nada**: ni PRs, ni issues,
   ni comentarios. No aceptan nada de fuera, y «es solo un issue» no es una excepción.
+  Su URL de push está puesta a `DISABLED` a propósito, para que la norma la sostenga la
+  herramienta y no la memoria; `git fetch upstream` sigue funcionando. **No restaurarla.** El
+  riesgo real no es un `git push` a mano, sino `gh pr create`, que en un fork apunta al repo
+  padre por defecto: hay que pasarle siempre `--repo aborbalan/open-cells`.
 - Monorepo de web components (npm workspaces + wireit). Paquetes en `packages/*`.
 - `main` lleva ya el `mcp-server` **y** la auditoría de tests, integrados en esa dirección.
 
@@ -44,6 +48,26 @@ raíz documenta el monorepo, las convenciones del framework y lo que está rojo 
 
 **Hallazgo real del propio análisis:** `recipes-app` declara `notFound: false` en su ruta
 `not-found`, así que la app de ejemplo se queda sin página 404 efectiva (`validate_routes` lo avisa).
+
+## Sincronización con upstream — 2026-08-02
+
+Primera desde la auditoría, en `chore/sync-upstream` (PR #19). Trae `core@1.2.0`,
+`core-plugin`/`page-mixin@1.2.3`, el arreglo de publicación en npm y el paquete experimental
+`packages/labs/pwbrouser`.
+
+Lo que conviene recordar de cómo se resolvió:
+
+- **Upstream ha corregido por su cuenta los defectos 5 y 6** del registro, de otra forma que
+  nosotros. Se conservó la nuestra por más estricta, tomando de la suya `let $bridge` y
+  `getConfig(): CellsConfig | undefined`. El detalle, en
+  [`upstream-issues-log.md`](./upstream-issues-log.md).
+- **Sus `overrides` rompen el build si se aceptan tal cual.** Fuerzan majors enteros sobre
+  consumidores incompatibles y `brace-expansion@5.0.9`, que es ESM y tumba wireit, que importa el
+  default. Quedaron reexpresados en la forma precisa `pkg@rango` que ya usaba el fichero.
+- **eslint se queda en 9.** Upstream sube a 10, pero la flat config está calibrada para la 9.
+  Pendiente como decisión aparte, no dentro de un merge de sincronización.
+- **`packages/labs/*` entra en workspaces** y trae su propio toolchain (pnpm, biome, TS 6 beta).
+  `check-test-toolchain.mjs` ignora ahora ese árbol, que es lo que ya hacía su otra mitad.
 
 ## Auditoría de tests — completada
 
@@ -112,8 +136,8 @@ Cerrado en §10. De la lista de mejoras que arrastraba este documento:
 
 ## Pendiente
 
-El backlog desglosado en unidades pequeñas está en [`backlog.html`](./backlog.html): 21 issues
-en 7 grupos, cada una con su criterio de cierre y sus dependencias. Ninguna está abierta todavía.
+El backlog desglosado en unidades pequeñas está en [`backlog.html`](./backlog.html): 23 issues
+en 8 grupos, cada una con su criterio de cierre y sus dependencias. Ninguna está abierta todavía.
 
 Se publica como artefacto en
 <https://claude.ai/code/artifact/5cd79bc6-1e6e-45ca-a7f4-63b399cecf78>. **Para actualizarlo hay
@@ -136,6 +160,28 @@ suites** si se hace sin cuidado: `core-plugin`, `element-controller`, `page-cont
 
 `vite build` produce `dist/core.*`, pero `main` apunta a `src/index.js` y `files` no incluye
 `dist`. Decidir si se distribuye fuente ESM o bundle antes de tocar `exports`/`files`.
+
+### Los gates no corren igual fuera de CI (8A y 8B)
+
+Salieron los dos al sincronizar con upstream, y ninguno es una regresión de ese merge: los dos
+se reprodujeron con `main` sin tocar. Comparten causa de fondo — el gate se escribió contra el
+entorno de CI, que es Linux y un checkout plano, y falla en cuanto se sale de ahí.
+
+- **`test:types` no arranca en Windows.** `scripts/check-public-types.mjs` lanza `npx` y
+  `npm.cmd` con `execFileSync` sin `shell: true`, y Node en Windows no puede lanzar un `.cmd`
+  directamente. Todo muere con `spawnSync npm.cmd EINVAL`, pero se presenta como si fallara la
+  comprobación: «types-contract does not compile» con el error vacío, y un «could not pack» por
+  paquete. Los dos son falsos — a mano, `npx tsc -p types-contract/tsconfig.json` sale con 0 y
+  `typchk` está limpio.
+
+- **La cobertura de `localize` se hunde en un worktree anidado.** Los 46 tests pasan, pero el
+  total cae de 98,72 % a 50,19 % y revienta el ratchet del 95 %. `web-test-runner` no deshace el
+  prefijo `__wds-outside-root__` con el que sirve lo que queda fuera de su `rootDir`, y acaba
+  contando `sinon-esm.js` como fuente sin cubrir. Pasa cuando el worktree cuelga de otro checkout
+  que ya tiene `node_modules` por encima, que es exactamente lo que es `.claude/worktrees/*`.
+
+El detalle y el criterio de cierre de cada uno, en [`backlog.html`](./backlog.html). **El umbral
+del 95 % no se toca**: es un ratchet.
 
 ### Avisos de `npm audit`
 

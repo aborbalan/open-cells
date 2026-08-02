@@ -443,9 +443,9 @@
           d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
         ></path>
       </svg>
-      21 propuestas
+      23 propuestas
     </span>
-    <span class="muted">7 grupos &middot; 1 condicional &middot; 4 sin tocar código</span>
+    <span class="muted">8 grupos &middot; 1 condicional &middot; 4 sin tocar código</span>
   </div>
 
   <!-- ============ GRUPO 1 ============ -->
@@ -1254,6 +1254,124 @@
         <p>
           <strong>Hecho cuando:</strong> el número del paquete refleja lo que de verdad está sin
           cubrir, con la decisión escrita en la config.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ GRUPO 8 ============ -->
+  <div class="group">
+    <span>8 &middot; Los gates fuera de CI</span
+    ><span class="hint">sueltas &middot; salieron al sincronizar con upstream</span>
+  </div>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"><span class="id">8A</span>test:types no arranca en Windows</span>
+        <span class="labels"
+          ><span class="label l-bug">bug</span><span class="label l-size">~2 líneas</span></span
+        >
+        <div class="row-meta">scripts &middot; sin dependencias, se puede hacer ya</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        <code>scripts/check-public-types.mjs</code> llama a <code>npx</code> y a
+        <code>npm.cmd</code> con <code>execFileSync</code> sin <code>shell: true</code>. En Windows
+        Node no puede lanzar un <code>.cmd</code> directamente, así que todas las llamadas mueren
+        con <code>spawnSync npm.cmd EINVAL</code>.
+      </p>
+      <p>
+        La salida además engaña, porque el fallo de spawn se presenta como fallo de la comprobación:
+      </p>
+      <pre><code>- types-contract does not compile:
+      (vacío)
+- @open-cells/core: could not pack (spawnSync npm.cmd EINVAL)
+  ... una línea por paquete</code></pre>
+      <p>
+        Los dos son falsos. Comprobado a mano que lo que verifica sí pasa:
+        <code>npx tsc -p types-contract/tsconfig.json</code> sale con 0 y
+        <code>npm run typchk -w @open-cells/core</code> está limpio. Es decir, uno de los tres gates
+        de <code>CLAUDE.md</code> —y parte de <code>npm test</code>— no se puede correr en local en
+        Windows; en CI, que es Linux, pasa.
+      </p>
+      <p>
+        Ojo al arreglarlo: <code>shell: true</code> cambia cómo se citan los argumentos, y a
+        <code>tsc</code> se le pasa la ruta del tsconfig como argumento. Hoy ninguna ruta del
+        repositorio tiene espacios, pero el arreglo no debería depender de eso.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> <code>npm run test:types</code> pasa en Windows y sigue
+          pasando en Linux, y ningún fallo de spawn puede volver a disfrazarse de fallo de la
+          comprobación.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">8B</span>La cobertura de localize se hunde en un worktree anidado</span
+        >
+        <span class="labels"
+          ><span class="label l-bug">bug</span><span class="label l-size">config</span></span
+        >
+        <div class="row-meta">localize &middot; 98,72 % fuera, 50,19 % dentro</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        La suite pasa —46 tests, 0 fallos— pero el total de cobertura cae al
+        <strong>50,19 %</strong> contra el 95 % del ratchet, así que el script sale con 1. El log se
+        llena de esto:
+      </p>
+      <pre><code>Error while generating code coverage for
+  http://localhost:8000/__wds-outside-root__/2/node_modules/&lt;pkg&gt;/index.js
+ENOENT: &lt;worktree&gt;\packages\localize\__wds-outside-root__\2\node_modules\&lt;pkg&gt;\index.js</code></pre>
+      <p>
+        <code>web-test-runner</code> sirve lo que queda fuera de su <code>rootDir</code> bajo el
+        prefijo <code>__wds-outside-root__/&lt;N&gt;/</code>, y el paso de cobertura pega esa ruta
+        detrás del directorio del paquete en vez de deshacer el prefijo. Los ficheros están en la
+        raíz del worktree; la ruta simplemente no resuelve. El efecto colateral es que
+        <code>packages/localize/node_modules/sinon/pkg/sinon-esm.js</code> acaba contando como
+        fuente sin cubrir —se ve en las entradas <code>SF:</code> de
+        <code>coverage/lcov.info</code>— y ese único fichero grande arrastra el total.
+      </p>
+      <p>
+        Es del entorno, no una regresión: <code>main</code> sin tocar, en un worktree bajo
+        <code>.claude/worktrees/</code>, reproduce el 50,19 %; el mismo commit en un checkout normal
+        da 98,72 % y pasa. Ocurre cuando el worktree cuelga de otro checkout que ya tiene su propio
+        <code>node_modules</code> por encima.
+      </p>
+      <p>
+        <code>packages/localize/web-test-runner.config.js</code> no fija <code>rootDir</code>, así
+        que toma por defecto el directorio del paquete. La vía a explorar es apuntarlo a la raíz del
+        monorepo, para que las dependencias izadas queden dentro de lo servido y el escape
+        <code>__wds-outside-root__</code> no llegue a hacer falta.
+      </p>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> la suite da el mismo porcentaje dentro y fuera de un
+          worktree anidado, <code>node_modules</code> sigue fuera del informe, y el umbral del 95 %
+          <strong>no</strong> se ha tocado — es un ratchet.
         </p>
       </div>
     </div>
