@@ -120,6 +120,29 @@
     padding: 0;
     font-size: 100%;
   }
+
+  /* Tablas dentro del cuerpo de una issue. Scroll propio: el body nunca va de lado. */
+  .tablewrap {
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+  .tablewrap table {
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 100%;
+  }
+  .tablewrap th,
+  .tablewrap td {
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .tablewrap th {
+    background: var(--canvas-subtle);
+    font-weight: 600;
+    white-space: nowrap;
+  }
   a {
     color: var(--accent);
     text-decoration: none;
@@ -443,7 +466,7 @@
           d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
         ></path>
       </svg>
-      23 propuestas
+      24 propuestas
     </span>
     <span class="muted">8 grupos &middot; 1 condicional &middot; 4 sin tocar código</span>
   </div>
@@ -1386,6 +1409,97 @@ ENOENT: &lt;worktree&gt;\packages\localize\__wds-outside-root__\2\node_modules\&
           <strong>Hecho cuando:</strong> la suite da el mismo porcentaje dentro y fuera de un
           worktree anidado, <code>node_modules</code> sigue fuera del informe, y el umbral del 95 %
           <strong>no</strong> se ha tocado — es un ratchet.
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="issue">
+    <summary>
+      <span class="icon"
+        ><svg height="16" width="16" viewBox="0 0 16 16">
+          <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
+          <path
+            d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"
+          ></path></svg
+      ></span>
+      <span class="row-main">
+        <span class="row-title"
+          ><span class="id">8C</span>Decidir el perímetro de packages/labs</span
+        >
+        <span class="labels"
+          ><span class="label l-chore">chore</span><span class="label l-size">decisión</span></span
+        >
+        <div class="row-meta">tooling &middot; llegó con la sincronización de upstream</div>
+      </span>
+    </summary>
+    <div class="body">
+      <p>
+        La sincronización trajo <code>packages/labs/pwbrouser</code> y, con él,
+        <code>packages/labs/*</code> en la lista de workspaces. Es un paquete experimental de
+        upstream que se gobierna solo: <code>pnpm</code> como <code>packageManager</code>, biome
+        como linter, TypeScript 6 beta, su propio <code>pnpm-lock.yaml</code> y sus propias
+        versiones de vitest y de playwright.
+      </p>
+      <p>Entró en nuestro perímetro de herramientas <strong>de forma desigual</strong>:</p>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Herramienta</th>
+              <th>¿Alcanza a labs?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>test:toolchain</code></td>
+              <td>No &mdash; excluido al resolver el merge</td>
+            </tr>
+            <tr>
+              <td><code>coverage:report</code></td>
+              <td>No &mdash; sólo camina <code>packages</code> y <code>packages/example</code></td>
+            </tr>
+            <tr>
+              <td><code>npm test</code></td>
+              <td><strong>Sí</strong> &mdash; corre pwbrouser: 145 tests con vitest 4.1.10</td>
+            </tr>
+            <tr>
+              <td><code>eslint .</code></td>
+              <td><strong>Sí</strong> &mdash; 16 ficheros, 0 errores hoy</td>
+            </tr>
+            <tr>
+              <td><code>prettier --check .</code></td>
+              <td><strong>Sí</strong> &mdash; marca su <code>pnpm-lock.yaml</code> (ver 4B)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Lo incómodo no es que falle —hoy está todo en verde— sino que
+        <strong>nadie decidió que estuviera ahí</strong>. La suite de un paquete experimental ajeno
+        corre dentro de nuestro <code>npm test</code> con una versión de vitest distinta de la que
+        el gate pinea a propósito, y dos linters gobiernan el mismo directorio.
+      </p>
+      <p>Tres salidas razonables:</p>
+      <ul>
+        <li>
+          Sacar <code>packages/labs/*</code> de la lista de workspaces y dejar que se gestione con
+          su propio <code>pnpm</code>, que es como está escrito el paquete.
+        </li>
+        <li>
+          Dejarlo dentro y alinearlo con nuestro toolchain, lo que significa pelearse con TypeScript
+          6 beta y con biome.
+        </li>
+        <li>
+          Dejarlo dentro y excluirlo de todo de forma explícita y coherente, en vez de herramienta
+          por herramienta como está ahora.
+        </li>
+      </ul>
+      <div class="dod">
+        <p>
+          <strong>Hecho cuando:</strong> hay una decisión escrita sobre si labs es nuestro o de
+          upstream, y las cinco herramientas de la tabla coinciden con ella — que las tres que hoy
+          lo alcanzan y las dos que no, lo hagan por la misma razón y no por accidente.
         </p>
       </div>
     </div>
