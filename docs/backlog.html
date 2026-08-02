@@ -9,6 +9,15 @@
 
   El fichero se envuelve en <!doctype html><head>…</head><body> al publicarlo,
   por eso aquí no hay ni <html> ni <head> ni <body>.
+
+  El cuerpo de cada issue es Markdown fuente dentro de un <pre>. Ese <pre> es la
+  única copia del texto: el botón copia su textContent, así que no hay que
+  duplicar el contenido en un atributo. Por eso su contenido empieza en la
+  columna 0 — la indentación del HTML acabaría dentro de lo copiado.
+
+  Los párrafos van en una sola línea a propósito. GitHub trata el salto de línea
+  simple como salto real en issues y comentarios, así que partirlos aquí saldría
+  partido allí. El bloque los envuelve visualmente con white-space: pre-wrap.
 -->
 <title>Backlog propuesto · aborbalan/open-cells</title>
 <style>
@@ -95,7 +104,6 @@
   }
 
   code,
-  pre,
   .mono {
     font-family:
       ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
@@ -105,43 +113,6 @@
     border-radius: 6px;
     padding: 0.15em 0.4em;
     font-size: 85%;
-  }
-  pre {
-    background: var(--canvas-subtle);
-    border-radius: 6px;
-    padding: 14px;
-    overflow-x: auto;
-    font-size: 85%;
-    line-height: 1.45;
-    margin: 12px 0;
-  }
-  pre code {
-    background: none;
-    padding: 0;
-    font-size: 100%;
-  }
-
-  /* Tablas dentro del cuerpo de una issue. Scroll propio: el body nunca va de lado. */
-  .tablewrap {
-    overflow-x: auto;
-    margin: 12px 0;
-  }
-  .tablewrap table {
-    border-collapse: collapse;
-    font-size: 13px;
-    min-width: 100%;
-  }
-  .tablewrap th,
-  .tablewrap td {
-    border: 1px solid var(--border);
-    padding: 6px 12px;
-    text-align: left;
-    vertical-align: top;
-  }
-  .tablewrap th {
-    background: var(--canvas-subtle);
-    font-weight: 600;
-    white-space: nowrap;
   }
   a {
     color: var(--accent);
@@ -155,6 +126,35 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: 6px;
+  }
+
+  /* ---- botones ---- */
+  .btn {
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fg);
+    background: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn:hover {
+    background: color-mix(in srgb, var(--fg) 7%, var(--canvas));
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .btn.ok {
+    color: var(--open);
+    border-color: color-mix(in srgb, var(--open) 45%, transparent);
+  }
+  .btn.fail {
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 45%, transparent);
   }
 
   /* ---- cabecera ---- */
@@ -226,6 +226,9 @@
     color: var(--fg-muted);
     font-weight: 400;
   }
+  .listhead .btn {
+    margin-left: auto;
+  }
 
   /* ---- agrupación ---- */
   .group {
@@ -257,9 +260,6 @@
   }
   details.issue:last-of-type {
     border-radius: 0 0 6px 6px;
-  }
-  details.issue[open] {
-    background: var(--canvas);
   }
   summary {
     list-style: none;
@@ -354,54 +354,53 @@
     background: color-mix(in srgb, var(--attention) 8%, transparent);
   }
 
-  /* ---- cuerpo ---- */
+  /* ---- cuerpo: el markdown de la issue ---- */
   .body {
     padding: 4px 16px 20px 40px;
     border-top: 1px solid var(--border-muted);
     margin-top: 4px;
   }
-  .body > *:first-child {
+  .md {
     margin-top: 16px;
-  }
-  .body h4 {
-    font-size: 14px;
-    margin: 20px 0 8px;
-  }
-  .body p {
-    margin: 0 0 12px;
-    max-width: 72ch;
-  }
-  .body ul {
-    margin: 0 0 12px;
-    padding-left: 22px;
-    max-width: 72ch;
-  }
-  .body li {
-    margin-bottom: 4px;
-  }
-  .dod {
     border: 1px solid var(--border);
     border-radius: 6px;
+    overflow: hidden;
+  }
+  .md-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    flex-wrap: wrap;
     background: var(--canvas-subtle);
-    padding: 10px 14px;
-    margin-top: 16px;
-    max-width: 72ch;
-  }
-  .dod strong {
-    color: var(--fg);
-  }
-  .dod p {
-    margin: 0;
-    color: var(--fg-muted);
-  }
-  .dep {
-    color: var(--fg-muted);
+    border-bottom: 1px solid var(--border);
+    padding: 7px 8px 7px 12px;
     font-size: 12px;
-    margin-top: 10px;
+    color: var(--fg-muted);
   }
-  .dep b {
-    color: var(--fg);
-    font-weight: 600;
+  .md-head .acts {
+    display: flex;
+    gap: 6px;
+  }
+  .md pre {
+    margin: 0;
+    padding: 14px 16px;
+    background: var(--canvas);
+    font-family:
+      ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    /* pre-wrap envuelve al mostrarlo sin meter saltos en lo que se copia */
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    overflow-x: auto;
+    tab-size: 2;
+  }
+  .md pre code {
+    background: none;
+    padding: 0;
+    font-size: 100%;
+    font-family: inherit;
   }
 
   footer {
@@ -423,6 +422,9 @@
       margin-left: 0;
       margin-top: 6px;
     }
+    .listhead .btn {
+      margin-left: 0;
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     * {
@@ -438,8 +440,8 @@
     ><span class="repo">open-cells</span>
   </div>
   <p class="lede">
-    Backlog propuesto, desglosado en unidades pequeñas. Cada una se puede cerrar por separado y
-    lleva su criterio de cierre explícito.
+    Backlog propuesto, desglosado en unidades pequeñas. Cada una se puede cerrar por separado, lleva
+    su criterio de cierre explícito, y trae su cuerpo en Markdown listo para pegar tal cual.
   </p>
 
   <div class="notice stop">
@@ -454,7 +456,8 @@
     <strong>Ninguna está abierta todavía</strong>
     <p>
       Es una propuesta. Los identificadores (<span class="mono">1A</span>,
-      <span class="mono">2B</span>&hellip;) son de este documento, no números de GitHub.
+      <span class="mono">2B</span>&hellip;) son de este documento, no números de GitHub; van dentro
+      del título al copiarlo para que las dependencias entre fichas sigan significando algo.
     </p>
   </div>
 
@@ -469,6 +472,9 @@
       24 propuestas
     </span>
     <span class="muted">8 grupos &middot; 1 condicional &middot; 4 sin tocar código</span>
+    <button class="btn" type="button" id="copy-all" aria-live="polite">
+      Copiar las 24 como un .md
+    </button>
   </div>
 
   <!-- ============ GRUPO 1 ============ -->
@@ -497,21 +503,30 @@
       </span>
     </summary>
     <div class="body">
-      <p><code>packages/core/vite.config.ts</code> declara la entrada de la librería así:</p>
-      <pre><code>lib: {
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>`packages/core/vite.config.ts` declara la entrada de la librería así:
+
+```ts
+lib: {
   entry: resolve(__dirname, 'src/index.ts'),   // no existe
   ...
-}</code></pre>
-      <p>
-        En <code>packages/core/src/</code> sólo hay <code>index.js</code>. El build no falla porque
-        lo que gobierna de verdad la entrada es <code>rollupOptions.input: 'src/index.js'</code>. Es
-        configuración muerta que aparenta mandar.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> <code>lib.entry</code> apunta al fichero real, o desaparece
-          si <code>rollupOptions.input</code> ya lo cubre, y el build produce lo mismo que ahora.
-        </p>
+}
+```
+
+En `packages/core/src/` sólo hay `index.js`. El build no falla porque lo que gobierna de verdad la entrada es `rollupOptions.input: 'src/index.js'`. Es configuración muerta que aparenta mandar.
+
+**Hecho cuando:** `lib.entry` apunta al fichero real, o desaparece si `rollupOptions.input` ya lo cubre, y el build produce lo mismo que ahora.</code></pre>
       </div>
     </div>
   </details>
@@ -536,29 +551,29 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        No está escrito en ningún sitio, y por eso la pregunta &laquo;&iquest;fuente o
-        bundle?&raquo; se puede reabrir cada seis meses. La evidencia del propio repositorio dice
-        que la estrategia es <strong>npm + bundler, ESM, fuente sin transpilar</strong>.
-      </p>
-      <h4>Lo que la sostiene</h4>
-      <ul>
-        <li>
-          Las dos plantillas de <code>create-app</code> generan <code>type: "module"</code> con Vite
-          (<code>dev</code>, <code>tsc &amp;&amp; vite build</code>) y cargan TypeScript
-          directamente: <code>&lt;script type="module" src="src/components/app-index.ts"&gt;</code>.
-        </li>
-        <li>
-          Ningún paquete declara <code>unpkg</code>, <code>jsdelivr</code>, <code>browser</code> ni
-          <code>module</code>. Ninguno de los ocho.
-        </li>
-        <li>Ningún README ni documento enseña carga por <code>&lt;script&gt;</code> o CDN.</li>
-      </ul>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> el README de <code>core</code> dice qué se publica, qué
-          necesita el consumidor, y que UMD/IIFE no son un camino soportado.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>&gt; **Desbloquea:** 1C, 2B
+
+No está escrito en ningún sitio, y por eso la pregunta «¿fuente o bundle?» se puede reabrir cada seis meses. La evidencia del propio repositorio dice que la estrategia es **npm + bundler, ESM, fuente sin transpilar**.
+
+**Lo que la sostiene**
+
+- Las dos plantillas de `create-app` generan `type: "module"` con Vite (`dev`, `tsc &amp;&amp; vite build`) y cargan TypeScript directamente: `&lt;script type="module" src="src/components/app-index.ts"&gt;`.
+- Ningún paquete declara `unpkg`, `jsdelivr`, `browser` ni `module`. Ninguno de los ocho.
+- Ningún README ni documento enseña carga por `&lt;script&gt;` o CDN.
+
+**Hecho cuando:** el README de `core` dice qué se publica, qué necesita el consumidor, y que UMD/IIFE no son un camino soportado.</code></pre>
       </div>
     </div>
   </details>
@@ -583,24 +598,25 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        <code>scripts.prepublish</code> ejecuta <code>vite build</code> en cada publicación, genera
-        cuatro bundles &mdash; <code>core.js</code>, <code>core.cjs</code>,
-        <code>core.umd.cjs</code>, <code>core.iife.js</code> &mdash; y <code>files</code> es
-        <code>["src/**/*", "types/**/*"]</code>. No se publica ninguno.
-      </p>
-      <p>
-        De paso, <code>prepublish</code> es un hook obsoleto. Y tiene una consecuencia: nuestro gate
-        <code>test:types</code> corre <code>npm pack</code>, que dispara <code>prepack</code>,
-        <em>no</em> <code>prepublish</code>. Hoy da igual porque publicamos fuente, que siempre
-        está; si algún día se moviera a <code>dist/</code> sin cambiar el hook, el gate fallaría
-        &mdash; y tendría razón.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> publicar no construye nada,
-          <code>npm run test:types</code> sigue verde, y el tarball contiene lo mismo que antes.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>&gt; **Depende de:** 1B
+
+`scripts.prepublish` ejecuta `vite build` en cada publicación, genera cuatro bundles — `core.js`, `core.cjs`, `core.umd.cjs`, `core.iife.js` — y `files` es `["src/**/*", "types/**/*"]`. No se publica ninguno.
+
+De paso, `prepublish` es un hook obsoleto. Y tiene una consecuencia: nuestro gate `test:types` corre `npm pack`, que dispara `prepack`, *no* `prepublish`. Hoy da igual porque publicamos fuente, que siempre está; si algún día se moviera a `dist/` sin cambiar el hook, el gate fallaría — y tendría razón.
+
+**Hecho cuando:** publicar no construye nada, `npm run test:types` sigue verde, y el tarball contiene lo mismo que antes.</code></pre>
       </div>
     </div>
   </details>
@@ -625,26 +641,27 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        Con 1C hecho, <code>npm run build -w @open-cells/core</code> sigue existiendo pero ya no
-        publica nada. Tres salidas:
-      </p>
-      <ul>
-        <li>borrarlo, si no aporta;</li>
-        <li>
-          conservarlo sólo como comprobación de que el paquete empaqueta &mdash; sale gratis en CI;
-        </li>
-        <li>
-          reducirlo a los formatos que alguien pueda querer. Hoy salen cuatro, y
-          <code>umd</code>/<code>iife</code> sólo sirven para carga por <code>&lt;script&gt;</code>,
-          que 1B habrá declarado no soportada.
-        </li>
-      </ul>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> la salida elegida está aplicada y el motivo escrito en
-          <code>docs/session-notes.md</code>.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>&gt; **Depende de:** 1C — es la única decisión real del grupo.
+
+Con 1C hecho, `npm run build -w @open-cells/core` sigue existiendo pero ya no publica nada. Tres salidas:
+
+- borrarlo, si no aporta;
+- conservarlo sólo como comprobación de que el paquete empaqueta — sale gratis en CI;
+- reducirlo a los formatos que alguien pueda querer. Hoy salen cuatro, y `umd`/`iife` sólo sirven para carga por `&lt;script&gt;`, que 1B habrá declarado no soportada.
+
+**Hecho cuando:** la salida elegida está aplicada y el motivo escrito en `docs/session-notes.md`.</code></pre>
       </div>
     </div>
   </details>
@@ -669,23 +686,29 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        El bundle actual <strong>embebe RxJS entero</strong>: cero imports externos en el ESM, cero
-        <code>require("rxjs")</code> en el CJS. Por eso el ESM son 143&nbsp;KB frente a los
-        67&nbsp;KB del CJS.
-      </p>
-      <p>
-        Si se publicara, cualquier app que ya use RxJS acabaría con dos copias. Y este código es
-        especialmente sensible: hace <code>instanceof</code> sobre tipos de RxJS y lee internals
-        suyos (<code>_finalizers</code>, <code>currentObservers</code>). Con dos instancias eso
-        falla en silencio.
-      </p>
-      <pre><code>rollupOptions: { external: ['rxjs', /^rxjs\//] }</code></pre>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> el bundle importa <code>rxjs</code> en vez de embeberlo.
-          Muy probablemente esta issue no llegue a abrirse, porque 1D apunta a no publicar bundle.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>&gt; **Depende de:** 1D — esta issue sólo existe si 1D decide seguir publicando un bundle.
+
+El bundle actual **embebe RxJS entero**: cero imports externos en el ESM, cero `require("rxjs")` en el CJS. Por eso el ESM son 143 KB frente a los 67 KB del CJS.
+
+Si se publicara, cualquier app que ya use RxJS acabaría con dos copias. Y este código es especialmente sensible: hace `instanceof` sobre tipos de RxJS y lee internals suyos (`_finalizers`, `currentObservers`). Con dos instancias eso falla en silencio.
+
+```js
+rollupOptions: { external: ['rxjs', /^rxjs\//] }
+```
+
+**Hecho cuando:** el bundle importa `rxjs` en vez de embeberlo. Muy probablemente esta issue no llegue a abrirse, porque 1D apunta a no publicar bundle.</code></pre>
       </div>
     </div>
   </details>
@@ -713,24 +736,31 @@
       </span>
     </summary>
     <div class="body">
-      <p>Cuatro paquetes importan el fixture cruzando la frontera del paquete:</p>
-      <pre><code>import { useBridge } from '@open-cells/core/test/helpers/bridge-fixture.js';</code></pre>
-      <p>
-        Son <code>core-plugin</code>, <code>element-controller</code>,
-        <code>page-controller</code> y <code>page-mixin</code>. Funciona hoy porque
-        <code>core</code> no tiene <code>exports</code> y los subpaths resuelven por directorio. En
-        cuanto se añada el mapa, esas cuatro suites se rompen salvo que se declare
-        <code>"./test/*"</code>.
-      </p>
-      <p>
-        Dos caminos: exponer <code>./test/*</code> en el mapa (pero <code>test/</code> no se publica
-        en el tarball), o sacar el fixture a un paquete propio.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> el camino está elegido y aplicado, y las cuatro suites
-          siguen verdes.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>&gt; **Bloquea:** 2B
+
+Cuatro paquetes importan el fixture cruzando la frontera del paquete:
+
+```js
+import { useBridge } from '@open-cells/core/test/helpers/bridge-fixture.js';
+```
+
+Son `core-plugin`, `element-controller`, `page-controller` y `page-mixin`. Funciona hoy porque `core` no tiene `exports` y los subpaths resuelven por directorio. En cuanto se añada el mapa, esas cuatro suites se rompen salvo que se declare `"./test/*"`.
+
+Dos caminos: exponer `./test/*` en el mapa (pero `test/` no se publica en el tarball), o sacar el fixture a un paquete propio.
+
+**Hecho cuando:** el camino está elegido y aplicado, y las cuatro suites siguen verdes.</code></pre>
       </div>
     </div>
   </details>
@@ -753,21 +783,25 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        <code>core</code> no declara <code>exports</code>, así que cualquier ruta interna del
-        paquete es alcanzable desde fuera. El mapa hace explícito el contrato: como mínimo
-        <code>"."</code> y <code>"./types"</code> &mdash; este último lo usa
-        <code>core-plugin</code>.
-      </p>
-      <p>
-        1B decide a qué apunta <code>"."</code>; 2A decide si hace falta <code>"./test/*"</code>.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> <code>core</code> tiene <code>exports</code>,
-          <code>npm test</code> sigue verde en los cuatro paquetes dependientes, y
-          <code>npm run test:types</code> pasa.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>&gt; **Depende de:** 2A, 1B
+
+`core` no declara `exports`, así que cualquier ruta interna del paquete es alcanzable desde fuera. El mapa hace explícito el contrato: como mínimo `"."` y `"./types"` — este último lo usa `core-plugin`.
+
+1B decide a qué apunta `"."`; 2A decide si hace falta `"./test/*"`.
+
+**Hecho cuando:** `core` tiene `exports`, `npm test` sigue verde en los cuatro paquetes dependientes, y `npm run test:types` pasa.</code></pre>
       </div>
     </div>
   </details>
@@ -790,20 +824,23 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        <code>localize</code> y <code>page-transitions</code> ya declaran <code>exports</code> con
-        condición <code>types</code>. Los otros cuatro no, y sólo tienen <code>main</code> +
-        <code>types</code>.
-      </p>
-      <p>
-        Es repetir el patrón que ya existe en el repositorio, una vez resuelto 2B para
-        <code>core</code>.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> los seis paquetes publicables declaran
-          <code>exports</code> de forma coherente y <code>npm run test:types</code> pasa.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>`localize` y `page-transitions` ya declaran `exports` con condición `types`. Los otros cuatro no, y sólo tienen `main` + `types`: `core-plugin`, `element-controller`, `page-controller` y `page-mixin`.
+
+Es repetir el patrón que ya existe en el repositorio, una vez resuelto 2B para `core`.
+
+**Hecho cuando:** los seis paquetes publicables declaran `exports` de forma coherente y `npm run test:types` pasa.</code></pre>
       </div>
     </div>
   </details>
@@ -830,28 +867,34 @@
       </span>
     </summary>
     <div class="body">
-      <p><code>src/router/routes.ts</code>, línea 39:</p>
-      <pre><code>{
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>`packages/example/recipes-app/src/router/routes.ts`, línea 39:
+
+```ts
+{
   path: '/not-found',
   name: 'not-found',
   notFound: false,          // desactiva el único candidato a 404
   component: 'not-found-page',
-}</code></pre>
-      <p>
-        La página 404 es la ruta marcada <code>notFound: true</code>. Con el flag en
-        <code>false</code> la aplicación no tiene 404: una URL sin match no selecciona nada y deja
-        en pantalla lo que hubiera antes. Es lo que copia todo el que empieza.
-      </p>
-      <p>
-        <strong>Ojo:</strong> hay un test e2e que afirma el comportamiento actual &mdash;
-        <em>&laquo;leaves an unmatched URL alone, because the app declares no 404 route&raquo;</em>,
-        en <code>navigation.spec.ts</code>. Se le da la vuelta en el mismo PR.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> <code>notFound: true</code>, y el test afirma que se
-          renderiza la página 404.
-        </p>
+}
+```
+
+La página 404 es la ruta marcada `notFound: true`. Con el flag en `false` la aplicación no tiene 404: una URL sin match no selecciona nada y deja en pantalla lo que hubiera antes. Es lo que copia todo el que empieza.
+
+**Ojo:** hay un test e2e que afirma el comportamiento actual — *«leaves an unmatched URL alone, because the app declares no 404 route»*, en `navigation.spec.ts`. Se le da la vuelta en el mismo PR.
+
+**Hecho cuando:** `notFound: true`, y el test afirma que se renderiza la página 404.</code></pre>
       </div>
     </div>
   </details>
@@ -876,18 +919,29 @@
       </span>
     </summary>
     <div class="body">
-      <pre><code>@click="${() =&gt; this._navigateToHome}"     // devuelve el método, no lo llama</code></pre>
-      <p>
-        Cinco ocurrencias, en <code>category-page.ts</code>, <code>recipe-page.ts</code> y
-        <code>favorite-recipes-page.ts</code>, para <code>_navigateToHome</code> y
-        <code>_navigateToFavoriteRecipes</code>.
-      </p>
-      <p>
-        Funcionan sólo porque esos elementos llevan además <code>href</code> y navega el navegador.
-        Copiado a un componente sin <code>href</code>, el botón no hace nada y no avisa.
-      </p>
-      <div class="dod">
-        <p><strong>Hecho cuando:</strong> los cinco llaman al handler.</p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>Cinco `@click` de la app de ejemplo devuelven el método en vez de llamarlo:
+
+```js
+@click="${() =&gt; this._navigateToHome}"     // devuelve el método, no lo llama
+```
+
+Están en `category-page.ts`, `recipe-page.ts` y `favorite-recipes-page.ts`, para `_navigateToHome` y `_navigateToFavoriteRecipes`.
+
+Funcionan sólo porque esos elementos llevan además `href` y navega el navegador. Copiado a un componente sin `href`, el botón no hace nada y no avisa.
+
+**Hecho cuando:** los cinco llaman al handler.</code></pre>
       </div>
     </div>
   </details>
@@ -908,17 +962,25 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        Arreglar 3B sin test deja el fallo libre de volver, y no volvería a notarse por la misma
-        razón por la que no se notó: el <code>href</code> lo tapa.
-      </p>
-      <p>
-        El test tiene que <strong>bloquear la navegación por <code>href</code></strong> &mdash;
-        <code>preventDefault</code> sobre el click, o interceptar la navegación&mdash; y comprobar
-        que el handler se ejecutó igualmente.
-      </p>
-      <div class="dod">
-        <p><strong>Hecho cuando:</strong> el test falla si se revierte 3B.</p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>&gt; **Depende de:** 3B
+
+Arreglar 3B sin test deja el fallo libre de volver, y no volvería a notarse por la misma razón por la que no se notó: el `href` lo tapa.
+
+El test tiene que **bloquear la navegación por `href`** — `preventDefault` sobre el click, o interceptar la navegación — y comprobar que el handler se ejecutó igualmente.
+
+**Hecho cuando:** el test falla si se revierte 3B.</code></pre>
       </div>
     </div>
   </details>
@@ -947,16 +1009,23 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        Los gates existen &mdash; <code>test:toolchain</code>, <code>test:types</code>, cobertura,
-        matriz de navegadores &mdash; pero <strong>no bloquean nada</strong>: hoy se puede mergear
-        con CI en rojo. Toda la auditoría se puede saltar sin querer.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> <em>Require status checks to pass</em> activo en
-          <code>main</code> para el job <code>build</code>.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>Los gates existen — `test:toolchain`, `test:types`, cobertura, matriz de navegadores — pero **no bloquean nada**: hoy se puede mergear con CI en rojo. Toda la auditoría se puede saltar sin querer.
+
+Es un ajuste del repositorio, no un fichero.
+
+**Hecho cuando:** *Require status checks to pass* activo en `main` para el job `build`.</code></pre>
       </div>
     </div>
   </details>
@@ -980,31 +1049,29 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        <code>npx prettier --check .</code> falla en <strong>67</strong> ficheros anteriores a la
-        configuración. <code>lint-staged</code> formatea lo que se toca, así que el repositorio
-        converge solo, pero mientras no sea gate puede volver a divergir.
-      </p>
-      <p>
-        <strong>La cifra decae sola</strong>, y por eso no hay que leerla como una regresión cuando
-        no cuadre: eran 71 antes de la sincronización con upstream y son 67 después, sin que nadie
-        formateara nada a propósito — sólo por los ficheros que <code>lint-staged</code> tocó por el
-        camino. Es el mecanismo del propio issue funcionando.
-      </p>
-      <p>
-        <strong>Ojo con uno.</strong> Entre los 67 está ahora
-        <code>packages/labs/pwbrouser/pnpm-lock.yaml</code>, que llegó con upstream. Es un lockfile
-        generado por otro gestor de paquetes y <em>no</em> se debe reformatear. No hay
-        <code>.prettierignore</code> en el repositorio, así que un <code>prettier --write .</code> a
-        secas lo reescribiría: este issue tiene que crear ese fichero antes que nada.
-      </p>
-      <p>Va en su propio commit, sin nada más, para que no entierre ningún cambio real.</p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> existe un <code>.prettierignore</code> que deja fuera lo
-          que no gobierna prettier, <code>npx prettier --check .</code> sale en verde, y el commit
-          no toca nada que no sea formato.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>&gt; **Bloquea:** 4C
+
+`npx prettier --check .` falla en **67** ficheros anteriores a la configuración. `lint-staged` formatea lo que se toca, así que el repositorio converge solo, pero mientras no sea gate puede volver a divergir.
+
+**La cifra decae sola**, y por eso no hay que leerla como una regresión cuando no cuadre: eran 71 antes de la sincronización con upstream y son 67 después, sin que nadie formateara nada a propósito — sólo por los ficheros que `lint-staged` tocó por el camino. Es el mecanismo del propio issue funcionando.
+
+**Ojo con uno.** Entre los 67 está ahora `packages/labs/pwbrouser/pnpm-lock.yaml`, que llegó con upstream. Es un lockfile generado por otro gestor de paquetes y *no* se debe reformatear. No hay `.prettierignore` en el repositorio, así que un `prettier --write .` a secas lo reescribiría: este issue tiene que crear ese fichero antes que nada.
+
+Va en su propio commit, sin nada más, para que no entierre ningún cambio real.
+
+**Hecho cuando:** existe un `.prettierignore` que deja fuera lo que no gobierna prettier, `npx prettier --check .` sale en verde, y el commit no toca nada que no sea formato.</code></pre>
       </div>
     </div>
   </details>
@@ -1027,12 +1094,23 @@
       </span>
     </summary>
     <div class="body">
-      <p>Con 4B hecho, el check pasa a ser una línea en <code>build.yml</code>, junto a lint.</p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> CI ejecuta <code>prettier --check</code> y falla si alguien
-          sube un fichero sin formatear.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>&gt; **Depende de:** 4B
+
+Con 4B hecho, el check pasa a ser una línea en `build.yml`, junto a lint.
+
+**Hecho cuando:** CI ejecuta `prettier --check` y falla si alguien sube un fichero sin formatear.</code></pre>
       </div>
     </div>
   </details>
@@ -1060,20 +1138,25 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        Casi todas transitivas vía eslint y vite. No es &laquo;ejecutar
-        <code>npm audit fix --force</code>&raquo;: eso rompería el pineado exacto de los runners que
-        monta la sección 9 de la auditoría, que existe por una razón.
-      </p>
-      <p>
-        El entregable es la clasificación, no el arreglo: cuáles nos afectan de verdad, cuáles son
-        ruido transitivo, y cuáles tienen arreglo sin tocar el pineado.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> cada crítica y cada alta está clasificada, con el motivo
-          escrito si se deja.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>`npm audit` reporta 35 avisos: 5 críticas, 18 altas, 6 moderadas y 6 bajas. Casi todas transitivas vía eslint y vite.
+
+No es «ejecutar `npm audit fix --force`»: eso rompería el pineado exacto de los runners que monta la sección 9 de la auditoría, que existe por una razón.
+
+El entregable es la clasificación, no el arreglo: cuáles nos afectan de verdad, cuáles son ruido transitivo, y cuáles tienen arreglo sin tocar el pineado.
+
+**Hecho cuando:** cada crítica y cada alta está clasificada, con el motivo escrito si se deja.</code></pre>
       </div>
     </div>
   </details>
@@ -1096,22 +1179,25 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        Las cinco críticas son <code>vitest</code>, <code>@vitest/browser</code>,
-        <code>@vitest/browser-playwright</code>, <code>@vitest/coverage-istanbul</code> y
-        <code>basic-ftp</code>.
-      </p>
-      <p>
-        La familia vitest está pineada a <code>4.0.18</code> exacto a propósito:
-        <code>@vitest/browser-playwright</code> fija su peer en la versión exacta de
-        <code>vitest</code>. Subir una obliga a subirlas todas a la vez, y
-        <code>npm run test:toolchain</code> lo comprueba.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> la familia sube en bloque, <code>test:toolchain</code> pasa
-          y la suite sigue verde en los tres navegadores.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>&gt; **Depende de:** 5A
+
+Las cinco críticas son `vitest`, `@vitest/browser`, `@vitest/browser-playwright`, `@vitest/coverage-istanbul` y `basic-ftp`.
+
+La familia vitest está pineada a `4.0.18` exacto a propósito: `@vitest/browser-playwright` fija su peer en la versión exacta de `vitest`. Subir una obliga a subirlas todas a la vez, y `npm run test:toolchain` lo comprueba.
+
+**Hecho cuando:** la familia sube en bloque, `test:toolchain` pasa y la suite sigue verde en los tres navegadores.</code></pre>
       </div>
     </div>
   </details>
@@ -1137,19 +1223,23 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        <code>npm view</code> da 404: hoy sólo se puede usar desde el checkout. Hay un changeset
-        (<code>tidy-pandas-shake.md</code>, minor) esperando.
-      </p>
-      <p>
-        Ya tiene <code>prepack</code>, así que el tarball se construye solo y el gate
-        <code>test:types</code> verifica que los entry points van dentro.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> publicado, e instalable con
-          <code>npm i @open-cells/mcp-server</code>.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>`npm view` da 404: hoy `@open-cells/mcp-server` sólo se puede usar desde el checkout. Hay un changeset (`tidy-pandas-shake.md`, minor) esperando.
+
+Ya tiene `prepack`, así que el tarball se construye solo y el gate `test:types` verifica que los entry points van dentro.
+
+**Hecho cuando:** publicado, e instalable con `npm i @open-cells/mcp-server`.</code></pre>
       </div>
     </div>
   </details>
@@ -1172,16 +1262,23 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        Hoy <code>.mcp.json</code> apunta a <code>packages/mcp-server/dist/index.js</code>, así que
-        una sesión nueva tiene que ejecutar <code>npm run build -w @open-cells/mcp-server</code>
-        antes de que aparezcan las herramientas. Con el paquete publicado eso deja de hacer falta.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> las herramientas <code>open_cells_*</code> funcionan en una
-          sesión limpia sin build previo, y <code>CLAUDE.md</code> ya no pide ese paso.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>&gt; **Depende de:** 6A
+
+Hoy `.mcp.json` apunta a `packages/mcp-server/dist/index.js`, así que una sesión nueva tiene que ejecutar `npm run build -w @open-cells/mcp-server` antes de que aparezcan las herramientas. Con el paquete publicado eso deja de hacer falta.
+
+**Hecho cuando:** las herramientas `open_cells_*` funcionan en una sesión limpia sin build previo, y `CLAUDE.md` ya no pide ese paso.</code></pre>
       </div>
     </div>
   </details>
@@ -1202,20 +1299,23 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        <code>scaffold/create-app.ts</code> está al <strong>13,04 %</strong>. Lanza el generador
-        real como proceso hijo, así que sus statements se ejecutan fuera del proceso de test y
-        istanbul no los ve.
-      </p>
-      <p>
-        Se puede cubrir la parte que sí vive dentro: construcción de argumentos, validación, manejo
-        de errores y del código de salida. El <code>spawn</code> en sí se stubbea.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> el fichero sube claramente y el umbral del paquete sube en
-          el mismo PR.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>`scaffold/create-app.ts`, en `mcp-server`, está al **13,04 %** de statements: el peor fichero del paquete. Lanza el generador real como proceso hijo, así que sus statements se ejecutan fuera del proceso de test y istanbul no los ve.
+
+Se puede cubrir la parte que sí vive dentro: construcción de argumentos, validación, manejo de errores y del código de salida. El `spawn` en sí se stubbea.
+
+**Hecho cuando:** el fichero sube claramente y el umbral del paquete sube en el mismo PR.</code></pre>
       </div>
     </div>
   </details>
@@ -1244,16 +1344,21 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        Es el fichero más flojo de <code>core</code>, muy por debajo del 90/85 que el paquete
-        declara. Pasa el gate porque lo sostiene la media de los demás &mdash; el umbral es del
-        paquete, no por fichero.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> <code>event-emitter.js</code> llega al 90/85 por sí solo, y
-          el umbral del paquete no se ha tocado a la baja.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>`external/event-emitter.js`, en `core`, está al 80,64 % de statements y 70,90 % de ramas. Es el fichero más flojo del paquete, muy por debajo del 90/85 que `core` declara. Pasa el gate porque lo sostiene la media de los demás — el umbral es del paquete, no por fichero.
+
+**Hecho cuando:** `event-emitter.js` llega al 90/85 por sí solo, y el umbral del paquete no se ha tocado a la baja.</code></pre>
       </div>
     </div>
   </details>
@@ -1278,20 +1383,23 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        <code>src/index.ts</code> está al <strong>0 %</strong>. Arranca el servidor sobre stdio, así
-        que no se ejecuta dentro del test. Hoy cuenta en el denominador y hunde el porcentaje del
-        paquete sin que eso signifique nada.
-      </p>
-      <p>
-        Dos salidas: excluirlo del <code>include</code> de cobertura y decir por qué, o extraer su
-        lógica a algo testeable y dejar en <code>index.ts</code> sólo el arranque.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> el número del paquete refleja lo que de verdad está sin
-          cubrir, con la decisión escrita en la config.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>`src/index.ts` de `mcp-server` está al **0 %**. Arranca el servidor sobre stdio, así que no se ejecuta dentro del test. Hoy cuenta en el denominador y hunde el porcentaje del paquete sin que eso signifique nada.
+
+Dos salidas: excluirlo del `include` de cobertura y decir por qué, o extraer su lógica a algo testeable y dejar en `index.ts` sólo el arranque.
+
+**Hecho cuando:** el número del paquete refleja lo que de verdad está sin cubrir, con la decisión escrita en la config.</code></pre>
       </div>
     </div>
   </details>
@@ -1320,37 +1428,34 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        <code>scripts/check-public-types.mjs</code> llama a <code>npx</code> y a
-        <code>npm.cmd</code> con <code>execFileSync</code> sin <code>shell: true</code>. En Windows
-        Node no puede lanzar un <code>.cmd</code> directamente, así que todas las llamadas mueren
-        con <code>spawnSync npm.cmd EINVAL</code>.
-      </p>
-      <p>
-        La salida además engaña, porque el fallo de spawn se presenta como fallo de la comprobación:
-      </p>
-      <pre><code>- types-contract does not compile:
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>`scripts/check-public-types.mjs` llama a `npx` y a `npm.cmd` con `execFileSync` sin `shell: true`. En Windows, Node no puede lanzar un `.cmd` directamente, así que todas las llamadas mueren con `spawnSync npm.cmd EINVAL`.
+
+La salida además engaña, porque el fallo de spawn se presenta como fallo de la comprobación:
+
+```
+- types-contract does not compile:
       (vacío)
 - @open-cells/core: could not pack (spawnSync npm.cmd EINVAL)
-  ... una línea por paquete</code></pre>
-      <p>
-        Los dos son falsos. Comprobado a mano que lo que verifica sí pasa:
-        <code>npx tsc -p types-contract/tsconfig.json</code> sale con 0 y
-        <code>npm run typchk -w @open-cells/core</code> está limpio. Es decir, uno de los tres gates
-        de <code>CLAUDE.md</code> —y parte de <code>npm test</code>— no se puede correr en local en
-        Windows; en CI, que es Linux, pasa.
-      </p>
-      <p>
-        Ojo al arreglarlo: <code>shell: true</code> cambia cómo se citan los argumentos, y a
-        <code>tsc</code> se le pasa la ruta del tsconfig como argumento. Hoy ninguna ruta del
-        repositorio tiene espacios, pero el arreglo no debería depender de eso.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> <code>npm run test:types</code> pasa en Windows y sigue
-          pasando en Linux, y ningún fallo de spawn puede volver a disfrazarse de fallo de la
-          comprobación.
-        </p>
+  ... una línea por paquete
+```
+
+Los dos son falsos. Comprobado a mano que lo que verifica sí pasa: `npx tsc -p types-contract/tsconfig.json` sale con 0 y `npm run typchk -w @open-cells/core` está limpio. Es decir, uno de los tres gates de `CLAUDE.md` —y parte de `npm test`— no se puede correr en local en Windows; en CI, que es Linux, pasa.
+
+Ojo al arreglarlo: `shell: true` cambia cómo se citan los argumentos, y a `tsc` se le pasa la ruta del tsconfig como argumento. Hoy ninguna ruta del repositorio tiene espacios, pero el arreglo no debería depender de eso.
+
+**Hecho cuando:** `npm run test:types` pasa en Windows y sigue pasando en Linux, y ningún fallo de spawn puede volver a disfrazarse de fallo de la comprobación.</code></pre>
       </div>
     </div>
   </details>
@@ -1375,41 +1480,33 @@
       </span>
     </summary>
     <div class="body">
-      <p>
-        La suite pasa —46 tests, 0 fallos— pero el total de cobertura cae al
-        <strong>50,19 %</strong> contra el 95 % del ratchet, así que el script sale con 1. El log se
-        llena de esto:
-      </p>
-      <pre><code>Error while generating code coverage for
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>La suite pasa —46 tests, 0 fallos— pero el total de cobertura cae al **50,19 %** contra el 95 % del ratchet, así que el script sale con 1. El log se llena de esto:
+
+```
+Error while generating code coverage for
   http://localhost:8000/__wds-outside-root__/2/node_modules/&lt;pkg&gt;/index.js
-ENOENT: &lt;worktree&gt;\packages\localize\__wds-outside-root__\2\node_modules\&lt;pkg&gt;\index.js</code></pre>
-      <p>
-        <code>web-test-runner</code> sirve lo que queda fuera de su <code>rootDir</code> bajo el
-        prefijo <code>__wds-outside-root__/&lt;N&gt;/</code>, y el paso de cobertura pega esa ruta
-        detrás del directorio del paquete en vez de deshacer el prefijo. Los ficheros están en la
-        raíz del worktree; la ruta simplemente no resuelve. El efecto colateral es que
-        <code>packages/localize/node_modules/sinon/pkg/sinon-esm.js</code> acaba contando como
-        fuente sin cubrir —se ve en las entradas <code>SF:</code> de
-        <code>coverage/lcov.info</code>— y ese único fichero grande arrastra el total.
-      </p>
-      <p>
-        Es del entorno, no una regresión: <code>main</code> sin tocar, en un worktree bajo
-        <code>.claude/worktrees/</code>, reproduce el 50,19 %; el mismo commit en un checkout normal
-        da 98,72 % y pasa. Ocurre cuando el worktree cuelga de otro checkout que ya tiene su propio
-        <code>node_modules</code> por encima.
-      </p>
-      <p>
-        <code>packages/localize/web-test-runner.config.js</code> no fija <code>rootDir</code>, así
-        que toma por defecto el directorio del paquete. La vía a explorar es apuntarlo a la raíz del
-        monorepo, para que las dependencias izadas queden dentro de lo servido y el escape
-        <code>__wds-outside-root__</code> no llegue a hacer falta.
-      </p>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> la suite da el mismo porcentaje dentro y fuera de un
-          worktree anidado, <code>node_modules</code> sigue fuera del informe, y el umbral del 95 %
-          <strong>no</strong> se ha tocado — es un ratchet.
-        </p>
+ENOENT: &lt;worktree&gt;\packages\localize\__wds-outside-root__\2\node_modules\&lt;pkg&gt;\index.js
+```
+
+`web-test-runner` sirve lo que queda fuera de su `rootDir` bajo el prefijo `__wds-outside-root__/&lt;N&gt;/`, y el paso de cobertura pega esa ruta detrás del directorio del paquete en vez de deshacer el prefijo. Los ficheros están en la raíz del worktree; la ruta simplemente no resuelve. El efecto colateral es que `packages/localize/node_modules/sinon/pkg/sinon-esm.js` acaba contando como fuente sin cubrir —se ve en las entradas `SF:` de `coverage/lcov.info`— y ese único fichero grande arrastra el total.
+
+Es del entorno, no una regresión: `main` sin tocar, en un worktree bajo `.claude/worktrees/`, reproduce el 50,19 %; el mismo commit en un checkout normal da 98,72 % y pasa. Ocurre cuando el worktree cuelga de otro checkout que ya tiene su propio `node_modules` por encima.
+
+`packages/localize/web-test-runner.config.js` no fija `rootDir`, así que toma por defecto el directorio del paquete. La vía a explorar es apuntarlo a la raíz del monorepo, para que las dependencias izadas queden dentro de lo servido y el escape `__wds-outside-root__` no llegue a hacer falta.
+
+**Hecho cuando:** la suite da el mismo porcentaje dentro y fuera de un worktree anidado, `node_modules` sigue fuera del informe, y el umbral del 95 % **no** se ha tocado — es un ratchet.</code></pre>
       </div>
     </div>
   </details>
@@ -1434,73 +1531,39 @@ ENOENT: &lt;worktree&gt;\packages\localize\__wds-outside-root__\2\node_modules\&
       </span>
     </summary>
     <div class="body">
-      <p>
-        La sincronización trajo <code>packages/labs/pwbrouser</code> y, con él,
-        <code>packages/labs/*</code> en la lista de workspaces. Es un paquete experimental de
-        upstream que se gobierna solo: <code>pnpm</code> como <code>packageManager</code>, biome
-        como linter, TypeScript 6 beta, su propio <code>pnpm-lock.yaml</code> y sus propias
-        versiones de vitest y de playwright.
-      </p>
-      <p>Entró en nuestro perímetro de herramientas <strong>de forma desigual</strong>:</p>
-      <div class="tablewrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Herramienta</th>
-              <th>¿Alcanza a labs?</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>test:toolchain</code></td>
-              <td>No &mdash; excluido al resolver el merge</td>
-            </tr>
-            <tr>
-              <td><code>coverage:report</code></td>
-              <td>No &mdash; sólo camina <code>packages</code> y <code>packages/example</code></td>
-            </tr>
-            <tr>
-              <td><code>npm test</code></td>
-              <td><strong>Sí</strong> &mdash; corre pwbrouser: 145 tests con vitest 4.1.10</td>
-            </tr>
-            <tr>
-              <td><code>eslint .</code></td>
-              <td><strong>Sí</strong> &mdash; 16 ficheros, 0 errores hoy</td>
-            </tr>
-            <tr>
-              <td><code>prettier --check .</code></td>
-              <td><strong>Sí</strong> &mdash; marca su <code>pnpm-lock.yaml</code> (ver 4B)</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p>
-        Lo incómodo no es que falle —hoy está todo en verde— sino que
-        <strong>nadie decidió que estuviera ahí</strong>. La suite de un paquete experimental ajeno
-        corre dentro de nuestro <code>npm test</code> con una versión de vitest distinta de la que
-        el gate pinea a propósito, y dos linters gobiernan el mismo directorio.
-      </p>
-      <p>Tres salidas razonables:</p>
-      <ul>
-        <li>
-          Sacar <code>packages/labs/*</code> de la lista de workspaces y dejar que se gestione con
-          su propio <code>pnpm</code>, que es como está escrito el paquete.
-        </li>
-        <li>
-          Dejarlo dentro y alinearlo con nuestro toolchain, lo que significa pelearse con TypeScript
-          6 beta y con biome.
-        </li>
-        <li>
-          Dejarlo dentro y excluirlo de todo de forma explícita y coherente, en vez de herramienta
-          por herramienta como está ahora.
-        </li>
-      </ul>
-      <div class="dod">
-        <p>
-          <strong>Hecho cuando:</strong> hay una decisión escrita sobre si labs es nuestro o de
-          upstream, y las cinco herramientas de la tabla coinciden con ella — que las tres que hoy
-          lo alcanzan y las dos que no, lo hagan por la misma razón y no por accidente.
-        </p>
+      <div class="md">
+        <div class="md-head">
+          <span>Cuerpo de la issue, en Markdown</span>
+          <span class="acts">
+            <button class="btn" type="button" data-copy="title" aria-live="polite">
+              Copiar título
+            </button>
+            <button class="btn" type="button" data-copy="body" aria-live="polite">
+              Copiar cuerpo
+            </button>
+          </span>
+        </div>
+        <pre><code>La sincronización con upstream trajo `packages/labs/pwbrouser` y, con él, `packages/labs/*` en la lista de workspaces. Es un paquete experimental de upstream que se gobierna solo: `pnpm` como `packageManager`, biome como linter, TypeScript 6 beta, su propio `pnpm-lock.yaml` y sus propias versiones de vitest y de playwright.
+
+Entró en nuestro perímetro de herramientas **de forma desigual**:
+
+| Herramienta | ¿Alcanza a labs? |
+| --- | --- |
+| `test:toolchain` | No — excluido al resolver el merge |
+| `coverage:report` | No — sólo camina `packages` y `packages/example` |
+| `npm test` | **Sí** — corre pwbrouser: 145 tests con vitest 4.1.10 |
+| `eslint .` | **Sí** — 16 ficheros, 0 errores hoy |
+| `prettier --check .` | **Sí** — marca su `pnpm-lock.yaml` (ver 4B) |
+
+Lo incómodo no es que falle —hoy está todo en verde— sino que **nadie decidió que estuviera ahí**. La suite de un paquete experimental ajeno corre dentro de nuestro `npm test` con una versión de vitest distinta de la que el gate pinea a propósito, y dos linters gobiernan el mismo directorio.
+
+Tres salidas razonables:
+
+- Sacar `packages/labs/*` de la lista de workspaces y dejar que se gestione con su propio `pnpm`, que es como está escrito el paquete.
+- Dejarlo dentro y alinearlo con nuestro toolchain, lo que significa pelearse con TypeScript 6 beta y con biome.
+- Dejarlo dentro y excluirlo de todo de forma explícita y coherente, en vez de herramienta por herramienta como está ahora.
+
+**Hecho cuando:** hay una decisión escrita sobre si labs es nuestro o de upstream, y las cinco herramientas de la tabla coinciden con ella — que las tres que hoy lo alcanzan y las dos que no, lo hagan por la misma razón y no por accidente.</code></pre>
       </div>
     </div>
   </details>
@@ -1519,3 +1582,93 @@ ENOENT: &lt;worktree&gt;\packages\localize\__wds-outside-root__\2\node_modules\&
     </p>
   </footer>
 </div>
+
+<script>
+  (function () {
+    const clean = s => s.replace(/\s+/g, ' ').trim();
+
+    /* El título de GitHub es un campo aparte, así que se copia aparte. Lleva el
+       identificador delante para que «depende de 1B» siga resolviendo. */
+    function titleOf(details) {
+      const node = details.querySelector('.row-title').cloneNode(true);
+      const idEl = node.querySelector('.id');
+      const id = idEl ? clean(idEl.textContent) : '';
+      if (idEl) idEl.remove();
+      const rest = clean(node.textContent);
+      return id ? id + ' · ' + rest : rest;
+    }
+
+    const bodyOf = details => details.querySelector('.md pre').textContent;
+
+    async function copy(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (err) {
+        /* Sin permiso de portapapeles o sin API: textarea temporal. */
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-1000px';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try {
+          ok = document.execCommand('copy');
+        } catch (_) {
+          ok = false;
+        }
+        ta.remove();
+        return ok;
+      }
+    }
+
+    function flash(btn, ok) {
+      btn.dataset.label = btn.dataset.label || btn.textContent.trim();
+      btn.textContent = ok ? 'Copiado' : 'No se pudo';
+      btn.classList.toggle('ok', ok);
+      btn.classList.toggle('fail', !ok);
+      clearTimeout(btn._restore);
+      btn._restore = setTimeout(function () {
+        btn.textContent = btn.dataset.label;
+        btn.classList.remove('ok', 'fail');
+      }, 1600);
+    }
+
+    document.querySelectorAll('details.issue').forEach(function (details) {
+      details.querySelectorAll('[data-copy]').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          const text = btn.dataset.copy === 'title' ? titleOf(details) : bodyOf(details);
+          flash(btn, await copy(text));
+        });
+      });
+    });
+
+    /* Las 24 como un solo documento: grupo → ##, issue → ### con sus etiquetas. */
+    document.getElementById('copy-all').addEventListener('click', async function () {
+      const out = [
+        '# Backlog propuesto · aborbalan/open-cells',
+        '',
+        '> Propuesta, ninguna está abierta todavía. Los identificadores son de este documento, no números de GitHub.',
+        '> Nada de esto va a BBVA/open-cells: estas issues son para nuestro repositorio.',
+        '',
+      ];
+      document.querySelectorAll('.wrap > .group, .wrap > details.issue').forEach(function (el) {
+        if (el.classList.contains('group')) {
+          out.push('## ' + clean(el.firstElementChild.textContent), '');
+          return;
+        }
+        out.push('### ' + titleOf(el), '');
+        const labels = Array.prototype.map
+          .call(el.querySelectorAll('.label'), l => '`' + clean(l.textContent) + '`')
+          .join(' ');
+        const meta = el.querySelector('.row-meta');
+        const line = [labels, meta ? clean(meta.textContent) : ''].filter(Boolean).join(' — ');
+        if (line) out.push(line, '');
+        out.push(bodyOf(el).trim(), '');
+      });
+      flash(this, await copy(out.join('\n')));
+    });
+  })();
+</script>
