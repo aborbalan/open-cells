@@ -112,6 +112,17 @@ Cerrado en §10. De la lista de mejoras que arrastraba este documento:
 
 ## Pendiente
 
+El backlog desglosado en unidades pequeñas está en [`backlog.html`](./backlog.html): 21 issues
+en 7 grupos, cada una con su criterio de cierre y sus dependencias. Ninguna está abierta todavía.
+
+Se publica como artefacto en
+<https://claude.ai/code/artifact/5cd79bc6-1e6e-45ca-a7f4-63b399cecf78>. **Para actualizarlo hay
+que pasar esa URL al republicar**; republicar sin ella crea un artefacto nuevo en vez de
+actualizar ese. El fuente vive en el repositorio precisamente para que una sesión futura pueda
+editarlo sin reconstruirlo.
+
+Lo de abajo es el detalle de lo que arrastramos de antes.
+
 ### `core` sin mapa `exports` (#6)
 
 Sigue resolviendo subpaths por directorio. Añadir `"exports"` es correcto pero **rompe cuatro
