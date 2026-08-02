@@ -190,7 +190,7 @@ no son dependencias que este repositorio eligiera y merecen su propio cambio.
 
 ### Formato como gate de CI
 
-`prettier --check` falla en 62 ficheros anteriores a la configuración. `lint-staged` formatea
+`prettier --check` falla en 67 ficheros anteriores a la configuración. `lint-staged` formatea
 cada fichero que se toca, así que el repositorio converge solo; convertirlo en gate es una
 decisión aparte.
 

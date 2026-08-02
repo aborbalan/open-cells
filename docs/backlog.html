@@ -951,22 +951,36 @@
         <span class="row-title"><span class="id">4B</span>Commit aislado de formateo</span>
         <span class="labels"
           ><span class="label l-chore">chore</span
-          ><span class="label l-size">71 ficheros</span></span
+          ><span class="label l-size">67 ficheros</span></span
         >
         <div class="row-meta">tooling &middot; bloquea 4C</div>
       </span>
     </summary>
     <div class="body">
       <p>
-        <code>npx prettier --check .</code> falla en <strong>71</strong> ficheros anteriores a la
+        <code>npx prettier --check .</code> falla en <strong>67</strong> ficheros anteriores a la
         configuración. <code>lint-staged</code> formatea lo que se toca, así que el repositorio
         converge solo, pero mientras no sea gate puede volver a divergir.
+      </p>
+      <p>
+        <strong>La cifra decae sola</strong>, y por eso no hay que leerla como una regresión cuando
+        no cuadre: eran 71 antes de la sincronización con upstream y son 67 después, sin que nadie
+        formateara nada a propósito — sólo por los ficheros que <code>lint-staged</code> tocó por el
+        camino. Es el mecanismo del propio issue funcionando.
+      </p>
+      <p>
+        <strong>Ojo con uno.</strong> Entre los 67 está ahora
+        <code>packages/labs/pwbrouser/pnpm-lock.yaml</code>, que llegó con upstream. Es un lockfile
+        generado por otro gestor de paquetes y <em>no</em> se debe reformatear. No hay
+        <code>.prettierignore</code> en el repositorio, así que un <code>prettier --write .</code> a
+        secas lo reescribiría: este issue tiene que crear ese fichero antes que nada.
       </p>
       <p>Va en su propio commit, sin nada más, para que no entierre ningún cambio real.</p>
       <div class="dod">
         <p>
-          <strong>Hecho cuando:</strong> <code>npx prettier --check .</code> sale en verde, y el
-          commit no toca nada que no sea formato.
+          <strong>Hecho cuando:</strong> existe un <code>.prettierignore</code> que deja fuera lo
+          que no gobierna prettier, <code>npx prettier --check .</code> sale en verde, y el commit
+          no toca nada que no sea formato.
         </p>
       </div>
     </div>
@@ -1379,11 +1393,11 @@ ENOENT: &lt;worktree&gt;\packages\localize\__wds-outside-root__\2\node_modules\&
 
   <footer>
     <p>
-      <strong>Cifras verificadas en esta sesión</strong>, no de memoria: 71 ficheros sin formatear,
-      35 avisos de <code>npm audit</code> (5/18/6/6), <code>event-emitter.js</code> 80,64/70,90,
-      <code>mcp-server</code> 82,03/68,89 con <code>create-app.ts</code> al 13,04&nbsp;% e
-      <code>index.ts</code> al 0&nbsp;%, cinco <code>@click</code> rotos, cuatro paquetes importando
-      el fixture del bridge.
+      <strong>Cifras reverificadas contra la rama sincronizada</strong> (2026-08-02), no de memoria:
+      67 ficheros sin formatear, 35 avisos de <code>npm audit</code> (5/18/6/6),
+      <code>event-emitter.js</code> 80,64/70,90, <code>mcp-server</code> 82,03/68,89 con
+      <code>create-app.ts</code> al 13,04&nbsp;% e <code>index.ts</code> al 0&nbsp;%, cinco
+      <code>@click</code> rotos, cuatro paquetes importando el fixture del bridge.
     </p>
     <p>
       <strong>No es exhaustivo.</strong> Es lo que salió por el camino de la auditoría y de la

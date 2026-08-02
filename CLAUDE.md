@@ -94,9 +94,12 @@ request that adds the coverage, never lower them to make a run pass.
 
 ## Known red, do not chase
 
-- `npx prettier --check .` fails on 62 files that predate the configuration. `lint-staged`
+- `npx prettier --check .` fails on 67 files that predate the configuration. `lint-staged`
   formats each file as it is touched, so the repository converges instead; it is not a CI gate.
-- `npm audit` reports 34 advisories, almost all transitive through eslint and vite.
+  The count decays on its own — do not read a smaller number as a regression. One of the 67 is
+  `packages/labs/pwbrouser/pnpm-lock.yaml`, which came from upstream and must **not** be
+  reformatted; there is no `.prettierignore` yet.
+- `npm audit` reports 35 advisories, almost all transitive through eslint and vite.
 
 Everything else is green. The three entries that used to live here — the `recipes-app` build,
 `npm run typchk -w @open-cells/core` and `npm run lint` — were fixed by the testing audit
