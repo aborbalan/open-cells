@@ -1,17 +1,29 @@
 # Defectos de upstream: registro interno
 
-> ## ⛔ Nada de esto se sube a `BBVA/open-cells`
+> ## A `BBVA/open-cells`: issues sí, código no
 >
-> Ni issues, ni pull requests, ni comentarios. **No se les envía nada, en ningún formato.** Es
-> una norma del upstream y no admite excepciones.
+> Cambiado el 2026-08-03. Antes ponía que no se les enviaba nada en ningún formato, apoyado en
+> que no aceptaban nada de fuera. **Era falso, y lo desmiente nuestro propio historial:**
+>
+> | Issue                                                     | Abierta    | Desenlace                                             |
+> | --------------------------------------------------------- | ---------- | ----------------------------------------------------- |
+> | [#50](https://github.com/BBVA/open-cells/issues/50) tipos | 2026-06-29 | Cerrada COMPLETED el 30-jul: «@open-cells/core 1.2.0» |
+> | [#51](https://github.com/BBVA/open-cells/issues/51) types | 2026-07-17 | Cerrada COMPLETED el 30-jul: «core-plugin 1.2.3»      |
+>
+> Las dos salieron de aquí, `julcasans` las arregló y las publicó, y esas son exactamente las
+> versiones que trajo la sincronización del 2 de agosto. Un mes y dos semanas.
+>
+> Lo que **no** se les manda es código: ni pull request, ni parche, ni diff para pegar. Y un
+> reporte no es una propuesta — lo que funcionó fueron defectos pequeños, reproducibles y con
+> evidencia, no pedirles que adopten nuestra arquitectura.
 
 Qué está roto en `BBVA/open-cells`, cómo nos afecta y qué hemos hecho al respecto en nuestro
 fork. El detalle técnico de cada uno está en [`upstream-issues.md`](./upstream-issues.md); este
 documento es el índice y el seguimiento.
 
-Para qué sirve, entonces, si no se envía: para saber qué heredamos, para no volver a
-diagnosticar lo mismo dos veces, y sobre todo para saber **qué ficheros van a dar conflicto**
-cuando sincronicemos con upstream.
+Para qué sirve: para saber qué heredamos, para no volver a diagnosticar lo mismo dos veces, para
+saber **qué ficheros van a dar conflicto** cuando sincronicemos — y ahora también como cola de lo
+que se les puede reportar.
 
 ## Cómo se redactan
 

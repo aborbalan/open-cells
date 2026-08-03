@@ -1,7 +1,8 @@
 # Defecto 1 — `Channel.unsubscribe()` deja el canal muerto
 
-> ⛔ **Documento interno.** No se envía nada a `BBVA/open-cells` — ni issues, ni PRs, ni
-> comentarios. Esta ficha existe para nosotros.
+> **Issues sí, código no** (desde el 2026-08-03). Esta ficha se puede reportar a
+> `BBVA/open-cells` como issue; lo que no se les manda es código — ni PR, ni parche, ni diff para
+> pegar. Antes este aviso decía que no se les enviaba nada en ningún formato.
 
 **Severidad:** crítica · **Área:** `@open-cells/core` · **En nuestro fork:** arreglado
 

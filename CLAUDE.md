@@ -107,10 +107,22 @@ Everything else is green. The three entries that used to live here — the `reci
 
 ## Repository conventions
 
-- **Nothing at all goes to `BBVA/open-cells`.** Not a pull request, not an issue, not a comment,
-  not a discussion. The upstream does not take anything from outside, and "it is only an issue"
-  is not an exception — it is the mistake this line exists to prevent. Everything, including
-  reports of upstream's own bugs, stays in `aborbalan/open-cells`.
-- PRs go to `aborbalan/open-cells`.
+- **Issues may go to `BBVA/open-cells`. Code never does.** Report a defect of theirs and follow
+  up on it; do not send a pull request, a patch, or a diff to paste. The line used to say that
+  nothing at all went upstream, on the grounds that they take nothing from outside. That turned
+  out to be false: issues [#50][i50] and [#51][i51] were opened from here, and a maintainer
+  fixed and shipped both — `@open-cells/core@1.2.0` and `@open-cells/core-plugin@1.2.3`, the
+  very versions the August sync pulled back in. What holds is the second half: our code stays
+  ours, and the divergence is not something to negotiate with them.
+- **A report is not a proposal.** What worked upstream was small, reproducible defects with
+  evidence. Suggesting they adopt our architecture — the MCP server, the gates, the audit — is a
+  different conversation and does not belong in a bug report.
+- PRs go to `aborbalan/open-cells`. `gh pr create` in a fork targets the parent by default, so
+  it always needs `--repo aborbalan/open-cells`. The push URL of `upstream` is `DISABLED` on
+  purpose; leave it that way, it is what keeps code from going the wrong way by accident.
+
+[i50]: https://github.com/BBVA/open-cells/issues/50
+[i51]: https://github.com/BBVA/open-cells/issues/51
+
 - `docs/session-notes.md` is a living document with the state of the work in progress; keep it
   current when you finish something substantial.
