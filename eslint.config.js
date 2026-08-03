@@ -29,6 +29,10 @@ export default [
       'packages/create-app/src/*/static/**',
       'packages/create-app/src/*/templates/**',
       'packages/example/*/dist/**',
+      // Upstream's experiment, governed by upstream's toolchain: pnpm, biome, TypeScript 6
+      // beta. It is out of `workspaces` for the same reason it is out of here — two linters
+      // over one directory is how our formatter ended up rewriting 15 of its files.
+      'packages/labs/**',
     ],
   },
 
