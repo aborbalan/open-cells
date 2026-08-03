@@ -26,6 +26,14 @@ export default {
   coverage: true,
   coverageConfig: {
     reportDir: 'coverage',
+    // No `exclude` here on purpose, and it is worth saying why so nobody spends the
+    // afternoon again: on Windows it cannot work. `@web/test-runner-coverage-v8`
+    // builds the path with `path.join` — backslashes — and matches it with picomatch,
+    // which reads a backslash as an escape. No pattern matches, including the
+    // `**/node_modules/**/*` the runner ships by default. Verified against picomatch
+    // directly. So a dependency must be kept out of `rootDir`, not filtered out of the
+    // report: any `node_modules` inside this package gets instrumented as if it were
+    // ours. `sinon` is 10.647 instrumented lines against roughly 1.000 of our own.
     // Ratchet: raise it with every PR that adds coverage, never lower it.
     threshold: {
       statements: 95,
