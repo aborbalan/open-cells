@@ -15,45 +15,21 @@
  * limitations under the License.
  */
 
+/**
+ * The stdio entry point, and nothing else.
+ *
+ * Everything here needs a live transport, so none of it can execute inside a test. That is why the
+ * command line moved to `cli.ts`: what is left is the wiring, and its 0 % is honest rather than a
+ * place for logic to hide. Keep it that way — anything worth asserting goes next door.
+ */
+
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { USAGE, parseArgs } from './cli.js';
 import { SERVER_NAME, SERVER_VERSION } from './constants.js';
 import { setDefaultProjectRoot } from './project.js';
 import { createServer } from './server.js';
 
 export { createServer } from './server.js';
-
-const USAGE = `${SERVER_NAME} ${SERVER_VERSION}
-
-Model Context Protocol server for Open Cells applications (stdio transport).
-
-Usage:
-  open-cells-mcp [--project-root <path>]
-
-Options:
-  --project-root <path>  Application analysed when a tool call omits "project_root".
-                         Can also be set with OPEN_CELLS_PROJECT_ROOT.
-  -h, --help             Show this message.
-`;
-
-/** Reads the supported flags. Unknown flags are ignored so clients can pass extras. */
-function parseArgs(argv: string[]): { projectRoot?: string; help: boolean } {
-  let projectRoot: string | undefined;
-  let help = false;
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const argument = argv[index];
-    if (argument === '--help' || argument === '-h') {
-      help = true;
-    } else if (argument === '--project-root') {
-      projectRoot = argv[index + 1];
-      index += 1;
-    } else if (argument?.startsWith('--project-root=')) {
-      projectRoot = argument.slice('--project-root='.length);
-    }
-  }
-
-  return { ...(projectRoot ? { projectRoot } : {}), help };
-}
 
 async function main(): Promise<void> {
   const { projectRoot, help } = parseArgs(process.argv.slice(2));
