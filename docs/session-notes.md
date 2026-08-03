@@ -136,7 +136,7 @@ Cerrado en §10. De la lista de mejoras que arrastraba este documento:
 
 ## Pendiente
 
-El backlog desglosado en unidades pequeñas está en [`backlog.html`](./backlog.html): 23 issues
+El backlog desglosado en unidades pequeñas está en [`backlog.html`](./backlog.html): 24 issues
 en 8 grupos, cada una con su criterio de cierre y sus dependencias. Ninguna está abierta todavía.
 
 Se publica como artefacto en
@@ -144,6 +144,62 @@ Se publica como artefacto en
 que pasar esa URL al republicar**; republicar sin ella crea un artefacto nuevo en vez de
 actualizar ese. El fuente vive en el repositorio precisamente para que una sesión futura pueda
 editarlo sin reconstruirlo.
+
+### Qué ficheros edita el arreglo de cada ficha — 2026-08-03
+
+Cada ficha del backlog lleva marcada la procedencia, verificada fichero a fichero contra
+`upstream/main` (`b01c489`), no por parecido de nombres. **El eje es qué ficheros hay que editar,
+no de quién es el defecto**: esto es un fork, así que todo lo heredado está en los dos árboles a
+la vez. «Heredado» no significa «suyo y no nuestro» — el primer corte usaba esa palabra y se leyó
+justo al revés.
+
+| Procedencia                                         | Fichas | Cuáles                                                    |
+| --------------------------------------------------- | ------ | --------------------------------------------------------- |
+| **heredado** — el arreglo sólo edita ficheros suyos | 8      | 1A · 1B · 1C · 1D · 1E · 2B · 2C · 3B                     |
+| **mixta** — edita de los dos lados                  | 4      | 3A · 4B · 5A · 5B                                         |
+| **propio** — sólo ficheros que sólo existen aquí    | 12     | 2A · 3C · 4A · 4C · 6A · 6B · 6C · 7A · 7B · 8A · 8B · 8C |
+
+Los dos casos que fijan el criterio: **3A es mixta**, porque hay que tocar su `routes.ts` y
+nuestro `navigation.spec.ts` en el mismo PR; y **7A es propia** aunque `external/event-emitter.js`
+sea byte a byte idéntico al suyo, porque upstream no tiene ningún test para ese fichero y lo que
+se amplía es `packages/core/test/external/event-emitter.test.js`, que es nuestro.
+
+Lo que sostiene el reparto: `scripts/check-public-types.mjs` no existe en upstream, y su
+`package.json` no declara `test:types` ni `test:toolchain` — su `test` es un `wireit` pelado. El
+`web-test-runner.config.js` de `localize` tiene allí `coverage: true` **sin** `threshold`, así que
+el ratchet del 95 % que revienta en worktree es nuestro. Lo heredado, en cambio, sigue aquí tal
+cual: nuestro `routes.ts` conserva el `notFound: false` en la línea 39, los cinco `@click` siguen
+devolviendo el método, nuestro `core` lleva el `prepublish` en la línea 12 y no declara `exports`
+—ni él ni `core-plugin`, `element-controller`, `page-controller` y `page-mixin`—, y el
+`.prettierrc.json` coincide byte a byte, de modo que los 67 ficheros sin formatear son de los dos.
+
+**Las ocho heredadas viven en los grupos 1, 2 y 3**, que es además el orden del documento y
+respeta la única dependencia que cruza grupos (1B → 2B). Los grupos 6 y 8 son íntegramente
+propios: ahí no hay nada que enseñar fuera.
+
+**Hay que reverificarlo en cada sincronización con upstream.** Un fichero que hoy sólo existe aquí
+puede aparecer allí mañana, y el reparto dejaría de ser cierto sin que nada avise.
+
+### `packages/labs` es de upstream, no nuestro — decisión de 8C, 2026-08-03
+
+Sale de `workspaces`, de los `ignores` de eslint y del nuevo `.prettierignore`. Se gestiona con su
+propio `pnpm`, que es como está escrito: `packageManager: pnpm@10.33.4`, biome, TypeScript 6 beta y
+su `pnpm-lock.yaml`.
+
+Lo que lo decidió no fue una preferencia, fue una factura ya pagada: **nuestro prettier reformateó
+15 de sus ficheros `.ts` al llegar en la sincronización del 2 de agosto**, sólo cambiando el estilo
+de comillas. Comprobado pasando la versión de upstream por nuestro prettier: los 15 salen byte a
+byte idénticos a lo que quedó mergeado. Cada uno de esos ficheros conflictúa ahora en cada cambio
+que ellos hagan, a cambio de nada. Y `npm test` corría su suite con `vitest ^4.1.9` mientras
+`test:toolchain` pinea la familia a `4.0.18` exacto a propósito.
+
+Las cinco herramientas de la tabla de la ficha coinciden ya con la decisión: `test:toolchain` y
+`coverage:report` no lo alcanzaban y siguen sin hacerlo; `npm test`, `eslint .` y
+`prettier --check .` han dejado de hacerlo. **Sacarlo de `workspaces` no bastaba**: eslint y
+prettier recorren el disco, no la lista de workspaces.
+
+Efecto colateral que conviene no malinterpretar: `prettier --check .` pasa de **67 ficheros sin
+formatear a 47**. No es que se haya formateado nada — son los 20 de labs que dejan de contarse.
 
 Lo de abajo es el detalle de lo que arrastramos de antes.
 
@@ -185,7 +241,7 @@ del 95 % no se toca**: es un ratchet.
 
 ### Avisos de `npm audit`
 
-34 advisories, casi todos transitivos vía eslint y vite. Se dejaron fuera de §9 a propósito:
+35 advisories, casi todos transitivos vía eslint y vite. Se dejaron fuera de §9 a propósito:
 no son dependencias que este repositorio eligiera y merecen su propio cambio.
 
 ### Formato como gate de CI
