@@ -33,15 +33,20 @@ ficha en algo accionable para nosotros. Cada defecto redactado así vive en su p
 bajo [`upstream/`](./upstream/); `upstream-issues.md` conserva el texto largo de los que aún no
 se han pasado a ese formato.
 
-| Redactada en formato final                           | Fichero                                                                                                  |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| 1 · `Channel.unsubscribe()` deja el canal muerto     | [`upstream/01-channel-unsubscribe.md`](./upstream/01-channel-unsubscribe.md)                             |
-| 11 · La app de ejemplo no tiene ruta 404             | [`upstream/11-example-app-no-404.md`](./upstream/11-example-app-no-404.md)                               |
-| 12 · Cinco botones devuelven su handler sin llamarlo | [`upstream/12-header-buttons-never-call-handler.md`](./upstream/12-header-buttons-never-call-handler.md) |
+| Redactada en formato final                                   | Fichero                                                                                                  |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| 1 · `Channel.unsubscribe()` deja el canal muerto             | [`upstream/01-channel-unsubscribe.md`](./upstream/01-channel-unsubscribe.md)                             |
+| 11 · La app de ejemplo no tiene ruta 404                     | [`upstream/11-example-app-no-404.md`](./upstream/11-example-app-no-404.md)                               |
+| 12 · Cinco botones devuelven su handler sin llamarlo         | [`upstream/12-header-buttons-never-call-handler.md`](./upstream/12-header-buttons-never-call-handler.md) |
+| 15 · `lib.entry` de `core` apunta a un fichero que no existe | [`upstream/15-core-lib-entry-missing-file.md`](./upstream/15-core-lib-entry-missing-file.md)             |
 
 Las 11 y 12 son las primeras redactadas con la norma nueva, así que son las primeras que se pueden
 reportar tal cual. Van juntas a propósito: las dos son de la app de ejemplo, las dos las hereda
 todo el que la copia, y las dos siguen sin arreglar aquí por la decisión de §6.
+
+La **15 no viene de la auditoría** sino del backlog de agosto (ficha 1A), y por eso su número se
+sale de la serie de los 14. La numeración de este registro es un identificador, no un orden: lo
+que llegue después de los 14 sigue contando desde 15 aunque no comparta origen.
 
 Las que siguen en `upstream-issues.md` y hay que trocear al pasarlas, porque hoy agrupan varios
 defectos en un solo issue: la 5 (cuatro defectos de tipos), la 7 (dos), la 8 (dos) y la 9
