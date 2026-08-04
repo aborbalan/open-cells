@@ -34,9 +34,22 @@ build: {
 
 En `packages/core/src/` sólo hay `index.js`. No hay ningún `index.ts` ni ningún paso que lo genere.
 
-El build no se rompe porque `rollupOptions.input` tiene preferencia sobre `lib.entry`, así que
-Rollup entra por el `.js` correcto y produce sus cuatro bundles. La línea de `lib.entry` no llega a
-usarse nunca.
+El build no se rompe, y el motivo está en el propio Vite —`vite/dist/node/chunks/config.js`, en la
+7.3.1—:
+
+```js
+const input = libOptions
+  ? options.rollupOptions.input || (resolve(libOptions.entry) …)
+  : …
+```
+
+En modo librería `lib.entry` es **el fallback**: si `rollupOptions.input` está puesto, gana él y
+`entry` no se mira nunca.
+
+**Ojo con la conclusión fácil: el bloque `lib` no sobra, sólo sobra su `entry`.** El resto sí
+gobierna la salida — `formats` produce los cuatro bundles y `fileName` les pone el nombre. Se
+comprueba lanzando el build: termina bien y emite `core.js`, `core.cjs`, `core.umd.cjs` y
+`core.iife.js`, con `src/index.ts` sin existir.
 
 ### Por qué importa
 
@@ -51,21 +64,27 @@ inexistente. El fallo no aparecerá en el commit que lo causa, sino en el que to
 ### Cómo reproducirlo
 
 ```sh
-ls packages/core/src/index.*        # sólo index.js
-grep -n "entry\|input" packages/core/vite.config.ts
+ls packages/core/src/index.*
+# packages/core/src/index.js   — no hay .ts
+
+npm run build -w @open-cells/core
+# ✓ built in 2.42s  →  core.js, core.cjs, core.umd.cjs, core.iife.js
 ```
 
-O más directo: quitar `rollupOptions` del config y lanzar el build. Vite falla al no encontrar
-`src/index.ts`.
+El build **funciona** con una entrada declarada que no existe: ésa es la demostración de que
+`lib.entry` no se usa. Para verlo al revés, quitar `rollupOptions` del config y volver a lanzarlo;
+entonces sí cae el fallback y Vite falla al no encontrar `src/index.ts`.
 
 ### Arreglo propuesto
 
 Cualquiera de los dos, según qué se quiera conservar:
 
 - apuntar `lib.entry` al fichero real, `resolve(__dirname, 'src/index.js')`; o
-- quitar `lib.entry` si `rollupOptions.input` ya cubre la entrada.
+- quitar `lib.entry`, dejando el resto del bloque `lib`, si `rollupOptions.input` ya cubre la
+  entrada. En ese caso el `import { resolve } from 'node:path'` de la línea 2 queda sin usarse y
+  también sobra, porque `lib.entry` es su único consumidor.
 
-En los dos casos el build debería producir exactamente lo mismo que ahora.
+En los dos casos el build debería producir exactamente los mismos cuatro ficheros.
 
 ### Nuestro arreglo y su test
 
