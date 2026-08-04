@@ -38,6 +38,15 @@ funcionalidad), luego 7 y 8 (la release y la suite), y el resto por debajo.
 | 12  | Botones del ejemplo que devuelven el handler en vez de él | Baja      | ejemplo       |
 | 13  | El e2e depende de una API de terceros en vivo             | Media     | tests         |
 | 14  | El e2e desactiva CSP y CORS para poder correr             | Media     | tests         |
+| 15  | Las suscripciones manuales no se limpian nunca            | Media     | controllers   |
+| 16  | Un `outbounds` sin `inbounds` suscribe a `undefined`      | Baja      | controllers   |
+
+La 15 y la 16 no salen de la auditoría, sino de la exploración de la API pub/sub de agosto de
+2026, y están redactadas directamente en el formato de ficha:
+[`upstream/15-manual-subscriptions-never-cleaned.md`](./upstream/15-manual-subscriptions-never-cleaned.md)
+y
+[`upstream/16-outbound-only-subscribes-undefined.md`](./upstream/16-outbound-only-subscribes-undefined.md).
+No tienen texto largo aquí abajo.
 
 ---
 

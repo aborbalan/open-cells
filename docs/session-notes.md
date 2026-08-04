@@ -2,7 +2,7 @@
 
 > Documento vivo para retomar el trabajo en futuras sesiones.
 > Consolida descubrimientos, estado y mejoras pendientes del fork.
-> Última actualización: 2026-08-02
+> Última actualización: 2026-08-04
 
 ## Contexto del fork
 
@@ -133,6 +133,41 @@ Cerrado en §10. De la lista de mejoras que arrastraba este documento:
 | 5   | El build genera `dist/` pero se publica `src/`  | **Abierto** — ver abajo                    |
 | 6   | `core` sin mapa `exports`                       | **Abierto** — ver abajo                    |
 | 7   | Higiene (newline, stub de lockfile)             | Resuelto                                   |
+
+## Ciclo de vida de las suscripciones pub/sub — 2026-08-04
+
+Exploración de cómo publican y se suscriben componentes y páginas. Salieron dos defectos de
+upstream, **documentados y no arreglados** a propósito:
+[ficha 15](./upstream/15-manual-subscriptions-never-cleaned.md) y
+[ficha 16](./upstream/16-outbound-only-subscribes-undefined.md).
+
+Lo que conviene tener presente antes de tocar nada de pub/sub, porque no está escrito en ningún
+otro sitio del repositorio:
+
+- **Los canales no son una cola FIFO.** `Channel extends ReplaySubject` con `super(1)`: buffer de
+  uno. Publicar tres veces y suscribirse después entrega **el tercero**, no los tres. Lo que sí es
+  FIFO es `$queueCommands` (`bridge.js:129`), la cola de comandos anteriores al arranque del
+  bridge.
+- **`addSubscription()` usa `previousState = false`**, que envuelve el callback con
+  `makeCallbackWithNoReplay()`: la primera suscripción sí recibe el valor en buffer, pero un nodo
+  que vuelve a suscribirse al mismo canal no lo recibe otra vez.
+- **Navegar no desconecta las páginas.** `Template.activate()`/`deactivate()` sólo cambian el
+  atributo `state`. Por eso los nodos se reutilizan, `firstUpdated` no vuelve a correr, y los
+  `unsubscribe()` en `disconnectedCallback` de `recipes-app` casi nunca se ejecutan.
+- **`inbounds`/`outbounds` sólo funcionan con `ElementController`/`PageController`.** `PageMixin`
+  enchufa la API pero nunca llama a `_definedBoundedProperties()`, así que con el mixin la vía
+  declarativa se ignora en silencio.
+- **`params` con `PageController` hay que declararlo a mano.** El `static get properties()` del
+  controlador (`PageController.js:29`) es del controlador, y Lit lee las de la clase del
+  elemento: no se aplica nunca. `category-page.ts:48` lo declara, y por eso funciona.
+- **`Subscriptor.hasSubscription()` deduplica por nodo + canal**, no por callback: un segundo
+  `subscribe()` al mismo canal desde el mismo host es un no-op silencioso, y un solo
+  `unsubscribe()` corta la entrega para ambos.
+
+Las tres afirmaciones de las fichas que se podían ejecutar se comprobaron con un test desechable
+(vitest browser, chromium) contra `840f8cc`, no se dedujeron leyendo: la suscripción manual sigue
+entregando tras `hostDisconnected()` + `remove()`, el nodo sigue en el `Map` de subscriptores
+aun desuscribiéndose bien, y un `outbounds` sin `inbounds` crea un canal llamado `undefined`.
 
 ## Pendiente
 

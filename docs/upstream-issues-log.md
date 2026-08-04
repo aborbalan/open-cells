@@ -21,9 +21,11 @@ ficha en algo accionable para nosotros. Cada defecto redactado así vive en su p
 bajo [`upstream/`](./upstream/); `upstream-issues.md` conserva el texto largo de los que aún no
 se han pasado a ese formato.
 
-| Redactada en formato final                       | Fichero                                                                      |
-| ------------------------------------------------ | ---------------------------------------------------------------------------- |
-| 1 · `Channel.unsubscribe()` deja el canal muerto | [`upstream/01-channel-unsubscribe.md`](./upstream/01-channel-unsubscribe.md) |
+| Redactada en formato final                                | Fichero                                                                                                    |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 1 · `Channel.unsubscribe()` deja el canal muerto          | [`upstream/01-channel-unsubscribe.md`](./upstream/01-channel-unsubscribe.md)                               |
+| 15 · Las suscripciones manuales no se limpian nunca       | [`upstream/15-manual-subscriptions-never-cleaned.md`](./upstream/15-manual-subscriptions-never-cleaned.md) |
+| 16 · Un `outbounds` sin `inbounds` suscribe a `undefined` | [`upstream/16-outbound-only-subscribes-undefined.md`](./upstream/16-outbound-only-subscribes-undefined.md) |
 
 Las que siguen en `upstream-issues.md` y hay que trocear al pasarlas, porque hoy agrupan varios
 defectos en un solo issue: la 5 (cuatro defectos de tipos), la 7 (dos), la 8 (dos) y la 9
@@ -40,28 +42,37 @@ su test para que nadie tenga que buscarlos.
 Cada cita está verificada contra el código de upstream en el commit previo a la auditoría
 (`398baed`), no reconstruida de memoria.
 
-## Las 14
+## Las 16
 
-| #   | Asunto                                 | Sev.    | Detectado en | En nuestro fork  |
-| --- | -------------------------------------- | ------- | ------------ | ---------------- |
-| 1   | Canales muertos tras `logout()`        | Crítica | §2 · PR #9   | Arreglado        |
-| 2   | `_hasPublisher()` y RxJS 7             | Alta    | §2 · PR #9   | Arreglado        |
-| 3   | `Router.stop()` no para el router      | Alta    | §2 · PR #9   | Arreglado        |
-| 4   | `addCellsCoreToPrototype()` lanza      | Alta    | §3 · PR #10  | Arreglado        |
-| 5   | Tipos publicados no compilan           | Alta    | §10 · PR #15 | Arreglado · ⬆️   |
-| 6   | `types/` desalineados con `src/`       | Media   | §10 · PR #15 | Arreglado · ⬆️   |
-| 7   | `npm publish` fallido reporta éxito    | Alta    | §7 · PR #14  | Arreglado        |
-| 8   | La suite no arranca en un clon limpio  | Alta    | §1 · PR #8   | Arreglado        |
-| 9   | ESLint no corre desde ESLint 9         | Media   | §7 · PR #14  | Arreglado        |
-| 10  | Dos versiones de Playwright            | Baja    | §9 · PR #15  | Arreglado        |
-| 11  | La app de ejemplo no tiene 404         | Media   | §6 · PR #13  | **Sin arreglar** |
-| 12  | Botones que no llaman al handler       | Baja    | §6 · PR #13  | **Sin arreglar** |
-| 13  | El e2e usa una API de terceros en vivo | Media   | §6 · PR #13  | Arreglado        |
-| 14  | El e2e desactiva CSP y CORS            | Media   | §6 · PR #13  | Arreglado        |
+Las 14 primeras salen de la auditoría de tests de julio de 2026. La 15 y la 16 son posteriores y
+de otro origen — la exploración de la API pub/sub de agosto de 2026 —, así que sus citas están
+verificadas contra `840f8cc`, no contra `398baed`. Da igual para el caso: en los ficheros que
+citan (`ElementController.js`, `component-connector.js`, `template.js`, `channel-manager.js`)
+nuestro fork no ha tocado nada de esa lógica, sólo tipos y comentarios.
+
+| #   | Asunto                                  | Sev.    | Detectado en | En nuestro fork  |
+| --- | --------------------------------------- | ------- | ------------ | ---------------- |
+| 1   | Canales muertos tras `logout()`         | Crítica | §2 · PR #9   | Arreglado        |
+| 2   | `_hasPublisher()` y RxJS 7              | Alta    | §2 · PR #9   | Arreglado        |
+| 3   | `Router.stop()` no para el router       | Alta    | §2 · PR #9   | Arreglado        |
+| 4   | `addCellsCoreToPrototype()` lanza       | Alta    | §3 · PR #10  | Arreglado        |
+| 5   | Tipos publicados no compilan            | Alta    | §10 · PR #15 | Arreglado · ⬆️   |
+| 6   | `types/` desalineados con `src/`        | Media   | §10 · PR #15 | Arreglado · ⬆️   |
+| 7   | `npm publish` fallido reporta éxito     | Alta    | §7 · PR #14  | Arreglado        |
+| 8   | La suite no arranca en un clon limpio   | Alta    | §1 · PR #8   | Arreglado        |
+| 9   | ESLint no corre desde ESLint 9          | Media   | §7 · PR #14  | Arreglado        |
+| 10  | Dos versiones de Playwright             | Baja    | §9 · PR #15  | Arreglado        |
+| 11  | La app de ejemplo no tiene 404          | Media   | §6 · PR #13  | **Sin arreglar** |
+| 12  | Botones que no llaman al handler        | Baja    | §6 · PR #13  | **Sin arreglar** |
+| 13  | El e2e usa una API de terceros en vivo  | Media   | §6 · PR #13  | Arreglado        |
+| 14  | El e2e desactiva CSP y CORS             | Media   | §6 · PR #13  | Arreglado        |
+| 15  | Suscripciones manuales sin limpiar      | Media   | pub/sub · —  | **Sin arreglar** |
+| 16  | `outbounds` solo suscribe a `undefined` | Baja    | pub/sub · —  | **Sin arreglar** |
 
 **Sev.** = gravedad del defecto. **Detectado en** = sección de la auditoría y PR nuestro donde
-salió. **En nuestro fork** = si nuestra rama ya lo corrige. **⬆️** = upstream también lo ha
-corregido, por su cuenta y de otra forma que nosotros.
+salió (`pub/sub · —` = exploración de agosto de 2026, sin PR). **En nuestro fork** = si nuestra
+rama ya lo corrige. **⬆️** = upstream también lo ha corregido, por su cuenta y de otra forma que
+nosotros.
 
 ### 5 y 6 ya no existen upstream
 
@@ -84,6 +95,22 @@ funcionan porque además llevan `href`) en lugar de fingir que es correcto. Son 
 app de ejemplo, no del framework, y cambiarlos aquí nos alejaría del ejemplo de upstream sin
 ganar nada. Si upstream los arregla, nuestros tests se pondrán rojos y habrá que actualizarlos:
 es el aviso que queremos.
+
+### Por qué 15 y 16 siguen sin arreglar aquí
+
+Decisión explícita: **documentar antes de tocar**. La 15 cambia el ciclo de vida de las
+suscripciones en dos paquetes publicados (`element-controller` y `page-mixin`) y, para la parte
+del `Map` de subscriptores, en `core`. Cualquier aplicación que hoy dependa —a sabiendas o no— de
+que una suscripción sobreviva a un `disconnectedCallback` cambia de comportamiento, y hacerlo mal
+(desuscribir sin volver a suscribir al reconectar) deja componentes sordos sin ningún error. No es
+un arreglo de tres líneas, es un cambio de contrato.
+
+La 16 sí son tres líneas, pero vive en la misma función (`_inOut()`) que la 15, así que va con
+ella cuando se aborde.
+
+Si se retoma, el orden que propone la ficha 15 es: primero el aviso de suscripción duplicada
+(no cambia comportamiento), luego el par simétrico connect/disconnect con opt-out, y al final la
+limpieza del `Map` en `core`.
 
 ### Por qué el resto sí está arreglado aquí
 
