@@ -454,14 +454,23 @@
   /* ---- redactadas para reportar ----
      Distinto de «hecha»: el defecto sigue aquí. Lo que existe es el texto
      revisable en docs/upstream/, listo para publicar cuando se decida. */
-  .l-report {
-    color: var(--upstream);
-    border-color: color-mix(in srgb, var(--upstream) 45%, transparent);
-    background: color-mix(in srgb, var(--upstream) 10%, transparent);
+  .l-report,
+  .l-published {
     border-radius: 4px;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
+  }
+  .l-report {
+    color: var(--upstream);
+    border-color: color-mix(in srgb, var(--upstream) 45%, transparent);
+    background: color-mix(in srgb, var(--upstream) 10%, transparent);
+  }
+  /* Sólida, como la de `heredado`: ya está fuera, no es una intención. */
+  .l-published {
+    color: var(--canvas);
+    background: var(--upstream);
+    border-color: var(--upstream);
   }
   details.issue.done > summary .row-title {
     color: var(--fg-muted);
@@ -617,7 +626,8 @@
       <span id="count-n">24</span> propuestas
     </span>
     <span class="muted"
-      >8 grupos &middot; <b>4 hechas</b> &middot; <b>2 redactadas</b> &middot; 18 pendientes</span
+      >8 grupos &middot; <b>4 hechas</b> &middot; <b>1 publicada</b> &middot;
+      <b>1 redactada</b> &middot; 18 pendientes</span
     >
     <span class="filters" role="group" aria-label="Filtrar por los ficheros que edita el arreglo">
       <button class="btn" type="button" data-filter="all" aria-pressed="true">Todas 24</button>
@@ -1020,7 +1030,7 @@ Es repetir el patrón que ya existe en el repositorio, una vez resuelto 2B para 
     ><span class="hint">defectos que el fork registró sin corregir</span>
   </div>
 
-  <details class="issue mix report">
+  <details class="issue mix published">
     <summary>
       <span class="icon"
         ><svg height="16" width="16" viewBox="0 0 16 16">
@@ -1032,7 +1042,7 @@ Es repetir el patrón que ya existe en el repositorio, una vez resuelto 2B para 
       <span class="row-main">
         <span class="row-title"><span class="id">3A</span>La app de ejemplo no tiene ruta 404</span>
         <span class="labels"
-          ><span class="label l-report">redactada</span><span class="label l-mix">mixta</span
+          ><span class="label l-published">publicada</span><span class="label l-mix">mixta</span
           ><span class="label l-bug">bug</span></span
         >
         <div class="row-meta">

@@ -7,6 +7,12 @@
 **Severidad:** media · **Área:** `packages/example/recipes-app` · **En nuestro fork:** sin
 arreglar, a propósito
 
+**Reportada:** [`BBVA/open-cells#62`](https://github.com/BBVA/open-cells/issues/62), 2026-08-03.
+La primera abierta bajo la norma nueva. Se publicó con una sección de dudas al final —si `#!/…` es
+la forma correcta de provocar un 404, si el `path` declarado debería ser alcanzable tal cual, y si
+hay otro mecanismo que haga innecesario el flag—, porque el formato de la URL no está documentado
+en ninguna parte y convenía decirlo antes que ellos.
+
 **En una línea:** la única ruta candidata a 404 lleva `notFound: false`, así que una URL sin match
 no selecciona nada y deja en pantalla lo que hubiera antes.
 

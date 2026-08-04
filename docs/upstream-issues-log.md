@@ -44,6 +44,25 @@ Las 11 y 12 son las primeras redactadas con la norma nueva, así que son las pri
 reportar tal cual. Van juntas a propósito: las dos son de la app de ejemplo, las dos las hereda
 todo el que la copia, y las dos siguen sin arreglar aquí por la decisión de §6.
 
+### Qué se ha reportado, y qué ha pasado
+
+| Ficha | Issue                                                                             | Estado                         |
+| ----- | --------------------------------------------------------------------------------- | ------------------------------ |
+| 11    | [`BBVA/open-cells#62`](https://github.com/BBVA/open-cells/issues/62) · 2026-08-03 | Abierta, sin respuesta todavía |
+| 12    | —                                                                                 | Redactada, sin publicar        |
+| 15    | —                                                                                 | Redactada, sin publicar        |
+
+Cuando se abrió la 62 era **la única issue abierta del repositorio**: las otras quince estaban
+todas cerradas. Sirve de referencia para medir cuánto tardan.
+
+**En curso: un experimento sobre hilos cerrados.** El resto del arreglo de la #50 —dejaron
+`types/index.ts` detrás del `index.d.ts` nuevo— se manda como **comentario dentro de la propia
+#50**, no como issue nueva, para ver si un hilo cerrado recibe atención. El precedente decía que
+no: de dieciséis issues sólo dos tienen comentarios posteriores al cierre, y en el único caso en
+que respondió un mantenedor fue el mismo día, con el hilo aún vivo. La #62 abierta es el control —
+si contestan allí y en la #50 no, la respuesta es clara y a partir de ahí todo va en issue nueva
+citando la anterior.
+
 La **15 no viene de la auditoría** sino del backlog de agosto (ficha 1A), y por eso su número se
 sale de la serie de los 14. La numeración de este registro es un identificador, no un orden: lo
 que llegue después de los 14 sigue contando desde 15 aunque no comparta origen.
