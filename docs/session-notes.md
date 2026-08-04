@@ -7,12 +7,22 @@
 ## Contexto del fork
 
 - `origin` = `aborbalan/open-cells` (fork del usuario) — **todos los PRs van aquí**.
-- `upstream` = `BBVA/open-cells` — **no se les envía absolutamente nada**: ni PRs, ni issues,
-  ni comentarios. No aceptan nada de fuera, y «es solo un issue» no es una excepción.
-  Su URL de push está puesta a `DISABLED` a propósito, para que la norma la sostenga la
-  herramienta y no la memoria; `git fetch upstream` sigue funcionando. **No restaurarla.** El
-  riesgo real no es un `git push` a mano, sino `gh pr create`, que en un fork apunta al repo
-  padre por defecto: hay que pasarle siempre `--repo aborbalan/open-cells`.
+- `upstream` = `BBVA/open-cells` — **issues sí, código no** (decidido el 2026-08-03). Se les
+  puede reportar un defecto suyo y seguir la conversación; no se les manda un PR, ni un parche,
+  ni un diff para pegar.
+  La norma anterior decía que no se les enviaba absolutamente nada, apoyada en que no aceptaban
+  nada de fuera. **Eso era falso**: las issues [#50](https://github.com/BBVA/open-cells/issues/50)
+  y [#51](https://github.com/BBVA/open-cells/issues/51) salieron de aquí en junio y julio, y
+  `julcasans` las arregló y publicó las dos — `@open-cells/core@1.2.0` y
+  `@open-cells/core-plugin@1.2.3`, que son exactamente las versiones que trajo la sincronización
+  del 2 de agosto. Tardaron un mes y dos semanas respectivamente.
+  Lo que sigue en pie es la otra mitad: **nuestro código es nuestro** y la divergencia no se
+  negocia con ellos. Su URL de push sigue puesta a `DISABLED` a propósito y **no se restaura**:
+  es lo que impide que el código se vaya por donde no debe. Y `gh pr create` en un fork apunta
+  al repo padre por defecto, así que hay que pasarle siempre `--repo aborbalan/open-cells`.
+- **Un reporte no es una propuesta.** Lo que funcionó allí fueron defectos pequeños,
+  reproducibles y con evidencia. Proponerles que adopten nuestra arquitectura —el `mcp-server`,
+  los gates, la auditoría— es otra conversación y no cabe dentro de un parte de fallo.
 - Monorepo de web components (npm workspaces + wireit). Paquetes en `packages/*`.
 - `main` lleva ya el `mcp-server` **y** la auditoría de tests, integrados en esa dirección.
 

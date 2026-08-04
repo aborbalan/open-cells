@@ -1,17 +1,29 @@
 # Defectos de upstream: registro interno
 
-> ## ⛔ Nada de esto se sube a `BBVA/open-cells`
+> ## A `BBVA/open-cells`: issues sí, código no
 >
-> Ni issues, ni pull requests, ni comentarios. **No se les envía nada, en ningún formato.** Es
-> una norma del upstream y no admite excepciones.
+> Cambiado el 2026-08-03. Antes ponía que no se les enviaba nada en ningún formato, apoyado en
+> que no aceptaban nada de fuera. **Era falso, y lo desmiente nuestro propio historial:**
+>
+> | Issue                                                     | Abierta    | Desenlace                                             |
+> | --------------------------------------------------------- | ---------- | ----------------------------------------------------- |
+> | [#50](https://github.com/BBVA/open-cells/issues/50) tipos | 2026-06-29 | Cerrada COMPLETED el 30-jul: «@open-cells/core 1.2.0» |
+> | [#51](https://github.com/BBVA/open-cells/issues/51) types | 2026-07-17 | Cerrada COMPLETED el 30-jul: «core-plugin 1.2.3»      |
+>
+> Las dos salieron de aquí, `julcasans` las arregló y las publicó, y esas son exactamente las
+> versiones que trajo la sincronización del 2 de agosto. Un mes y dos semanas.
+>
+> Lo que **no** se les manda es código: ni pull request, ni parche, ni diff para pegar. Y un
+> reporte no es una propuesta — lo que funcionó fueron defectos pequeños, reproducibles y con
+> evidencia, no pedirles que adopten nuestra arquitectura.
 
 Qué está roto en `BBVA/open-cells`, cómo nos afecta y qué hemos hecho al respecto en nuestro
 fork. El detalle técnico de cada uno está en [`upstream-issues.md`](./upstream-issues.md); este
 documento es el índice y el seguimiento.
 
-Para qué sirve, entonces, si no se envía: para saber qué heredamos, para no volver a
-diagnosticar lo mismo dos veces, y sobre todo para saber **qué ficheros van a dar conflicto**
-cuando sincronicemos con upstream.
+Para qué sirve: para saber qué heredamos, para no volver a diagnosticar lo mismo dos veces, para
+saber **qué ficheros van a dar conflicto** cuando sincronicemos — y ahora también como cola de lo
+que se les puede reportar.
 
 ## Cómo se redactan
 
@@ -21,9 +33,39 @@ ficha en algo accionable para nosotros. Cada defecto redactado así vive en su p
 bajo [`upstream/`](./upstream/); `upstream-issues.md` conserva el texto largo de los que aún no
 se han pasado a ese formato.
 
-| Redactada en formato final                       | Fichero                                                                      |
-| ------------------------------------------------ | ---------------------------------------------------------------------------- |
-| 1 · `Channel.unsubscribe()` deja el canal muerto | [`upstream/01-channel-unsubscribe.md`](./upstream/01-channel-unsubscribe.md) |
+| Redactada en formato final                                   | Fichero                                                                                                  |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| 1 · `Channel.unsubscribe()` deja el canal muerto             | [`upstream/01-channel-unsubscribe.md`](./upstream/01-channel-unsubscribe.md)                             |
+| 11 · La app de ejemplo no tiene ruta 404                     | [`upstream/11-example-app-no-404.md`](./upstream/11-example-app-no-404.md)                               |
+| 12 · Cinco botones devuelven su handler sin llamarlo         | [`upstream/12-header-buttons-never-call-handler.md`](./upstream/12-header-buttons-never-call-handler.md) |
+| 15 · `lib.entry` de `core` apunta a un fichero que no existe | [`upstream/15-core-lib-entry-missing-file.md`](./upstream/15-core-lib-entry-missing-file.md)             |
+
+Las 11 y 12 son las primeras redactadas con la norma nueva, así que son las primeras que se pueden
+reportar tal cual. Van juntas a propósito: las dos son de la app de ejemplo, las dos las hereda
+todo el que la copia, y las dos siguen sin arreglar aquí por la decisión de §6.
+
+### Qué se ha reportado, y qué ha pasado
+
+| Ficha | Issue                                                                             | Estado                         |
+| ----- | --------------------------------------------------------------------------------- | ------------------------------ |
+| 11    | [`BBVA/open-cells#62`](https://github.com/BBVA/open-cells/issues/62) · 2026-08-03 | Abierta, sin respuesta todavía |
+| 12    | —                                                                                 | Redactada, sin publicar        |
+| 15    | —                                                                                 | Redactada, sin publicar        |
+
+Cuando se abrió la 62 era **la única issue abierta del repositorio**: las otras quince estaban
+todas cerradas. Sirve de referencia para medir cuánto tardan.
+
+**En curso: un experimento sobre hilos cerrados.** El resto del arreglo de la #50 —dejaron
+`types/index.ts` detrás del `index.d.ts` nuevo— se manda como **comentario dentro de la propia
+#50**, no como issue nueva, para ver si un hilo cerrado recibe atención. El precedente decía que
+no: de dieciséis issues sólo dos tienen comentarios posteriores al cierre, y en el único caso en
+que respondió un mantenedor fue el mismo día, con el hilo aún vivo. La #62 abierta es el control —
+si contestan allí y en la #50 no, la respuesta es clara y a partir de ahí todo va en issue nueva
+citando la anterior.
+
+La **15 no viene de la auditoría** sino del backlog de agosto (ficha 1A), y por eso su número se
+sale de la serie de los 14. La numeración de este registro es un identificador, no un orden: lo
+que llegue después de los 14 sigue contando desde 15 aunque no comparta origen.
 
 Las que siguen en `upstream-issues.md` y hay que trocear al pasarlas, porque hoy agrupan varios
 defectos en un solo issue: la 5 (cuatro defectos de tipos), la 7 (dos), la 8 (dos) y la 9
